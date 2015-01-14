@@ -10,6 +10,8 @@ from django.template import RequestContext
 from django.conf import settings
 from users.view_util import fill_template_values
 
+import remote.view_util
+
 def perform_login(request):
     """
         Perform user authentication
@@ -26,6 +28,9 @@ def perform_login(request):
             login_failure = "Invalid username or password"
     
     if request.user.is_authenticated():
+        # Try to authenticate with Fermi
+        remote.view_util.authenticate(request)
+        
         # If we came from a given page and just needed 
         # authentication, go back to that page.
         if "next" in request.GET:

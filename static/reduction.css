@@ -65,7 +65,7 @@
     margin-top:4px;
     padding-left:2px;
 }
-.fermi_notification {padding:40px 40px 40px 40px; border: 1px solid silver; background: #FFEA7D; font-size:14px; -moz-border-radius: 5px; -webkit-border-radius: 5px; border-radius: 5px;}
+.fermi_notification {padding:10px 10px 10px 10px; border: 1px solid silver; background: #FFEA7D; font-size:14px; -moz-border-radius: 5px; -webkit-border-radius: 5px; border-radius: 5px;}
 .main_content {position:relative; min-height:400px;padding-left:5px;}
 .center_area {
     margin-right: 150px;

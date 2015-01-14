@@ -1,5 +1,26 @@
 {% extends "base.html" %}
 
+{% block analysis_box %}
+  <div class="analysis_tools">
+      <div class="top_tool_area">
+        <b>Fermi status</b><br>
+        {% spaceless %}
+        {% if fermi_authenticated %}
+        <div class='green'>Authenticated as: {{ fermi_uid }}</div>
+        {% else %}
+        <div class='red'>Not authenticated</div>
+        {% endif %}
+        {% endspaceless %}
+        <form action="{% url 'remote_authenticate'%}" method="post">{% csrf_token %}
+          <input class="form_text" type="text" name="username" placeholder="username"><br>
+          <input class="form_text" type="password" name="password" placeholder="password"><br>
+          <input type="submit" id="login_button" value="log in" title="Log in to Fermi to be able to submit jobs">
+          <input type="hidden" name="redirect" value="{{ current_path }}">
+        </form>
+      </div>
+  </div>
+{% endblock %}
+
 {% block content %}
 {% if need_authentication %}
     <div class="fermi_notification">

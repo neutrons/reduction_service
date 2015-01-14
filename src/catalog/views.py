@@ -5,7 +5,7 @@
     @copyright: 2014 Oak Ridge National Laboratory
 """
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.views.decorators.cache import cache_page
 from django.conf import settings
@@ -14,6 +14,7 @@ from django.http import HttpResponse
 from icat_server_communication import get_ipts_runs, get_instruments, get_experiments, get_run_info
 import catalog.view_util
 import remote.view_util
+import users.view_util
 import reduction_service.view_util
 import json
 
@@ -68,14 +69,18 @@ def experiment_run_list(request, instrument, ipts):
                                                                                              instrument.lower(),
                                                                                              ipts.lower(),
                                                                                              )
-    runs = get_ipts_runs(instrument.upper(), ipts)
-    template_values = {'run_data': runs,
-                       'instrument': instrument,
+    template_values = {'instrument': instrument,
                        'experiment': ipts,
                        'title': '%s %s' % (instrument.upper(), ipts.upper()),
                        'breadcrumbs': breadcrumbs}
-    if len(runs)==0:
-        template_values['user_alert'] = ['No runs were found for instrument %s experiment %s' % (instrument, ipts)]
+
+    if users.view_util.is_experiment_member(request, instrument, ipts) is False:
+        template_values['user_alert'] = ["You do not have access to this experiment data."]
+    else:
+        runs = get_ipts_runs(instrument.upper(), ipts)
+        template_values['run_data'] = runs
+        if len(runs)==0:
+            template_values['user_alert'] = ['No runs were found for instrument %s experiment %s' % (instrument, ipts)]
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     template_values = catalog.view_util.fill_template_values(request, **template_values)
     return render_to_response('catalog/experiment_run_list.html',

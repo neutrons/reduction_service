@@ -1,5 +1,7 @@
 prefix := /var/www/reduction_service
 
+HAS_MIGRATIONS:=$(shell python -c "import django;t=0 if django.VERSION[1]>=8 else 1; print t")
+
 ifeq ($(OS),Windows_NT)
 UNAME_S=Windows
 else
@@ -44,17 +46,25 @@ webapp: check
 	# Collect the static files and install them
 	cd $(prefix)/app/src; python manage.py collectstatic --noinput
 
-	# Create the database tables. The database itself must have been
-	# created on the server already
-	cd $(prefix)/app/src; python manage.py syncdb
+	# Create the database tables. The database itself must have been created on the server already
+ifeq ($(HAS_MIGRATIONS),1)
+	@echo "Detected Django >= 1.7: Using migrations"
+	# The following call only needs to be done once to create the migrations if the tables already exist
+	#cd $(prefix)/app/src; python manage.py makemigrations eqsans plotting catalog remote users
 	
+	# Create migrations and apply them
+	cd $(prefix)/app/src; python manage.py makemigrations
+	cd $(prefix)/app/src; python manage.py migrate
+else
+	cd $(prefix)/app/src; python manage.py syncdb
+endif
 	# Prepare web monitor cache: RUN THIS ONCE BY HAND
 	#cd $(prefix)/app/src; python manage.py createcachetable webcache
 	
 	@echo "\n\nReady to go: run apachectl restart\n"
 	
 	# Development environment
-	test -d /etc/apache2/other && cp $(prefix)/apache/apache_django_wsgi.conf /etc/apache2/other/reduction_service_wsgi.conf
+	test -d /etc/apache2/other && cp $(prefix)/apache/dev_django_wsgi.conf /etc/apache2/other/reduction_service_wsgi.conf
 	# Linux server environment
 	#test -d /etc/httpd/conf.d && cp $(prefix)/apache/apache_django_wsgi.conf /etc/httpd/conf.d/reduction_service_wsgi.conf
 	

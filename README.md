@@ -24,6 +24,7 @@
 sudo pip install Django==1.7.3
 sudo pip install django-auth-ldap --upgrade
 sudo pip install psycopg2
+sudo pip install django-debug-toolbar
 ```
 
 ## Check the Django instalation:

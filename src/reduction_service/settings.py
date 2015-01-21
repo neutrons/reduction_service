@@ -143,6 +143,8 @@ INSTALLED_APPS = (
     'remote',
     'catalog',
     'plotting',
+    'seq',
+    'reduction',
 )
 if DEBUG_TOOLBAR:
     INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar',)

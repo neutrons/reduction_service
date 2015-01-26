@@ -6,7 +6,7 @@
 """
 from django import forms
 from django.shortcuts import get_object_or_404
-from models import ReductionProcess, ReductionConfiguration
+from reduction.models import ReductionProcess, ReductionConfiguration
 from reduction.models import Instrument, Experiment
 import time
 import sys

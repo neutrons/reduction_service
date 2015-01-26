@@ -1,4 +1,4 @@
-from models import ReductionProcess, RemoteJob, ReductionConfiguration, RemoteJobSet
+from reduction.models import ReductionProcess, RemoteJob, ReductionConfiguration, RemoteJobSet
 from reduction.models import Instrument, Experiment
 from django.contrib import admin
 import logging

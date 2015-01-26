@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
-from models import ReductionProcess, RemoteJob, ReductionConfiguration, RemoteJobSet
+from reduction.models import ReductionProcess, RemoteJob, ReductionConfiguration, RemoteJobSet
 from reduction.models import Instrument, Experiment
 import reduction_service.view_util
 import remote.view_util

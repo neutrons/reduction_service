@@ -5,7 +5,7 @@
     @copyright: 2014 Oak Ridge National Laboratory
 """
 from plotting.models import Plot1D, Plot2D
-from models import RemoteJob
+from reduction.models import RemoteJob
 import remote.view_util
 import h5py
 import tempfile

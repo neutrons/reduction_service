@@ -5,7 +5,7 @@
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
-from models import ReductionProcess, RemoteJob, Instrument
+from reduction.models import ReductionProcess, RemoteJob, Instrument
 from plotting.models import Plot1D, Plot2D
 from remote.models import Transaction
 import users.view_util

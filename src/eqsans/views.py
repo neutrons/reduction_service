@@ -14,6 +14,7 @@ from reduction.models import ReductionProcess, RemoteJob, ReductionConfiguration
 from reduction.models import Instrument, Experiment
 import reduction_service.view_util
 import remote.view_util
+import reduction.view_util
 import view_util
 from catalog.icat_server_communication import get_ipts_info
 from . import forms
@@ -68,7 +69,7 @@ def experiment(request, ipts):
         data_dict = r.get_data_dict()
         data_dict['id'] = r.id
         data_dict['config'] = r.get_config()
-        latest_job = view_util.get_latest_job(request, r)
+        latest_job = reduction.view_util.get_latest_job(request, r)
         if latest_job is not None:
             data_dict['completed_job'] = reverse('eqsans.views.job_details', args=[latest_job.remote_id])
         try:

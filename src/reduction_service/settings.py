@@ -206,6 +206,10 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
+        'seq': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
         'remote': {
             'handlers': ['console'],
             'level': 'DEBUG',

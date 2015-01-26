@@ -38,7 +38,7 @@
       <div class="tool_area">
         <b>Reduction</b><br>
         <ul>
-          <li><a href="{% url 'eqsans_reduction_home' %}" title="Go to reduction home for this instrument">reduction home</a></li>
+          <li><a href="{% url 'reduction_reduction_home' 'eqsans' %}" title="Go to reduction home for this instrument">reduction home</a></li>
           <li><a href="{% url 'eqsans_new_configuration' %}" title="Start a new configuration to use with multiple reductions">new configuration</a></li>
           <li><a href="{% url 'eqsans_new_reduction' %}" title="Start a new single reduction">new reduction</a></li>
           {% if reduction_id %}

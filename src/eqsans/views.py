@@ -595,19 +595,4 @@ def reduction_jobs(request):
     return render_to_response('eqsans/reduction_jobs.html',
                               template_values)
 
-@login_required
-def reduction_home(request):
-    """
-        Home page for the EQSANS reduction
-        @param request: request object
-    """
-    eqsans = Instrument.objects.get(name='eqsans')
-    experiments = Experiment.objects.experiments_for_instrument(eqsans, owner=request.user)
 
-    breadcrumbs = "<a href='%s'>home</a> &rsaquo; eqsans reduction" % reverse(settings.LANDING_VIEW)
-    template_values = {'title': 'EQSANS Reduction',
-                       'experiments':experiments,
-                       'breadcrumbs': breadcrumbs}
-    template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    return render_to_response('eqsans/reduction_home.html',
-                              template_values)

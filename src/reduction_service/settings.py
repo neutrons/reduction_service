@@ -162,7 +162,7 @@ AUTH_LDAP_USER_DN_TEMPLATE = ""
 # Wb monitor url
 WEBMON_URL = 'https://monitor.sns.gov/report/'
 # Set the following to the local domain name
-ALLOWED_DOMAIN = ''
+ALLOWED_DOMAIN = 'ornl.gov'
 LOGIN_URL = 'users.views.perform_login'
 LANDING_VIEW = 'catalog.views.instrument_list'
 ALTERNATE_LANDING_VIEW = 'eqsans.views.reduction_home'

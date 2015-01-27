@@ -3,7 +3,7 @@ from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.conf import settings
-
+from django.forms.formsets import formset_factory
 
 from reduction.models import Instrument, Experiment
 import reduction_service.view_util
@@ -12,8 +12,14 @@ import forms as reduction_forms
 from reduction.models import ReductionProcess, RemoteJob, ReductionConfiguration, RemoteJobSet
 from catalog.icat_server_communication import get_ipts_info
 import copy
+import importlib
 
-# Create your views here.
+def _import_forms_from_app(instrument_name_lowercase):
+    """
+    @return the forms module from an instrument app 
+    """
+    instrument_forms = importlib.import_module(instrument_name_lowercase + ".forms")
+    return instrument_forms
 
 @login_required
 def reduction_home(request, instrument_name):
@@ -151,9 +157,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
     instrument_name_capitals = str.capitalize(str(instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
     
-    import importlib
-    instrument_forms = importlib.import_module(instrument_name_lowercase + ".forms")
-    
+    instrument_forms = _import_forms_from_app(instrument_name_lowercase)
     
     # Get reduction and configuration information
     config_obj = None
@@ -207,4 +211,152 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     return render_to_response('%s/reduction_options.html'%instrument_name_lowercase,
                               template_values)
+
+@login_required
+def reduction_jobs(request, instrument_name):
+    """
+        Return a list of the remote reduction jobs for EQSANS.
+        The jobs are those that are owned by the user and have an
+        entry in the database.
+        
+        @param request: request object
+    """
+    instrument_name = str(instrument_name).lower()
     
+    jobs = RemoteJob.objects.filter(transaction__owner=request.user)
+    status_data = []
+    for job in jobs:
+        if not job.transaction.is_active or job.reduction.get_config() is not None:
+            continue
+        j_data = {'id': job.remote_id,
+                  'name': job.reduction.name,
+                  'reduction_id': job.reduction.id,
+                  'start_date': job.transaction.start_time,
+                  'data': job.reduction.data_file,
+                  'trans_id': job.transaction.trans_id,
+                  'experiments': job.reduction.get_experiments()
+                 }
+        status_data.append(j_data)
+    
+    # Get config jobs
+    config_jobs = RemoteJobSet.objects.filter(transaction__owner=request.user)
+    config_data = []
+    for job in config_jobs:
+        if not job.transaction.is_active:
+            continue
+        j_data = {'id': job.id,
+                  'config_id': job.configuration.id,
+                  'name': job.configuration.name,
+                  'trans_id': job.transaction.trans_id,
+                  'experiments': job.configuration.get_experiments()
+                 }
+        config_data.append(j_data)
+    
+    breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
+    breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % (reverse('eqsans.views.reduction_home'),instrument_name)
+    breadcrumbs += " &rsaquo; jobs"
+    template_values = {'status_data': status_data,
+                       'config_data': config_data,
+                       'back_url': request.path,
+                       'breadcrumbs': breadcrumbs,
+                       'instrument' : instrument_name, }
+    template_values = reduction_service.view_util.fill_template_values(request, **template_values)   
+    return render_to_response('%s/reduction_jobs.html'%instrument_name,
+                              template_values)    
+
+@login_required
+def reduction_configuration(request, config_id=None, instrument_name=None):
+    """
+        Show the reduction properties for a given configuration,
+        along with all the reduction jobs associated with it.
+        
+        @param request: The request object
+        @param config_id: The ReductionConfiguration pk
+    """
+    
+    instrument_name_capitals = str.capitalize(str(instrument_name))
+    instrument_name_lowercase = str.lower(str(instrument_name))
+    
+    instrument_forms = _import_forms_from_app(instrument_name_lowercase)
+    
+    # Create a form for the page
+    default_extra = 1 if config_id is None and not (request.method == 'GET' and 'data_file' in request.GET) else 0
+    try:
+        extra = int(request.GET.get('extra', default_extra))
+    except:
+        extra = default_extra
+    ReductionOptionsSet = formset_factory(instrument_forms.ReductionOptions, extra=extra)
+
+    # The list of relevant experiments will be displayed on the page
+    expt_list = None
+    job_list = None
+    # Deal with data submission
+    if request.method == 'POST':
+        options_form = ReductionOptionsSet(request.POST)
+        config_form = instrument_forms.ReductionConfigurationForm(request.POST)
+        # If the form is valid update or create an entry for it
+        if options_form.is_valid() and config_form.is_valid():
+            # Save the configuration
+            config_id = config_form.to_db(request.user, config_id)
+            # Save the individual reductions
+            for form in options_form:
+                form.to_db(request.user, None, config_id)
+            if config_id is not None:
+                return redirect(reverse('reduction.views.reduction_configuration',
+                                        args={'config_id' : config_id, 'instrument_name': instrument_name }))
+        else:
+            # There's a proble with the data, the validated form 
+            # will automatically display what the problem is to the user
+            pass
+    else:
+        # Deal with the case of creating a new configuration
+        if config_id is None:
+            initial_values = []
+            if 'data_file' in request.GET:
+                initial_values = [{'data_file': request.GET.get('data_file','')}]
+            options_form = ReductionOptionsSet(initial=initial_values)
+            initial_config = {}
+            if 'experiment' in request.GET:
+                initial_config['experiment'] = request.GET.get('experiment','')
+            if 'reduction_name' in request.GET:
+                initial_config['reduction_name'] = request.GET.get('reduction_name','')
+            config_form = instrument_forms.ReductionConfigurationForm(initial=initial_config)
+        # Retrieve existing configuration
+        else:
+            reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
+            initial_config = instrument_forms.ReductionConfigurationForm.data_from_db(request.user, reduction_config)
+            
+            initial_values = []
+            for item in reduction_config.reductions.all():
+                props = instrument_forms.ReductionOptions.data_from_db(request.user, item.pk)
+                initial_values.append(props)
+                
+            options_form = ReductionOptionsSet(initial=initial_values)
+            config_form = instrument_forms.ReductionConfigurationForm(initial=initial_config)
+            expt_list = reduction_config.experiments.all()
+            job_list = RemoteJobSet.objects.filter(configuration=reduction_config)
+
+    breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
+    breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('eqsans.views.reduction_home')
+    if config_id is not None:
+        breadcrumbs += " &rsaquo; configuration %s" % config_id
+    else:
+        breadcrumbs += " &rsaquo; new configuration"
+
+    # ICAT info url
+    icat_url = reverse('catalog.views.run_info', args=['EQSANS', '0000'])
+    icat_url = icat_url.replace('/0000','')
+    #TODO: add New an Save-As functionality
+    template_values = {'config_id': config_id,
+                       'options_form': options_form,
+                       'config_form': config_form,
+                       'expt_list': expt_list,
+                       'existing_job_sets': job_list,
+                       'title': '%s Reduction'%instrument_name_capitals,
+                       'breadcrumbs': breadcrumbs,
+                       'icat_url': icat_url,
+                       'instrument' : instrument_name, }
+
+    template_values = reduction_service.view_util.fill_template_values(request, **template_values)
+    return render_to_response('eqsans/reduction_table.html',
+                              template_values)

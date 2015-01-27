@@ -2,6 +2,8 @@ from django.conf import settings
 import logging
 import sys
 
+logger = logging.getLogger('catalog')
+
 def fill_template_values(request, **template_args):
     """
         Fill template values for catalog app
@@ -22,9 +24,10 @@ def get_new_reduction_url(instrument, run=None, ipts=None):
         try:
             instrument_app = __import__(instrument.lower())
             if hasattr(instrument_app, 'get_new_reduction_url'):
-                url = instrument_app.get_new_reduction_url(run, ipts)
-        except:
-            logging.error('Error getting URL: %s' % sys.exc_value)
+                url = instrument_app.get_new_reduction_url(run, ipts,instrument_name=instrument.lower())
+        except Exception as e:
+            logger.exception(e)
+            logger.error('Error getting URL: %s' % sys.exc_value)
     return url
 
 def get_webmon_url(instrument, run=None, ipts=None):
@@ -42,8 +45,9 @@ def get_remote_jobs_url(instrument):
             instrument_app = __import__(instrument.lower())
             if hasattr(instrument_app, 'get_remote_jobs_url'):
                 url = instrument_app.get_remote_jobs_url()
-        except:
-            logging.error('Error getting URL: %s' % sys.exc_value)
+        except Exception as e:
+            logger.exception(e)
+            logger.error('Error getting URL: %s' % sys.exc_value)
     return url
 
 def get_reduction_url(instrument):
@@ -52,9 +56,10 @@ def get_reduction_url(instrument):
         try:
             instrument_app = __import__(instrument.lower())
             if hasattr(instrument_app, 'get_reduction_url'):
-                url = instrument_app.get_reduction_url()
-        except:
-            logging.error('Error getting URL: %s' % sys.exc_value)
+                url = instrument_app.get_reduction_url(instrument_name=instrument.lower())
+        except Exception as e:
+            logger.exception(e)
+            logger.error('Error getting URL: %s' % sys.exc_value)
     return url
 
 def get_new_batch_url(instrument, run=None, ipts=None):
@@ -64,6 +69,7 @@ def get_new_batch_url(instrument, run=None, ipts=None):
             instrument_app = __import__(instrument.lower())
             if hasattr(instrument_app, 'get_new_batch_url'):
                 url = instrument_app.get_new_batch_url(run, ipts)
-        except:
-            logging.error('Error getting URL: %s' % sys.exc_value)
+        except Exception as e:
+            logger.exception(e)
+            logger.error('Error getting URL: %s' % sys.exc_value)
     return url

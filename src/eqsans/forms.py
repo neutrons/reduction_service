@@ -457,9 +457,5 @@ class ReductionOptions(forms.Form):
         """
         return True
     
-class ReductionStart(forms.Form):
-    """
-        Simple form to select run to reduce
-    """
-    run_number = forms.IntegerField(required=False)
+
 

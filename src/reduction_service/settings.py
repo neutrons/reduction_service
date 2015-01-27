@@ -202,6 +202,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'django_auth_ldap': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
         'eqsans': {
             'handlers': ['console'],
             'level': 'DEBUG',
@@ -214,7 +218,7 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
-        'django_auth_ldap': {
+        'catalog': {
             'handlers': ['console'],
             'level': 'DEBUG',
         },

@@ -22,14 +22,14 @@
       <div class="tool_area">
         <b>Catalog</b><br>
         <ul>
-          <li><a href="{% url 'catalog_experiments' 'eqsans'%}" title="See all experiments for this instrument">see experiments</a></li>
+          <li><a href="{% url 'catalog_experiments' instrument %}" title="See all experiments for this instrument">see experiments</a></li>
           {% spaceless %}
           {% if ipts_number and is_categorized %}
-          <li><a href="{% url 'catalog_runs' 'eqsans' ipts_number%}" title="See all runs for this experiment">see {{ ipts_number }} runs</a></li>
+          <li><a href="{% url 'catalog_runs' instrument ipts_number%}" title="See all runs for this experiment">see {{ ipts_number }} runs</a></li>
           {% endif %}
           {% for expt in expt_list %}
             {% if not expt.is_uncategorized and expt.name|length > 0 %}
-            <li><a href="{% url 'catalog_runs' 'eqsans' expt%}" title="See all runs for this experiment">see {{ expt }} runs</a></li>
+            <li><a href="{% url 'catalog_runs' instrument expt%}" title="See all runs for this experiment">see {{ expt }} runs</a></li>
             {% endif %}
           {% endfor %}
           {% endspaceless %}
@@ -38,7 +38,7 @@
       <div class="tool_area">
         <b>Reduction</b><br>
         <ul>
-          <li><a href="{% url 'reduction_reduction_home' 'eqsans' %}" title="Go to reduction home for this instrument">reduction home</a></li>
+          <li><a href="{% url 'reduction_reduction_home' instrument %}" title="Go to reduction home for this instrument">reduction home</a></li>
           <li><a href="{% url 'eqsans_new_configuration' %}" title="Start a new configuration to use with multiple reductions">new configuration</a></li>
           <li><a href="{% url 'eqsans_new_reduction' %}" title="Start a new single reduction">new reduction</a></li>
           {% if reduction_id %}

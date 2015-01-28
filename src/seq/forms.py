@@ -27,7 +27,7 @@ def _process_experiment(reduction_obj, expt_string):
         @param expt_string: string taken from the reduction form
     """
     # Find experiment
-    uncategorized_expt = Experiment.objects.get_uncategorized('eqsans')
+    uncategorized_expt = Experiment.objects.get_uncategorized('seq')
     expts = expt_string.split(',')
     for item in expts:
         # Experiments have unique names of no more than 24 characters
@@ -127,42 +127,16 @@ class ReductionOptions(forms.Form):
     expt_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     experiment = forms.CharField(required=False, initial='uncategorized')
     nickname = forms.CharField(required=False, initial='')
+    
     # General options
-    absolute_scale_factor = forms.FloatField(required=False, initial=1.0)
-    dark_current_run = forms.CharField(required=False, initial='')
-    sample_aperture_diameter = forms.FloatField(required=False, initial=10.0)
-    mask_file = forms.CharField(required=False, initial='')
     
-    # Beam center
-    beam_center_x = forms.FloatField(required=False, initial=96.0)
-    beam_center_y = forms.FloatField(required=False, initial=128.0)
-    fit_direct_beam = forms.BooleanField(required=False, initial=False,
-                                         help_text='Select to fit the beam center')
-    direct_beam_run = forms.CharField(required=False, initial='')
-    
-    # Sensitivity
-    perform_sensitivity = forms.BooleanField(required=False, initial=False,
-                                             label='Perform sensitivity correction',
-                                             help_text='Select to enable sensitivity correction')
-    sensitivity_file = forms.CharField(required=False, initial='')
-    sensitivity_min = forms.FloatField(required=False, initial=0.4)
-    sensitivity_max = forms.FloatField(required=False, initial=2.0)
     
     # Data
     data_file = forms.CharField(required=True)
-    sample_thickness = forms.FloatField(required=False, initial=1.0)
-    transmission_sample = forms.CharField(required=True)
-    transmission_empty = forms.CharField(required=False)
-    beam_radius = forms.FloatField(required=False, initial=3.0, widget=forms.HiddenInput)
-    fit_frames_together = forms.BooleanField(required=False, initial=False, widget=forms.HiddenInput)
-    theta_dependent_correction = forms.BooleanField(required=False, initial=True, widget=forms.HiddenInput)
+    
     
     # Background
-    subtract_background = forms.BooleanField(required=False, initial=False,
-                                             help_text='Select to enable background subtraction')
-    background_file = forms.CharField(required=False, initial='')
-    background_transmission_sample = forms.CharField(label='Transmission sample', required=False, initial='')
-    background_transmission_empty = forms.CharField(label='Transmission empty', required=False, initial='')
+    
     
     @classmethod
     def as_xml(cls, data):
@@ -171,106 +145,15 @@ class ReductionOptions(forms.Form):
             @param data: dictionary of reduction properties
         """
         xml  = "<Reduction>\n"
-        xml += "<instrument_name>EQSANS</instrument_name>\n"
+        xml += "<instrument_name>SEQ</instrument_name>\n"
         xml += "<timestamp>%s</timestamp>\n" % time.ctime()
         xml += "<Instrument>\n"
-        xml += "  <name>EQSANS</name>\n"
-        xml += "  <solid_angle_corr>True</solid_angle_corr>\n"
-        dark_corr = data['dark_current_run'] and str(len(data['dark_current_run'])>0)
-        xml += "  <dark_current_corr>%s</dark_current_corr>\n" % dark_corr
-        xml += "  <dark_current_data>%s</dark_current_data>\n" % data['dark_current_run']
+        xml += "  <name>SEQ</name>\n"
 
-        xml += "  <n_q_bins>100</n_q_bins>\n" # TODO
-        xml += "  <log_binning>False</log_binning>\n"  #TODO
-
-        xml += "  <normalization>2</normalization>\n" # 2 is monitor normalization
         xml += "  <UseDataDirectory>False</UseDataDirectory>\n"
         xml += "  <OutputDirectory></OutputDirectory>\n" # TODO
         xml += "</Instrument>\n"
-        
-        xml += "<AbsScale>\n"
-        xml += "  <scaling_factor>%s</scaling_factor>\n" % data['absolute_scale_factor']
-        xml += "  <calculate_scale>False</calculate_scale>\n"
-        xml += "</AbsScale>\n"
 
-        # TOF cutoff and correction
-        xml += "<TOFcorr>\n"
-        xml += "  <use_config_cutoff>True</use_config_cutoff>\n"
-        xml += "  <perform_flight_path_corr>True</perform_flight_path_corr>\n"
-        xml += "</TOFcorr>\n"
-        
-        # Mask
-        if 'mask_file' in data and len(data['mask_file'])>0:
-            xml += "<UseConfigMask>True</UseConfigMask>\n"
-            xml += "<Mask>\n"
-            xml += "  <DetectorIDs></DetectorIDs>\n"
-            xml += "  <mask_file>%s</mask_file>\n" % data['mask_file']
-            xml += "  <use_mask_file>True</use_mask_file>\n"
-            xml += "</Mask>\n"
-        
-        # Resolution
-        xml += "<ComputeResolution>False</ComputeResolution>\n" # TODO
-        xml += "<SampleApertureDiameter>%s</SampleApertureDiameter>\n" % data['sample_aperture_diameter']
-
-        # TOF correction
-        xml += "<PerformTOFCorrection>True</PerformTOFCorrection>\n"
-
-        xml += "<Sensitivity>\n"
-        xml += "  <sensitivity_corr>%s</sensitivity_corr>\n" % data['perform_sensitivity']
-        xml += "  <sensitivity_data>%s</sensitivity_data>\n" % data['sensitivity_file']
-        xml += "  <use_sample_dark>True</use_sample_dark>\n"
-        xml += "  <sensitivity_min>%s</sensitivity_min>\n" % data['sensitivity_min']
-        xml += "  <sensitivity_max>%s</sensitivity_max>\n" % data['sensitivity_max']
-        xml += "  <use_sample_beam_center>True</use_sample_beam_center>\n"
-        xml += "</Sensitivity>\n"
-
-        # Beam center
-        beam_radius = data['beam_radius']
-        if beam_radius is None:
-            beam_radius=cls.base_fields['beam_radius'].initial
-        xml += "<BeamFinder>\n"
-        if not data['fit_direct_beam']:
-            xml += "  <position>\n"
-            xml += "    <x>%s</x>\n" % data['beam_center_x']
-            xml += "    <y>%s</y>\n" % data['beam_center_y']
-            xml += "  </position>\n"
-        xml += "  <use_finder>%s</use_finder>\n" % data['fit_direct_beam']
-        xml += "  <beam_file>%s</beam_file>\n" % data['direct_beam_run']
-        xml += "  <use_direct_beam>True</use_direct_beam>\n"
-        xml += "  <beam_radius>%s</beam_radius>\n" % beam_radius
-        xml += "</BeamFinder>\n"
-        
-        # Sample transmission
-        xml += "<Transmission>\n"
-        xml += "  <calculate_trans>True</calculate_trans>\n"
-        xml += "  <theta_dependent>%s</theta_dependent>\n" % data['theta_dependent_correction']
-        xml += "  <DirectBeam>\n"
-        xml += "    <sample_file>%s</sample_file>\n" % data['transmission_sample']
-        xml += "    <direct_beam>%s</direct_beam>\n" % data['transmission_empty']
-        xml += "    <beam_radius>%g</beam_radius>\n" % beam_radius
-        xml += "  </DirectBeam>\n"
-        xml += "  <combine_transmission_frames>%s</combine_transmission_frames>\n" % data['fit_frames_together']
-        xml += "</Transmission>\n"
-        xml += "<SampleData>\n"
-        xml += "  <separate_jobs>False</separate_jobs>\n"
-        xml += "  <sample_thickness>%g</sample_thickness>\n" % data['sample_thickness']
-        xml += "  <data_file>%s</data_file>\n" % data['data_file']
-        xml += "</SampleData>\n"
-        
-        # Background
-        xml += "<Background>\n"
-        xml += "  <background_corr>%s</background_corr>\n" % data['subtract_background']
-        xml += "  <background_file>%s</background_file>\n" % data['background_file']
-        xml += "  <bck_trans_enabled>True</bck_trans_enabled>\n"
-        xml += "  <calculate_trans>True</calculate_trans>\n"
-        xml += "  <theta_dependent>%s</theta_dependent>\n" % data['theta_dependent_correction']
-        xml += "  <DirectBeam>\n"
-        xml += "    <sample_file>%s</sample_file>\n" % data['background_transmission_sample']
-        xml += "    <direct_beam>%s</direct_beam>\n" % data['background_transmission_empty']
-        xml += "    <beam_radius>%s</beam_radius>\n" % beam_radius
-        xml += "  </DirectBeam>\n"
-        xml += "  <combine_transmission_frames>%s</combine_transmission_frames>\n" % data['fit_frames_together']
-        xml += "</Background>\n"
         xml += "</Reduction>"
 
         return xml

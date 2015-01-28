@@ -43,7 +43,7 @@ def get_dummy_data(request, job_id):
         remote_job.save()
         
     breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('eqsans.views.reduction_home')
+    breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('reduction.views.reduction_home',args=['eqsans'])
     breadcrumbs += " &rsaquo; <a href='%s'>jobs</a>" % reverse('eqsans.views.reduction_jobs')
     breadcrumbs += " &rsaquo; dummy job"
 

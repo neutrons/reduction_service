@@ -56,7 +56,7 @@ def reduction_configuration_submit(request, config_id):
                 job.save()
                 job_set.jobs.add(job)
     return redirect(reverse('reduction.views.reduction_configuration',
-                                        args={'config_id' : config_id, 'instrument_name': 'eqsans' }))
+                                        kwargs={'config_id' : config_id, 'instrument_name': 'eqsans' }))
     
 @login_required
 def reduction_configuration_query(request, remote_set_id):
@@ -70,7 +70,7 @@ def reduction_configuration_query(request, remote_set_id):
     breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
     breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('eqsans.views.reduction_home')
     breadcrumbs += " &rsaquo; <a href='%s'>configuration %s</a>" % (reverse('reduction.views.reduction_configuration',
-                                        args={'config_id' : job_set.configuration.id, 'instrument_name': 'eqsans' }), job_set.configuration.id)
+                                        kwargs={'config_id' : job_set.configuration.id, 'instrument_name': 'eqsans' }), job_set.configuration.id)
     breadcrumbs += " &rsaquo; <a href='%s'>jobs</a>" % reverse('reductions.views.reduction_jobs',args=['eqsans'])
     breadcrumbs += " &rsaquo; job results"
     
@@ -154,7 +154,7 @@ def reduction_configuration_job_delete(request, config_id, reduction_id):
         reduction_config.reductions.remove(reduction_proc)
         reduction_proc.delete()
     return redirect(reverse('reduction.views.reduction_configuration',
-                                        args={'config_id' : config_id, 'instrument_name': 'eqsans' }))
+                                        kwargs={'config_id' : config_id, 'instrument_name': 'eqsans' }))
     
 @login_required
 def reduction_configuration_delete(request, config_id):

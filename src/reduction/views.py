@@ -38,7 +38,7 @@ def reduction_home(request, instrument_name):
                        'breadcrumbs': breadcrumbs,
                        'instrument' : instrument_name, }
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    return render_to_response(instrument_name + '/reduction_home.html',
+    return render_to_response('reduction/reduction_home.html',
                               template_values)
 
 
@@ -51,6 +51,10 @@ def experiment(request, ipts, instrument_name):
         
         #TODO create new reduction using a pre-existing one as a template
     """
+    
+    instrument_name_capitals = str.capitalize(str(instrument_name))
+    instrument_name_lowercase = str.lower(str(instrument_name))
+    
     # Get experiment object
     uncategorized = Experiment.objects.get_uncategorized(instrument_name)
     try:
@@ -113,21 +117,24 @@ def experiment(request, ipts, instrument_name):
         configurations.append(data_dict)
     
     breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('eqsans.views.reduction_home')
+    breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % ( reverse('reduction.views.reduction_home', args=[instrument_name_lowercase]),
+                                                                     instrument_name_lowercase )
+    
     breadcrumbs += " &rsaquo; %s" % ipts.lower()
     template_values = {'reductions': reductions,
                        'configurations': configurations,
-                       'title': 'EQSANS %s' % ipts,
+                       'title': '%s %s' % (instrument_name_capitals, ipts),
                        'breadcrumbs': breadcrumbs,
                        'ipts_number': ipts,
-                       'back_url': reverse('eqsans.views.experiment', args=[ipts]),
+                       'back_url': reverse('reduction.views.experiment', kwargs={'ipts' : ipts, 'instrument_name': instrument_name_lowercase }),
                        'icat_info': icat_ipts,
                        'form': reduction_start_form,
-                       'is_categorized': not IS_UNCATEGORIZED}
+                       'is_categorized': not IS_UNCATEGORIZED,
+                       'instrument' : instrument_name_lowercase, }
     if 'icat_error' in icat_ipts:
         template_values['user_alert'] = [icat_ipts['icat_error']]
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    return render_to_response('eqsans/experiment.html',
+    return render_to_response('%s/experiment.html'%instrument_name_lowercase,
                               template_values)
     
 @login_required
@@ -303,7 +310,7 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
                 form.to_db(request.user, None, config_id)
             if config_id is not None:
                 return redirect(reverse('reduction.views.reduction_configuration',
-                                        args={'config_id' : config_id, 'instrument_name': instrument_name }))
+                                        kwargs={'config_id' : config_id, 'instrument_name': instrument_name }))
         else:
             # There's a proble with the data, the validated form 
             # will automatically display what the problem is to the user
@@ -337,7 +344,8 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
             job_list = RemoteJobSet.objects.filter(configuration=reduction_config)
 
     breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('eqsans.views.reduction_home')
+    breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % ( reverse('reduction.views.reduction_home', args=[instrument_name_lowercase]),
+                                                                     instrument_name_lowercase )
     if config_id is not None:
         breadcrumbs += " &rsaquo; configuration %s" % config_id
     else:

@@ -85,8 +85,9 @@ def authenticate(request):
             request.session['fermi']=sessionid
             request.session['fermi_uid']=request.POST['username']
         return r.status, reason
-    except:
+    except Exception, e:
         logging.error("Could not authenticate with Fermi: %s" % sys.exc_value)
+        logging.exception(str(e))
     return 500, reason
 
 def transaction(request, start=False):

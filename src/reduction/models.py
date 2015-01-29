@@ -47,7 +47,7 @@ class ExperimentManager(models.Manager):
         return experiments
 
     def get_uncategorized(self, instrument):
-        expt_list = super(ExperimentManager, self).get_query_set().filter(name=UNCATEGORIZED)
+        expt_list = super(ExperimentManager, self).get_queryset().filter(name=UNCATEGORIZED)
         if len(expt_list)>0:
             expt = expt_list[0]
         else:

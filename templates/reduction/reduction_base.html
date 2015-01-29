@@ -42,9 +42,9 @@
           <li><a href="{% url 'reduction_new_configuration' instrument %}" title="Start a new configuration to use with multiple reductions">new configuration</a></li>
           <li><a href="{% url 'reduction_new_reduction' instrument %}" title="Start a new single reduction">new reduction</a></li>
           {% if reduction_id %}
-          <li><a href="{% url 'reduction_reduction_script' reduction_id instrument%}" title="See reduction script">see script</a></li>
-          <li><a href="{% url 'reduction_py_reduction_script' reduction_id instrument%}" title="Download python script">download python</a></li>
-          <li><a href="{% url 'reduction_xml_reduction_script' reduction_id instrument%}" title="Download Mantid xml file">download xml</a></li>
+          <li><a href="{% url 'reduction_reduction_script' instrument reduction_id%}" title="See reduction script">see script</a></li>
+          <li><a href="{% url 'reduction_py_reduction_script' instrument reduction_id%}" title="Download python script">download python</a></li>
+          <li><a href="{% url 'reduction_xml_reduction_script' instrument reduction_id%}" title="Download Mantid xml file">download xml</a></li>
           {% endif %}
         </ul>
       </div>
@@ -53,18 +53,18 @@
         <ul>
           <li><a href="{% url 'reduction_reduction_jobs' instrument%}" title="See remote jobs">see all jobs</a></li>
           {% if config_id %}
-          <li><a href="{% url 'reduction_configuration_submit' config_id instrument %}" title="Submit jobs for this configuration">submit jobs</a></li>
+          <li><a href="{% url 'reduction_configuration_submit' instrument config_id %}" title="Submit jobs for this configuration">submit jobs</a></li>
           {% if existing_job_sets and existing_job_sets|length > 0 %}
           {% for job in existing_job_sets %}
-          <li><a href="{% url 'reduction_configuration_query' job.id instrument%}" title="See job details">job set {{ job.id }}</a></li>
+          <li><a href="{% url 'reduction_configuration_query' instrument job.id%}" title="See job details">job set {{ job.id }}</a></li>
           {% endfor %}
           {% endif %}
           {% endif %}
           {% if reduction_id %}
-          <li><a href="{% url 'reduction_submit_job' reduction_id instrument%}" title="Submit this reduction job">submit this job</a></li>
+          <li><a href="{% url 'reduction_submit_job' instrument reduction_id%}" title="Submit this reduction job">submit this job</a></li>
           {% if existing_jobs and existing_jobs|length > 0 %}
           {% for job in existing_jobs %}
-          <li><a href="{% url 'reduction_job_details' job.remote_id instrument %}" title="See job details">job {{ job.remote_id }}</a></li>
+          <li><a href="{% url 'reduction_job_details' instrument job.remote_id %}" title="See job details">job {{ job.remote_id }}</a></li>
           {% endfor %}
           {% endif %}
           {% endif %}

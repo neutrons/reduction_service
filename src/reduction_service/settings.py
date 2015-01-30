@@ -138,12 +138,10 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'eqsans',
     'users',
     'remote',
     'catalog',
     'plotting',
-    'seq',
     'reduction',
 )
 if DEBUG_TOOLBAR:
@@ -206,14 +204,6 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
-        'eqsans': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        },
-        'seq': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        },
         'remote': {
             'handlers': ['console'],
             'level': 'DEBUG',
@@ -222,7 +212,19 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
-
+        'reduction': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'reduction.eqsans': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'reduction.seq': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        
     }
 }
 

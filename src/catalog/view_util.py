@@ -10,6 +10,7 @@
 from django.conf import settings
 import logging
 import sys
+import inspect
 
 logger = logging.getLogger('catalog')
 
@@ -25,45 +26,77 @@ def fill_template_values(request, **template_args):
         template_args['remote_url'] = get_remote_jobs_url(instrument)
     return template_args
 
+def _get_function_from_instrument_name(instrument_name,function_name):
+    """
+    Gets a function call object from an instrument name.
+    Functions are available in reduction.<instrument name>.__init__
+    """
+    instrument = instrument_name.lower()
+    module_str = "reduction." + instrument
+    module = __import__ (module_str, fromlist = ["reduction"])
+    try:
+        
+        func_to_call = getattr(module, function_name)
+        return func_to_call
+    except Exception as e:
+        logger.exception(e)
+        logger.error('Error getting function <%s> from module <%s>: %s' %(function_name, module_str, sys.exc_value) )
+        return None
+
 def get_new_reduction_url(instrument, run=None, ipts=None):
     """
         Return link to new reduction page if available
     """
-    url = None
-    if instrument.lower() in settings.INSTALLED_APPS:
-        try:
-            instrument_app = __import__(instrument.lower())
-            if hasattr(instrument_app, 'get_new_reduction_url'):
-                url = instrument_app.get_new_reduction_url(run, ipts,instrument_name=instrument.lower())
-        except Exception as e:
-            logger.exception(e)
-            logger.error('Error getting URL: %s' % sys.exc_value)
-    return url
+    if instrument.lower() in settings.REDUCTION_AVAILABLE:
+        this_function_name = inspect.stack()[0][3]
+        func = _get_function_from_instrument_name(instrument, this_function_name)
+        if func is not None:
+            return func(run, ipts,instrument_name=instrument.lower())
+        else:
+            logger.debug("%s has no function %s."%(instrument, this_function_name))
+            return None
+    else:
+        logger.debug("Reduction not available for %s."%(instrument))
+
 
 def get_reduction_url(instrument):
-    url = None
-    if instrument.lower() in settings.INSTALLED_APPS:
-        try:
-            instrument_app = __import__(instrument.lower())
-            if hasattr(instrument_app, 'get_reduction_url'):
-                url = instrument_app.get_reduction_url(instrument_name=instrument.lower())
-        except Exception as e:
-            logger.exception(e)
-            logger.error('Error getting URL: %s' % sys.exc_value)
-    return url
+    if instrument.lower() in settings.REDUCTION_AVAILABLE:
+        this_function_name = inspect.stack()[0][3]
+        func = _get_function_from_instrument_name(instrument, this_function_name)
+        if func is not None:
+            return func(instrument_name=instrument.lower())
+        else:
+            logger.debug("%s has no function %s."%(instrument, this_function_name))
+            return None
+    else:
+        logger.debug("Reduction not available for %s."%(instrument))
+
 
 def get_remote_jobs_url(instrument):
-    url = None
-    if instrument.lower() in settings.INSTALLED_APPS:
-        try:
-            instrument_app = __import__(instrument.lower())
-            if hasattr(instrument_app, 'get_remote_jobs_url'):
-                url = instrument_app.get_remote_jobs_url(instrument_name=instrument.lower())
-        except Exception as e:
-            logger.exception(e)
-            logger.error('Error getting URL: %s' % sys.exc_value)
-    return url
 
+    if instrument.lower() in settings.REDUCTION_AVAILABLE:
+        this_function_name = inspect.stack()[0][3]
+        func = _get_function_from_instrument_name(instrument, this_function_name)
+        if func is not None:
+            return func(instrument_name=instrument.lower())
+        else:
+            logger.debug("%s has no function %s."%(instrument, this_function_name))
+            return None
+    else:
+        logger.debug("Reduction not available for %s."%(instrument))
+
+
+def get_new_batch_url(instrument, run=None, ipts=None):
+    if instrument.lower() in settings.REDUCTION_AVAILABLE:
+        this_function_name = inspect.stack()[0][3]
+        func = _get_function_from_instrument_name(instrument, this_function_name)
+        if func is not None:
+            return func(run, ipts)
+        else:
+            logger.debug("%s has no function %s."%(instrument, this_function_name))
+            return None
+    else:
+        logger.debug("Reduction not available for %s."%(instrument))
 
 def get_webmon_url(instrument, run=None, ipts=None):
     """
@@ -73,16 +106,3 @@ def get_webmon_url(instrument, run=None, ipts=None):
         return "%s%s/%s/" % (settings.WEBMON_URL, instrument.lower(), run)
     return None
 
-
-
-def get_new_batch_url(instrument, run=None, ipts=None):
-    url = None
-    if instrument.lower() in settings.INSTALLED_APPS:
-        try:
-            instrument_app = __import__(instrument.lower())
-            if hasattr(instrument_app, 'get_new_batch_url'):
-                url = instrument_app.get_new_batch_url(run, ipts)
-        except Exception as e:
-            logger.exception(e)
-            logger.error('Error getting URL: %s' % sys.exc_value)
-    return url

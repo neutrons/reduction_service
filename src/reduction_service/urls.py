@@ -5,8 +5,6 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^$', 'reduction_service.views.home', name='home'),
-    url(r'^eqsans/', include('eqsans.urls')),
-    url(r'^seq/', include('seq.urls')),
     url(r'^reduction/', include('reduction.urls')), # general reductions
     url(r'^remote/', include('remote.urls')),
     url(r'^catalog/', include('catalog.urls')),

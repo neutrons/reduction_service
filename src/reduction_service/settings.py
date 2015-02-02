@@ -147,6 +147,10 @@ INSTALLED_APPS = (
 if DEBUG_TOOLBAR:
     INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar',)
 
+
+## Instruments with "Reduce" link must be specified here
+REDUCTION_AVAILABLE = ('eqsans','seq',)
+
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
 AUTHENTICATION_BACKENDS = (

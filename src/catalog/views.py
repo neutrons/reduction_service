@@ -17,6 +17,9 @@ import remote.view_util
 import users.view_util
 import reduction_service.view_util
 import json
+import logging
+
+logger = logging.getLogger('catalog')
 
 @login_required
 def instrument_list(request):

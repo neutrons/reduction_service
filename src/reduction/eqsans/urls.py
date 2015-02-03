@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 from django.contrib import admin
-admin.autodiscover()
+#admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^query/(?P<job_id>[\w\-\.]+)/$', 'eqsans.views.job_details', name='eqsans_job_details'),

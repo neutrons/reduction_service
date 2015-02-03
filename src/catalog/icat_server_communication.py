@@ -8,6 +8,8 @@ import datetime
 from django.conf import settings
 import catalog.view_util
 
+logger = logging.getLogger('catalog.icat')
+
 if hasattr(settings, 'ICAT_DOMAIN'):
     ICAT_DOMAIN = settings.ICAT_DOMAIN
     ICAT_PORT = settings.ICAT_PORT
@@ -87,6 +89,7 @@ def get_instruments():
             if not instr.upper().endswith('A'):
                 if not instr.upper() in ['NSE', 'FNPB']:
                     instruments.append(instr)
+        logger.debug("List of instruments: %s",instruments)
     except:
         logging.error("Could not get list of instruments from ICAT: %s" % sys.exc_value)
     return instruments

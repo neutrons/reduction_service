@@ -9,8 +9,8 @@ import os
 import django
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
-DEBUG_TOOLBAR = False
+TEMPLATE_DEBUG = True
+DEBUG_TOOLBAR = True
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -143,6 +143,8 @@ INSTALLED_APPS = (
     'catalog',
     'plotting',
     'reduction',
+    'reduction.seq',
+    'reduction.eqsans',
 )
 if DEBUG_TOOLBAR:
     INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar',)
@@ -197,7 +199,7 @@ LOGGING = {
         'django': {
             'handlers':['console'],
             'propagate': True,
-            'level':'WARN',
+            'level':'DEBUG',
         },
         'django.db.backends': {
             'handlers': ['console'],
@@ -213,6 +215,10 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'catalog': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'catalog.icat': {
             'handlers': ['console'],
             'level': 'DEBUG',
         },

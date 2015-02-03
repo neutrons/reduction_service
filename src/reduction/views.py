@@ -15,12 +15,17 @@ from reduction.models import ReductionProcess, RemoteJob, ReductionConfiguration
 from catalog.icat_server_communication import get_ipts_info
 import copy
 import importlib
+import logging
+
+logger = logging.getLogger('reduction')
 
 def _import_forms_from_app(instrument_name_lowercase):
     """
-    @return the forms module from an instrument app 
+    Note that all forms must be in reduction.<instrument name>.forms
+    @return the forms module from an instrument name 
     """
-    instrument_forms = importlib.import_module(instrument_name_lowercase + ".forms")
+    module_str = "reduction.%s.forms"%instrument_name_lowercase
+    instrument_forms = importlib.import_module(module_str)
     return instrument_forms
 
 @login_required
@@ -97,10 +102,11 @@ def experiment(request, ipts, instrument_name):
         data_dict['config'] = r.get_config()
         latest_job = reduction.view_util.get_latest_job(request, r)
         if latest_job is not None:
-            data_dict['completed_job'] = reverse('eqsans.views.job_details', args=[latest_job.remote_id])
+            data_dict['completed_job'] = reverse('%s.views.job_details'%instrument_name,
+                                                  args=[latest_job.remote_id])
         try:
             run_id = int(data_dict['data_file'])
-            data_dict['webmon_url'] = "https://monitor.sns.gov/report/eqsans/%s/" % run_id
+            data_dict['webmon_url'] = "https://monitor.sns.gov/report/%s/%s/" %(instrument_name,run_id)
         except:
             pass
         reductions.append(data_dict)
@@ -191,7 +197,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
             if 'expt_name' in request.GET:
                 initial_values['experiment'] = request.GET['expt_name']
         options_form = instrument_forms.ReductionOptions(initial=initial_values)
-
+    
     breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
     breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % (reverse('reduction.views.reduction_home', args=[instrument_name_lowercase]),
                                                                 instrument_name_lowercase)
@@ -232,6 +238,7 @@ def reduction_jobs(request, instrument_name):
         
         @param request: request object
     """
+
     instrument_name = str(instrument_name).lower()
     
     jobs = RemoteJob.objects.filter(transaction__owner=request.user)
@@ -565,17 +572,17 @@ def submit_job(request, reduction_id, instrument_name):
 @login_required
 def reduction_configuration_query(request, remote_set_id, instrument_name):
     instrument_name_lowercase = str.lower(str(instrument_name))
-    redirect(reverse('%s.views.reduction_configuration_query'%instrument_name_lowercase,
+    redirect(reverse('reduction.%s.views.reduction_configuration_query'%instrument_name_lowercase,
                                   kwargs={'remote_set_id' : remote_set_id,}))
     
 @login_required
 def reduction_configuration_iq(request, remote_set_id, instrument_name):
     instrument_name_lowercase = str.lower(str(instrument_name))
-    redirect(reverse('%s.views.reduction_configuration_iq'%instrument_name_lowercase,
+    redirect(reverse('reduction.%s.views.reduction_configuration_iq'%instrument_name_lowercase,
                                   kwargs={'remote_set_id' : remote_set_id,}))
 
 @login_required
 def job_details(request, job_id, instrument_name):
     instrument_name_lowercase = str.lower(str(instrument_name))
-    redirect(reverse('%s.views.job_details'%instrument_name_lowercase, kwargs={'job_id' : job_id}))
+    redirect(reverse('reduction.%s.views.job_details'%instrument_name_lowercase, kwargs={'job_id' : job_id}))
     

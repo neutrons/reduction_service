@@ -116,3 +116,17 @@ Open the following URL in a browser:
 http://localhost/reduction_service/
 ```
 
+# For developers
+
+## Cache
+
+If something goes realy wrong (e.g. moving things around), cache might need to be clean. Type:
+
+```bash
+$ python manage.py shell
+```
+
+```python
+from django.core.cache import cache
+cache.clear()
+```

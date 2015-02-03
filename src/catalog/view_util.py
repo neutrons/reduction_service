@@ -32,8 +32,8 @@ def _get_function_from_instrument_name(instrument_name,function_name):
     Functions are available in reduction.<instrument name>.__init__
     """
     instrument = instrument_name.lower()
-    module_str = "reduction." + instrument
-    module = __import__ (module_str, fromlist = ["reduction"])
+    module_str = instrument
+    module = __import__ (module_str)
     try:
         
         func_to_call = getattr(module, function_name)

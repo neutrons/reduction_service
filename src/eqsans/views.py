@@ -22,12 +22,9 @@ from django.forms.formsets import formset_factory
 import copy
 import zipfile
 import StringIO
+import logging
 
-
-
-
-
-
+logger = logging.getLogger('eqsans')
     
 @login_required
 def reduction_configuration_query(request, remote_set_id):
@@ -108,6 +105,9 @@ def reduction_configuration_iq(request, remote_set_id):
     # Create response with correct MIME-type
     resp = HttpResponse(str_io.getvalue(), mimetype = "application/x-zip-compressed")
     resp['Content-Disposition'] = 'attachment; filename=%s' % 'iq_transaction_%s.zip' % job_set.transaction.trans_id
+    resp["Content-Description"] = "File Transfer";
+    resp["Content-type"] = "application/octet-stream";
+    resp["Content-Transfer-Encoding"] = "binary";
     str_io.close()
     return resp
 

@@ -11,7 +11,8 @@ import tempfile
 import numpy
 import sys
 import logging
-logger = logging.getLogger('eqsans.view_util')
+
+logger = logging.getLogger('eqsans')
 
 def process_iq_output(request, remote_job, trans_id, filename):
     """

@@ -13,6 +13,10 @@ from django.conf import settings
 import reduction_service.view_util
 import remote.view_util
 
+import logging
+
+logger = logging.getLogger('remote')
+
 @login_required
 def query_remote_jobs(request):
     """
@@ -78,6 +82,9 @@ def download_file(request, trans_id, filename, delete=False):
         remote.view_util.stop_transaction(request, trans_id)
     response = HttpResponse(file_content)
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+    response["Content-Description"] = "File Transfer";
+    response["Content-type"] = "application/octet-stream";
+    response["Content-Transfer-Encoding"] = "binary";
     return response
  
 @login_required

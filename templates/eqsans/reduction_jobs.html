@@ -43,7 +43,7 @@ The following is a list of your results not associated with a configuration:
   {% for job in status_data|dictsortreversed:"id" %}
     <tr class="{% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
       <td><a href="{% url 'eqsans_job_details' job.id %}" title="Click to see the results this reduction job">{{ job.id }}</a></td>
-      <td><a href="{% url 'eqsans_reduction' job.reduction_id %}" title="Click to see the latest version of this reduction">{{ job.name }}</a></td>
+      <td><a href="{% url 'reduction_reduction' instrument job.reduction_id %}" title="Click to see the latest version of this reduction">{{ job.name }}</a></td>
       <td>{{ job.start_date|date:"n/d H:i" }}</td><td>{{ job.data }}</td>
       <td>{{ job.experiments }}</td>
       <td title='Click to remove this reduction job'><a href="{% url 'remote_stop_transaction' job.trans_id %}?back_url={{ back_url }}"><span class="ui-icon ui-icon-trash"></span></a></td>

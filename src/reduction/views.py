@@ -24,7 +24,7 @@ def _import_forms_from_app(instrument_name_lowercase):
     Note that all forms must be in reduction.<instrument name>.forms
     @return the forms module from an instrument name 
     """
-    module_str = "reduction.%s.forms"%instrument_name_lowercase
+    module_str = "%s.forms"%instrument_name_lowercase
     instrument_forms = importlib.import_module(module_str)
     return instrument_forms
 
@@ -502,6 +502,7 @@ def py_reduction_script(request, reduction_id, instrument_name):
     response = HttpResponse(instrument_forms.ReductionOptions.as_mantid_script(data))
     response['Content-Disposition'] = 'attachment; filename="%s_reduction.py"' % instrument_name_lowercase
     response['Content-Type'] = "text/x-python;charset=UTF-8"
+    response["Content-Description"] = "File Transfer";
     return response
 
 @login_required
@@ -519,6 +520,7 @@ def xml_reduction_script(request, reduction_id, instrument_name):
     response = HttpResponse(instrument_forms.ReductionOptions.as_xml(data))
     response['Content-Disposition'] = 'attachment; filename="%s_reduction.xml"' % instrument_name_lowercase
     response['Content-Type'] = "text/xml;charset=UTF-8"
+    response["Content-Description"] = "File Transfer";
     return response
 
 @login_required

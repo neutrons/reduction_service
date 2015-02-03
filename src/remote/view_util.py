@@ -15,6 +15,8 @@ import sys
 from models import Transaction
 from django.conf import settings
 
+logger = logging.getLogger('remote')
+
 class FermiLoginForm(forms.Form):
     """
         Simple form to submit authentication

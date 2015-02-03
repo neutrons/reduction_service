@@ -1,7 +1,6 @@
 from django.conf.urls import patterns, url, include
 from django.contrib import admin
 admin.autodiscover()
-import reduction.eqsans
 
 urlpatterns = patterns('',
     url(r'^(?P<instrument_name>\w+)/$', 'reduction.views.reduction_home', name='reduction_reduction_home'),
@@ -31,5 +30,5 @@ urlpatterns = patterns('',
     
     # Those are instrument specific. If the regular expression is met above this is never called!
     #url(r'^eqsans/', include('reduction.eqsans.urls')),
-    url(r'^eqsans/', include('reduction.eqsans.urls') ),
+    url(r'^eqsans/', include('eqsans.urls') ),
 )

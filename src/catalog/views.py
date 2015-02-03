@@ -100,7 +100,8 @@ def run_info(request, instrument, run_number):
     """ 
     info_dict = get_run_info(instrument, run_number)
     response = HttpResponse(json.dumps(info_dict), content_type="application/json")
-    response['Connection'] = 'close'
+    # Ricardo : commenting this to avoid : AssertionError: Hop-by-hop headers not allowed
+    # response['Connection'] = 'close'
     return response
 
 @login_required

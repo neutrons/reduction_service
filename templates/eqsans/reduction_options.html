@@ -68,11 +68,14 @@
     }
 
     function get_icat_info(run_number, element_id) {
-        $.ajax({ url: "{{ icat_url }}"+run_number+"/", 
-                 success: function(data) {
-                        $('#'+element_id).replaceWith("<span class='subtitle' id='"+element_id+"'>"+data.title+"</span>");
-                      }
-                 , dataType: "json", timeout: 30000, cache: true});
+  		// run_number sometimes is None, adding this to avoid unecessary HTTP calls
+    	if (run_number && run_number != "None" ) {
+	        $.ajax({ url: "{{ icat_url }}"+run_number+"/", 
+	                 success: function(data) {
+	                        $('#'+element_id).replaceWith("<span class='subtitle' id='"+element_id+"'>"+data.title+"</span>");
+	                      }
+	                 , dataType: "json", timeout: 30000, cache: true});
+        }
     }
     
     $(function() {

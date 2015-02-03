@@ -15,6 +15,7 @@ from reduction.models import ReductionProcess, RemoteJob, ReductionConfiguration
 from catalog.icat_server_communication import get_ipts_info
 import copy
 import importlib
+import pprint as pp
 import logging
 
 logger = logging.getLogger('reduction')
@@ -58,6 +59,8 @@ def experiment(request, ipts, instrument_name):
         
         #TODO create new reduction using a pre-existing one as a template
     """
+    
+    logger.debug("Experiment: ipts = %s, instrument=%s"%(ipts,instrument_name))
     
     instrument_name_capitals = str.capitalize(str(instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
@@ -203,7 +206,9 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
                                                                 instrument_name_lowercase)
 
     if config_obj is not None:
-        breadcrumbs += " &rsaquo; <a href='%s'>configuration %s</a>" % (reverse('%s.views.reduction_configuration' % instrument_name_lowercase, args=[config_obj.id]), config_obj.id)
+        breadcrumbs += " &rsaquo; <a href='%s'>configuration %s</a>" % (reverse('reduction.views.reduction_configuration',  
+                                                                                kwargs={'config_id' : config_obj.id, 'instrument_name' : instrument_name})
+                                                                        , config_obj.id)
     if reduction_id is not None:
         breadcrumbs += " &rsaquo; reduction %s" % reduction_id
     else:
@@ -226,6 +231,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
             template_values['existing_jobs'] = existing_jobs.order_by('id')
         template_values['expt_list'] = reduction_proc.experiments.all()
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
+    #logger.debug(pp.pformat(template_values))
     return render_to_response('%s/reduction_options.html' % instrument_name_lowercase,
                               template_values)
 

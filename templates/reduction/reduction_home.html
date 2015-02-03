@@ -15,7 +15,7 @@
   <tbody>
   {% for e in experiments %}
     <tr class="{% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
-        <td><a href="{% url 'reduction_experiment' instrument e.name %}" >{{ e.name }}</a></td>
+        <td><a href="{% url 'reduction_experiment' ipts=e.name instrument_name=instrument %}" >{{ e.name }}</a></td>
         <td><div class='subtitle_black'>{{ e.created_on }}</div></td>
     </tr>
   {% endfor %}

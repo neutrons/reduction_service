@@ -18,6 +18,7 @@ import users.view_util
 import reduction_service.view_util
 import json
 import logging
+import time
 
 logger = logging.getLogger('catalog')
 
@@ -98,10 +99,14 @@ def run_info(request, instrument, run_number):
          @param instrument: instrument name
          @param run_number: run number
     """ 
+    logger.debug("Getting ICAT info for %s run %s..."%(instrument, run_number))
+    t = time.time() 
     info_dict = get_run_info(instrument, run_number)
     response = HttpResponse(json.dumps(info_dict), content_type="application/json")
     # Ricardo : commenting this to avoid : AssertionError: Hop-by-hop headers not allowed
     # response['Connection'] = 'close'
+    
+    logger.debug("Getting ICAT info for %s run %s: Done! Time: %f (s)."%(instrument, run_number,time.time() - t))
     return response
 
 @login_required

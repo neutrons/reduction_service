@@ -10,7 +10,7 @@ import django
 
 DEBUG = True
 TEMPLATE_DEBUG = True
-DEBUG_TOOLBAR = True
+DEBUG_TOOLBAR = False
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -183,6 +183,9 @@ LOGGING = {
             'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
             'datefmt' : "%d/%b/%Y %H:%M:%S"
         },
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
     },
     'handlers': {
         'null': {
@@ -217,6 +220,7 @@ LOGGING = {
         'catalog': {
             'handlers': ['console'],
             'level': 'DEBUG',
+            'formatter': 'standard',
         },
         'catalog.icat': {
             'handlers': ['console'],

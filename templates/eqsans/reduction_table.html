@@ -4,7 +4,7 @@
     function get_icat_info(run_number, element_id) {
         $.ajax({ url: "{{ icat_url }}"+run_number+"/", 
                  success: function(data) { $('#'+element_id).attr('title', data.title); },
-                 dataType: "json", timeout: 1000, cache: true });
+                 dataType: "json", timeout: 10000, cache: true });
     }
     $(function() {
       $("#submit_button").button();
@@ -69,7 +69,7 @@
               <td title='Click to remove this reduction job'><a href='{% url 'reduction_configuration_job_delete' 'eqsans' config_id form.reduction_id.value %}'><span class="ui-icon ui-icon-trash"></span></a></td>
               <td title='Click to view this reduction job in a new window'><a href='{% url 'reduction_reduction' 'eqsans' form.reduction_id.value %}' target='_blank'><span class="ui-icon ui-icon-pencil"></span></a></td>
               {% elif config_id %}
-              <td title='Click to remove this reduction job'><a href='{% url 'eqsans_configuration' config_id %}'><span class="ui-icon ui-icon-trash"></span></a></td>
+              <td title='Click to remove this reduction job'><a href='{% url 'reduction_configuration' instrument config_id %}'><span class="ui-icon ui-icon-trash"></span></a></td>
               {% endif %}
               {% endspaceless %}
               {% if form.reduction_id.value %}<td title='Submit this job by itself, without submitting all the other jobs'><a href="{% url 'reduction_submit_job' 'eqsans' form.reduction_id.value %}"><span class="ui-icon ui-icon-refresh"></span></a></td>{% endif %}

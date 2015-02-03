@@ -67,6 +67,7 @@ def get_ipts_info(instrument, ipts):
                 if n.nodeName=='createTime' and n.hasChildNodes():
                     timestr = get_text_from_xml(n.childNodes)
                     run_info['createTime'] = decode_time(timestr)
+        conn.close()
     except Exception as e:
         logger.exception(e)
         run_info['icat_error'] = 'Could not communicate with catalog server'
@@ -90,6 +91,7 @@ def get_instruments():
             if not instr.upper().endswith('A'):
                 if not instr.upper() in ['NSE', 'FNPB']:
                     instruments.append(instr)
+        conn.close()
         logger.debug("List of instruments: %s",instruments)
     except Exception as e:
         logger.exception(e)
@@ -129,6 +131,7 @@ def get_experiments(instrument):
                         expt[n.nodeName] = decode_time(timestr)
                         
             experiments.append(expt)
+        conn.close()
         logging.debug("ICAT %s: %s" % (url, str(time.time()-t0)))
     except Exception as e:
         logger.exception(e)
@@ -181,6 +184,7 @@ def get_ipts_runs(instrument, ipts):
                         text_value = get_text_from_xml(n.childNodes)
                         run_info[n.nodeName] = decode_time(text_value)
             run_data.append(run_info)
+        conn.close()
     except Exception as e:
         logger.exception(e)
         logging.error("Communication with ICAT server failed: %s" % sys.exc_value)
@@ -193,7 +197,6 @@ def get_run_info(instrument, run_number):
         @param run_number: run_number
     """
     
-    logger.debug("Getting run info for %s and run = %s"%(instrument,str(run_number)))
     run_info = {}
     try:
         conn = httplib.HTTPConnection(ICAT_DOMAIN,
@@ -208,6 +211,7 @@ def get_run_info(instrument, run_number):
                 for tag in ['title', 'duration', 'protonCharge', 'totalCounts']:
                     if n.nodeName==tag and n.hasChildNodes():
                         run_info[tag] = urllib.unquote(get_text_from_xml(n.childNodes))
+        conn.close()
     except Exception as e:
         logger.exception(e)
         run_info['icat_error'] = 'Could not communicate with catalog server'

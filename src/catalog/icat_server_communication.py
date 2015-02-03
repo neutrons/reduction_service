@@ -6,7 +6,7 @@ import sys
 import time
 import datetime
 from django.conf import settings
-import catalog.view_util
+from catalog.view_util import get_webmon_url, get_new_reduction_url, get_new_batch_url
 
 logger = logging.getLogger('catalog.icat')
 
@@ -67,7 +67,8 @@ def get_ipts_info(instrument, ipts):
                 if n.nodeName=='createTime' and n.hasChildNodes():
                     timestr = get_text_from_xml(n.childNodes)
                     run_info['createTime'] = decode_time(timestr)
-    except:
+    except Exception as e:
+        logger.exception(e)
         run_info['icat_error'] = 'Could not communicate with catalog server'
         logging.error("Communication with ICAT server failed: %s" % sys.exc_value)
     return run_info
@@ -90,7 +91,8 @@ def get_instruments():
                 if not instr.upper() in ['NSE', 'FNPB']:
                     instruments.append(instr)
         logger.debug("List of instruments: %s",instruments)
-    except:
+    except Exception as e:
+        logger.exception(e)
         logging.error("Could not get list of instruments from ICAT: %s" % sys.exc_value)
     return instruments
     
@@ -128,7 +130,8 @@ def get_experiments(instrument):
                         
             experiments.append(expt)
         logging.debug("ICAT %s: %s" % (url, str(time.time()-t0)))
-    except:
+    except Exception as e:
+        logger.exception(e)
         logging.error("Could not get list of experiments from ICAT: %s" % sys.exc_value)
     return experiments
     
@@ -161,9 +164,9 @@ def get_ipts_runs(instrument, ipts):
         dom = xml.dom.minidom.parseString(r.read())
         for r in dom.getElementsByTagName('run'):
             run_info = {'id': r.attributes['id'].value,
-                        'webmon_url': catalog.view_util.get_webmon_url(instrument, r.attributes['id'].value, ipts),
-                        'reduce_url': catalog.view_util.get_new_reduction_url(instrument, r.attributes['id'].value, ipts),
-                        'batch_url': catalog.view_util.get_new_batch_url(instrument, r.attributes['id'].value, ipts)}
+                        'webmon_url': get_webmon_url(instrument, r.attributes['id'].value, ipts),
+                        'reduce_url': get_new_reduction_url(instrument, r.attributes['id'].value, ipts),
+                        'batch_url':  get_new_batch_url(instrument, r.attributes['id'].value, ipts)}
             for n in r.childNodes:
                 if n.hasChildNodes():
                     if n.nodeName in ['title']:
@@ -178,7 +181,8 @@ def get_ipts_runs(instrument, ipts):
                         text_value = get_text_from_xml(n.childNodes)
                         run_info[n.nodeName] = decode_time(text_value)
             run_data.append(run_info)
-    except:
+    except Exception as e:
+        logger.exception(e)
         logging.error("Communication with ICAT server failed: %s" % sys.exc_value)
     return run_data
 
@@ -188,10 +192,12 @@ def get_run_info(instrument, run_number):
         @param instrument: instrument name
         @param run_number: run_number
     """
+    
+    logger.debug("Getting run info for %s and run = %s"%(instrument,str(run_number)))
     run_info = {}
     try:
         conn = httplib.HTTPConnection(ICAT_DOMAIN,
-                                      ICAT_PORT, timeout=1.0)
+                                      ICAT_PORT, timeout=3.0)
         url = '/icat-rest-ws/dataset/SNS/%s/%s' % (instrument.upper(), run_number)
         conn.request('GET', url)
         r = conn.getresponse()
@@ -202,7 +208,8 @@ def get_run_info(instrument, run_number):
                 for tag in ['title', 'duration', 'protonCharge', 'totalCounts']:
                     if n.nodeName==tag and n.hasChildNodes():
                         run_info[tag] = urllib.unquote(get_text_from_xml(n.childNodes))
-    except:
+    except Exception as e:
+        logger.exception(e)
         run_info['icat_error'] = 'Could not communicate with catalog server'
         logging.error("Communication with ICAT server failed: %s" % sys.exc_value)
         

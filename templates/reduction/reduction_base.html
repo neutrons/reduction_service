@@ -69,7 +69,7 @@
           {% endif %}
           {% endif %}
           {% if trans_id %}
-          <li><a href="{% url 'remote_stop_transaction' trans_id %}?back_url={% url 'eqsans_reduction_jobs'%}" title="Delete this job and all the files associated with this transaction">delete this job</a></li>
+          <li><a href="{% url 'remote_stop_transaction' trans_id %}?back_url={% url 'reduction_reduction_jobs' instrument %}" title="Delete this job and all the files associated with this transaction">delete this job</a></li>
           {% endif %}
         </ul>
       </div>

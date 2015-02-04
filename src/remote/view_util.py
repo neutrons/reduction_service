@@ -44,9 +44,9 @@ def get_authentication_status(request):
             request.session['fermi_uid'] = info["Authenticated_As"]
             return info["Authenticated_As"]
         if "Err_Msg" in info:
-            logging.error("MantidRemote: %s" % info["Err_Msg"])
+            logger.error("MantidRemote: %s" % info["Err_Msg"])
     except:
-        logging.error("Could not obtain information from Fermi: %s" % sys.exc_value)
+        logger.error("Could not obtain information from Fermi: %s" % sys.exc_value)
     return None
 
 def fill_template_values(request, **template_args):
@@ -78,18 +78,18 @@ def authenticate(request):
             try:
                 info = json.loads(r.read())
                 if "Err_Msg" in info:
-                    logging.error("MantidRemote: %s" % info["Err_Msg"])
+                    logger.error("MantidRemote: %s" % info["Err_Msg"])
                     reason = info["Err_Msg"]
             except:
-                logging.error("MantidRemote: %s" % sys.exc_value)
+                logger.error("MantidRemote: %s" % sys.exc_value)
         sessionid = r.getheader('set-cookie', '')
         if len(sessionid)>0:
             request.session['fermi']=sessionid
             request.session['fermi_uid']=request.POST['username']
         return r.status, reason
     except Exception, e:
-        logging.error("Could not authenticate with Fermi: %s" % sys.exc_value)
-        logging.exception(str(e))
+        logger.error("Could not authenticate with Fermi: %s" % sys.exc_value)
+        logger.exception(str(e))
     return 500, reason
 
 def transaction(request, start=False):
@@ -105,24 +105,26 @@ def transaction(request, start=False):
             if len(transactions)>0:
                 return transactions[0]
     try:
+        logger.debug("Connection to %s to start a transaction."%settings.FERMI_HOST)
         conn = httplib.HTTPSConnection(settings.FERMI_HOST, timeout=0.5)
         conn.request('GET', settings.FERMI_BASE_URL+'transaction?Action=Start',
                             headers={'Cookie':request.session.get('fermi', '')})
         r = conn.getresponse()
         if not r.status == 200:
-            logging.error("Fermi transaction call failed: %s" % r.status)
+            logger.error("Fermi transaction call failed: %s" % r.status)
         info = json.loads(r.read())
         if "Err_Msg" in info:
-            logging.error("MantidRemote: %s" % info["Err_Msg"])
+            logger.error("MantidRemote: %s" % info["Err_Msg"])
 
         request.session['fermi_transID'] = info["TransID"]
         transaction_obj = Transaction(trans_id = info["TransID"],
                                   directory = info["Directory"],
                                   owner = request.user)
         transaction_obj.save()
+        logger.debug("Transaction created: %s"%transaction_obj)
         return transaction_obj
     except:
-        logging.error("Could not get new transaction ID: %s" % sys.exc_value)
+        logger.error("Could not get new transaction ID: %s" % sys.exc_value)
     return None
 
 def stop_transaction(request, trans_id):
@@ -140,9 +142,9 @@ def stop_transaction(request, trans_id):
     if len(transactions)>0:
         transaction_obj = transactions[0]
     if transaction_obj is None:
-        logging.error("Local transaction %s does not exist" % trans_id)
+        logger.error("Local transaction %s does not exist" % trans_id)
     elif not transaction_obj.owner == request.user:
-        logging.error("User %s trying to stop transaction %s belonging to %s" % (request.user,
+        logger.error("User %s trying to stop transaction %s belonging to %s" % (request.user,
                                                                                  trans_id,
                                                                                  transaction_obj.owner))
     else:
@@ -159,12 +161,12 @@ def stop_transaction(request, trans_id):
                             headers={'Cookie':request.session.get('fermi', '')})
         r = conn.getresponse()
         if not r.status == 200:
-            logging.error("Could not close Fermi transaction: %s" % r.status)
+            logger.error("Could not close Fermi transaction: %s" % r.status)
             info = json.loads(r.read())
             if "Err_Msg" in info:
-                logging.error("MantidRemote: %s" % info["Err_Msg"])
+                logger.error("MantidRemote: %s" % info["Err_Msg"])
     except:
-        logging.error("Could not close Fermi transaction: %s" % sys.exc_value)
+        logger.error("Could not close Fermi transaction: %s" % sys.exc_value)
 
     
 def submit_job(request, transaction, script_code, script_name='web_submission.py'):
@@ -184,6 +186,7 @@ def submit_job(request, transaction, script_code, script_name='web_submission.py
                                   'ScriptName': script_name,
                                   script_name: script_code})
     try:
+        logger.debug("Submiting transaction id %s to %s."%(transaction.trans_id,settings.FERMI_HOST))
         conn = httplib.HTTPSConnection(settings.FERMI_HOST, timeout=5)
         conn.request('POST', settings.FERMI_BASE_URL+'submit',
                      body=post_data,
@@ -191,11 +194,11 @@ def submit_job(request, transaction, script_code, script_name='web_submission.py
         r = conn.getresponse()
         resp = json.loads(r.read())
         if "Err_Msg" in resp:
-            logging.error("MantidRemote: %s" % resp["Err_Msg"])
+            logger.error("MantidRemote: %s" % resp["Err_Msg"])
         if 'JobID' in resp:
             jobID = request.session['fermi_jobID'] = resp['JobID']
     except:
-        logging.error("Could not submit job: %s" % sys.exc_value)
+        logger.error("Could not submit job: %s" % sys.exc_value)
     return jobID
 
 def query_job(request, job_id):
@@ -228,9 +231,9 @@ def query_job(request, job_id):
             job_info['SubmitDate'] = parse_datetime(job_info['SubmitDate'])
             return job_info
         else:
-            logging.error("Could not get job info: %s" % r.status)
+            logger.error("Could not get job info: %s" % r.status)
     except:
-        logging.error("Could not get job info: %s" % sys.exc_value)
+        logger.error("Could not get job info: %s" % sys.exc_value)
     return None
 
 def get_remote_jobs(request):
@@ -263,7 +266,7 @@ def get_remote_jobs(request):
             jobs[key]['SubmitDate'] = parse_datetime(jobs[key]['SubmitDate'])
             status_data.append(jobs[key])
     except:
-        logging.error("Could not connect to status page: %s" % sys.exc_value)
+        logger.error("Could not connect to status page: %s" % sys.exc_value)
     
     return status_data
     
@@ -291,9 +294,9 @@ def query_files(request, trans_id):
             file_list = json.loads(r.read())['Files']
             return file_list
         else:
-            logging.error("Could not get files for transaction: %s" % r.status)
+            logger.error("Could not get files for transaction: %s" % r.status)
     except:
-        logging.error("Could not get files for transaction: %s" % sys.exc_value)
+        logger.error("Could not get files for transaction: %s" % sys.exc_value)
     return None
 
 def download_file(request, trans_id, filename):
@@ -314,9 +317,9 @@ def download_file(request, trans_id, filename):
         if r.status == 200:
             return r.read()
         else:
-            logging.error("Could not get file from compute node: %s" % r.status)
+            logger.error("Could not get file from compute node: %s" % r.status)
     except:
-        logging.error("Could not get file from compute node: %s" % sys.exc_value)
+        logger.error("Could not get file from compute node: %s" % sys.exc_value)
     return None
 
 def fill_job_dictionary(request, remote_job_id, **template_values):

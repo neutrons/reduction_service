@@ -203,6 +203,12 @@ class RemoteJob(models.Model):
         if len(plots)>0:
             return plots[0]
         return None
+    
+    def __str__(self):
+        d = { 'reduction' : self.reduction,
+        'remote_id' : self.remote_id,
+        'transaction' : self.transaction}
+        return str(d)
 
 class RemoteJobSet(models.Model):
     """

@@ -23,6 +23,7 @@ import copy
 import zipfile
 import StringIO
 import logging
+import inspect
 
 logger = logging.getLogger('eqsans')
     
@@ -33,6 +34,8 @@ def reduction_configuration_query(request, remote_set_id):
         @param request: request object
         @param remote_id: pk of RemoteJobSet object
     """
+    logger.debug("EQSANS: %s remote_set_id=%s"%(inspect.stack()[0][3],remote_set_id))
+    
     job_set = get_object_or_404(RemoteJobSet, pk=remote_set_id)
     
     breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
@@ -49,7 +52,8 @@ def reduction_configuration_query(request, remote_set_id):
                        'title': 'EQSANS job results',
                        'trans_id': job_set.transaction.trans_id,
                        'job_directory': job_set.transaction.directory,
-                       'back_url': request.path}
+                       'back_url': request.path,
+                       'instrument': 'eqsans'}
     
     # Get status of each job
     job_set_info = []
@@ -89,6 +93,9 @@ def reduction_configuration_iq(request, remote_set_id):
         @param request: request object
         @param remote_id: pk of RemoteJobSet object
     """
+    
+    logger.debug("EQSANS: %s remote_set_id=%s"%(inspect.stack()[0][3],remote_set_id))
+    
     job_set = get_object_or_404(RemoteJobSet, pk=remote_set_id)
     files = remote.view_util.query_files(request, job_set.transaction.trans_id)
     
@@ -122,19 +129,26 @@ def job_details(request, job_id):
         @param job_id: pk of the RemoteJob object
         
     """
+    
+    logger.debug("EQSANS: %s job_id=%s"%(inspect.stack()[0][3],job_id))
+    
     remote_job = get_object_or_404(RemoteJob, remote_id=job_id)
 
     breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
     breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('reduction.views.reduction_home',args=['eqsans'])
-    breadcrumbs += " &rsaquo; <a href='%s'>reduction %s</a>" % (reverse('eqsans.views.reduction_options', args=[remote_job.reduction.id]), remote_job.reduction.id)
-    breadcrumbs += " &rsaquo; <a href='%s'>jobs</a>" % reverse('reductions.views.reduction_jobs',args=['eqsans'])
+    breadcrumbs += " &rsaquo; <a href='%s'>reduction %s</a>" % (reverse('reduction.views.reduction_options', 
+                                                                        kwargs={'instrument_name': 'eqsans',
+                                                                                'reduction_id': remote_job.reduction.id }),
+                                                                remote_job.reduction.id)
+    breadcrumbs += " &rsaquo; <a href='%s'>jobs</a>" % reverse('reduction.views.reduction_jobs',args=['eqsans'])
     breadcrumbs += " &rsaquo; %s" % job_id
 
     template_values = {'remote_job': remote_job,
                        'parameters': remote_job.get_data_dict(),
                        'reduction_id': remote_job.reduction.id,
                        'breadcrumbs': breadcrumbs,
-                       'back_url': request.path}
+                       'back_url': request.path,
+                       'instrument': 'eqsans'}
     template_values = remote.view_util.fill_job_dictionary(request, job_id, **template_values)
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     template_values['title'] = "EQSANS job results"

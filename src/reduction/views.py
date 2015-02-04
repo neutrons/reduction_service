@@ -15,7 +15,7 @@ from reduction.models import ReductionProcess, RemoteJob, ReductionConfiguration
 from catalog.icat_server_communication import get_ipts_info
 import copy
 import importlib
-import pprint as pp
+import inspect
 import logging
 
 logger = logging.getLogger('reduction')
@@ -35,6 +35,7 @@ def reduction_home(request, instrument_name):
         Home page for the EQSANS reduction
         @param request: request object
     """
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument = get_object_or_404(Instrument, name=instrument_name)
     
@@ -60,7 +61,7 @@ def experiment(request, ipts, instrument_name):
         #TODO create new reduction using a pre-existing one as a template
     """
     
-    logger.debug("Experiment: ipts = %s, instrument=%s"%(ipts,instrument_name))
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument_name_capitals = str.capitalize(str(instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
@@ -156,6 +157,9 @@ def delete_reduction(request, reduction_id, instrument_name):
         @param request: request object
         @param reduction_id: primary key of reduction object
     """
+    
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
+    
     reduction_proc = get_object_or_404(ReductionProcess, pk=reduction_id, owner=request.user)
     reduction_proc.delete()
     if 'back_url' in request.GET:
@@ -172,6 +176,8 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
         @param request: request object
         @param reduction_id: pk of reduction process object
     """
+    
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument_name_capitals = str.capitalize(str(instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
@@ -244,12 +250,14 @@ def reduction_jobs(request, instrument_name):
         
         @param request: request object
     """
-
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
+    
     instrument_name = str(instrument_name).lower()
     
     jobs = RemoteJob.objects.filter(transaction__owner=request.user)
     status_data = []
     for job in jobs:
+        
         if not job.transaction.is_active or job.reduction.get_config() is not None:
             continue
         j_data = {'id': job.remote_id,
@@ -298,6 +306,8 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
         @param request: The request object
         @param config_id: The ReductionConfiguration pk
     """
+    
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument_name_capitals = str.capitalize(str(instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
@@ -398,6 +408,7 @@ def reduction_configuration_submit(request, config_id, instrument_name):
         @param request: request object
         @param config_id: pk of configuration
     """
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument_name_lowercase = str.lower(str(instrument_name))
     
@@ -435,8 +446,9 @@ def reduction_configuration_job_delete(request, config_id, reduction_id, instrum
         @param config_id: pk of configuration this reduction belongs to
         @param reduction_id: pk of the reduction object
     """
-    instrument_name_lowercase = str.lower(str(instrument_name))
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
+    instrument_name_lowercase = str.lower(str(instrument_name))
     
     reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
     reduction_proc = get_object_or_404(ReductionProcess, pk=reduction_id, owner=request.user)
@@ -453,6 +465,9 @@ def reduction_configuration_delete(request, config_id, instrument_name):
         @param request: request object
         @param config_id: pk of configuration this reduction belongs to
     """
+    
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
+    
     instrument_name_lowercase = str.lower(str(instrument_name))
     
     reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
@@ -472,6 +487,8 @@ def reduction_script(request, reduction_id, instrument_name):
         @param request: request object
         @param reduction_id: pk of the ReductionProcess object
     """
+    
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument_name_lowercase = str.lower(str(instrument_name))
     
@@ -501,6 +518,8 @@ def py_reduction_script(request, reduction_id, instrument_name):
         @param reduction_id: pk of the ReductionProcess object
     """
     
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
+    
     instrument_name_lowercase = str.lower(str(instrument_name))
     instrument_forms = _import_forms_from_app(instrument_name_lowercase)
     
@@ -520,6 +539,9 @@ def xml_reduction_script(request, reduction_id, instrument_name):
         @param request: request object
         @param reduction_id: pk of the ReductionProcess object
     """
+    
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
+    
     instrument_name_lowercase = str.lower(str(instrument_name))
     instrument_forms = _import_forms_from_app(instrument_name_lowercase)
     data = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id) 
@@ -538,8 +560,9 @@ def submit_job(request, reduction_id, instrument_name):
         @param reduction_id: pk of the ReductionProcess object
     """
     
-    instrument_name_lowercase = str.lower(str(instrument_name))
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
+    instrument_name_lowercase = str.lower(str(instrument_name))
     instrument_forms = _import_forms_from_app(instrument_name_lowercase)
     
     # TODO: Make sure the submission errors are clearly reported
@@ -570,7 +593,8 @@ def submit_job(request, reduction_id, instrument_name):
                         properties=reduction_proc.properties,
                         transaction=transaction)
         job.save()
-    return redirect(reverse('reduction.views.reduction_options',
+        logger.debug("Remote job created: %s"%job)
+    return redirect(reverse('reduction_reduction',
                                   kwargs={'reduction_id' : reduction_id, 'instrument_name': instrument_name_lowercase}))
 
 
@@ -579,18 +603,22 @@ def submit_job(request, reduction_id, instrument_name):
     
 @login_required
 def reduction_configuration_query(request, remote_set_id, instrument_name):
+    logger.debug("%s remote_set_id=%s instrument_name=%s"%(inspect.stack()[0][3],remote_set_id,instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
-    redirect(reverse('reduction.%s.views.reduction_configuration_query'%instrument_name_lowercase,
+    return redirect(reverse('%s.views.reduction_configuration_query'%instrument_name_lowercase,
                                   kwargs={'remote_set_id' : remote_set_id,}))
     
 @login_required
 def reduction_configuration_iq(request, remote_set_id, instrument_name):
+    logger.debug("%s remote_set_id=%s instrument_name=%s"%(inspect.stack()[0][3],remote_set_id,instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
-    redirect(reverse('reduction.%s.views.reduction_configuration_iq'%instrument_name_lowercase,
+    return redirect(reverse('%s.views.reduction_configuration_iq'%instrument_name_lowercase,
                                   kwargs={'remote_set_id' : remote_set_id,}))
 
 @login_required
 def job_details(request, job_id, instrument_name):
+    logger.debug("%s job_id=%s instrument_name=%s"%(inspect.stack()[0][3],job_id,instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
-    redirect(reverse('reduction.%s.views.job_details'%instrument_name_lowercase, kwargs={'job_id' : job_id}))
+    forward_url = reverse('%s_job_details'%instrument_name_lowercase, kwargs={'job_id' : job_id})
+    return redirect(forward_url)
     

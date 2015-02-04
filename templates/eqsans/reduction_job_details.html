@@ -22,7 +22,8 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Results for <a href="{% url 'eqsans_reduction' remote_job.reduction.id %}" title='Click to see the latest version of this reduction'>{% if remote_job.reduction.name|length > 0 %}{{ remote_job.reduction.name }}{% else %}reduction {{ remote_job.reduction.id }}{% endif %}</a></h2>
+    <h2>Results for <a href="{% url 'reduction_reduction' reduction_id=remote_job.reduction.id instrument_name=instrument %}" title='Click to see the latest version of this reduction'>
+    	{% if remote_job.reduction.name|length > 0 %}{{ remote_job.reduction.name }}{% else %}reduction {{ remote_job.reduction.id }}{% endif %}</a></h2>
     <div class='tiled_area'>
       <div class='tile'>
         Job {{ job_id }}

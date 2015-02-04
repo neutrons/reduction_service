@@ -1,12 +1,12 @@
 import httplib
 import urllib
 import xml.dom.minidom
-import logging
 import sys
 import time
 import datetime
 from django.conf import settings
 from catalog.view_util import get_webmon_url, get_new_reduction_url, get_new_batch_url
+import logging
 
 logger = logging.getLogger('catalog.icat')
 
@@ -14,7 +14,7 @@ if hasattr(settings, 'ICAT_DOMAIN'):
     ICAT_DOMAIN = settings.ICAT_DOMAIN
     ICAT_PORT = settings.ICAT_PORT
 else:
-    logging.error("App settings does not contain ICAT server info: using icat.sns.gov:2080")
+    logger.error("App settings does not contain ICAT server info: using icat.sns.gov:2080")
     ICAT_DOMAIN = 'icat.sns.gov'
     ICAT_PORT = 2080
 
@@ -40,7 +40,7 @@ def decode_time(timestamp):
             except:
                 return datetime.datetime.strptime(date_time_str, "%Y-%m-%dT%H:%M:%S")
     except:
-        logging.error("Could not parse timestamp '%s': %s" % (timestamp, sys.exc_value))
+        logger.error("Could not parse timestamp '%s': %s" % (timestamp, sys.exc_value))
         return None
 
 def get_ipts_info(instrument, ipts):
@@ -48,6 +48,7 @@ def get_ipts_info(instrument, ipts):
     
     # Get basic run info
     try:
+        t0 = time.time()
         conn = httplib.HTTPConnection(ICAT_DOMAIN, 
                                       ICAT_PORT, timeout=0.5)
         conn.request('GET', '/icat-rest-ws/experiment/SNS/%s/%s/meta' % (instrument.upper(),
@@ -68,10 +69,11 @@ def get_ipts_info(instrument, ipts):
                     timestr = get_text_from_xml(n.childNodes)
                     run_info['createTime'] = decode_time(timestr)
         conn.close()
+        logger.debug("ICAT HTTP request took %g sec" % (time.time()-t0))
     except Exception as e:
         logger.exception(e)
         run_info['icat_error'] = 'Could not communicate with catalog server'
-        logging.error("Communication with ICAT server failed: %s" % sys.exc_value)
+        logger.error("Communication with ICAT server failed: %s" % sys.exc_value)
     return run_info
     
 def get_instruments():
@@ -80,6 +82,7 @@ def get_instruments():
     """
     instruments = []
     try:
+        t0 = time.time()
         conn = httplib.HTTPConnection(ICAT_DOMAIN, 
                                       ICAT_PORT, timeout=0.5)
         conn.request('GET', '/icat-rest-ws/experiment/SNS/')
@@ -92,10 +95,10 @@ def get_instruments():
                 if not instr.upper() in ['NSE', 'FNPB']:
                     instruments.append(instr)
         conn.close()
-        logger.debug("List of instruments: %s",instruments)
+        logger.debug("ICAT HTTP request %s:%s took %g sec" % (ICAT_DOMAIN, ICAT_PORT, (time.time()-t0)))
     except Exception as e:
         logger.exception(e)
-        logging.error("Could not get list of instruments from ICAT: %s" % sys.exc_value)
+        logger.error("Could not get list of instruments from ICAT: %s" % sys.exc_value)
     return instruments
     
 
@@ -118,7 +121,6 @@ def get_experiments(instrument):
                                       ICAT_PORT, timeout=20)
         conn.request('GET', url)
         r = conn.getresponse()
-        logging.debug("Catalog request %s:%s%s took %g sec" % (ICAT_DOMAIN, ICAT_PORT, url, (time.time()-t0)))
         dom = xml.dom.minidom.parseString(r.read())
         for e in  dom.getElementsByTagName('proposal'):
             expt = {'id': e.attributes['id'].value}
@@ -132,10 +134,10 @@ def get_experiments(instrument):
                         
             experiments.append(expt)
         conn.close()
-        logging.debug("ICAT %s: %s" % (url, str(time.time()-t0)))
+        logger.debug("ICAT HTTP request %s:%s%s took %g sec" % (ICAT_DOMAIN, ICAT_PORT, url, (time.time()-t0)))
     except Exception as e:
         logger.exception(e)
-        logging.error("Could not get list of experiments from ICAT: %s" % sys.exc_value)
+        logger.error("Could not get list of experiments from ICAT: %s" % sys.exc_value)
     return experiments
     
     
@@ -163,7 +165,6 @@ def get_ipts_runs(instrument, ipts):
                                       ICAT_PORT, timeout=10)
         conn.request('GET', url)
         r = conn.getresponse()
-        logging.debug("Catalog request %s:%s%s took %g sec" % (ICAT_DOMAIN, ICAT_PORT, url, (time.time()-t0)))
         dom = xml.dom.minidom.parseString(r.read())
         for r in dom.getElementsByTagName('run'):
             run_info = {'id': r.attributes['id'].value,
@@ -185,9 +186,10 @@ def get_ipts_runs(instrument, ipts):
                         run_info[n.nodeName] = decode_time(text_value)
             run_data.append(run_info)
         conn.close()
+        logger.debug("ICAT HTTP request %s:%s%s took %g sec" % (ICAT_DOMAIN, ICAT_PORT, url, (time.time()-t0)))
     except Exception as e:
         logger.exception(e)
-        logging.error("Communication with ICAT server failed: %s" % sys.exc_value)
+        logger.error("Communication with ICAT server failed: %s" % sys.exc_value)
     return run_data
 
 def get_run_info(instrument, run_number):
@@ -196,9 +198,9 @@ def get_run_info(instrument, run_number):
         @param instrument: instrument name
         @param run_number: run_number
     """
-    
     run_info = {}
     try:
+        t0 = time.time()
         conn = httplib.HTTPConnection(ICAT_DOMAIN,
                                       ICAT_PORT, timeout=3.0)
         url = '/icat-rest-ws/dataset/SNS/%s/%s' % (instrument.upper(), run_number)
@@ -212,9 +214,10 @@ def get_run_info(instrument, run_number):
                     if n.nodeName==tag and n.hasChildNodes():
                         run_info[tag] = urllib.unquote(get_text_from_xml(n.childNodes))
         conn.close()
+        logger.debug("ICAT HTTP request %s:%s%s took %g sec" % (ICAT_DOMAIN, ICAT_PORT, url, (time.time()-t0)))
     except Exception as e:
         logger.exception(e)
         run_info['icat_error'] = 'Could not communicate with catalog server'
-        logging.error("Communication with ICAT server failed: %s" % sys.exc_value)
+        logger.error("Communication with ICAT server failed: %s" % sys.exc_value)
         
     return run_info

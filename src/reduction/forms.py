@@ -9,7 +9,7 @@ from django import forms
 
 
 import logging
-logger = logging.getLogger('reductions.forms')
+logger = logging.getLogger('reduction.forms')
 
 class ReductionStart(forms.Form):
     """

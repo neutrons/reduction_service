@@ -183,9 +183,6 @@ LOGGING = {
             'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
             'datefmt' : "%d/%b/%Y %H:%M:%S"
         },
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
-        },
     },
     'handlers': {
         'null': {
@@ -193,7 +190,7 @@ LOGGING = {
             'class':'django.utils.log.NullHandler',
         },
         'console':{
-            'level':'INFO',
+            'level':'DEBUG',
             'class':'logging.StreamHandler',
             'formatter': 'standard'
         },
@@ -201,17 +198,17 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers':['console'],
-            'propagate': True,
             'level':'DEBUG',
+            'propagate': True,
         },
         'django.db.backends': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False,
         },
         'django_auth_ldap': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
         'remote': {
             'handlers': ['console'],
@@ -220,13 +217,16 @@ LOGGING = {
         'catalog': {
             'handlers': ['console'],
             'level': 'DEBUG',
-            'formatter': 'standard',
         },
         'catalog.icat': {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
         'reduction': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'reduction.forms': {
             'handlers': ['console'],
             'level': 'DEBUG',
         },

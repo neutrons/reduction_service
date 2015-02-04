@@ -11,6 +11,7 @@ from django.conf import settings
 import logging
 import sys
 import inspect
+import time
 
 logger = logging.getLogger('catalog')
 
@@ -35,7 +36,6 @@ def _get_function_from_instrument_name(instrument_name,function_name):
     module_str = instrument
     module = __import__ (module_str)
     try:
-        
         func_to_call = getattr(module, function_name)
         return func_to_call
     except Exception as e:

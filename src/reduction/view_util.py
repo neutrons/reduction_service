@@ -10,7 +10,7 @@ from reduction.models import RemoteJob
 import remote.view_util
 
 import logging
-logger = logging.getLogger('reduction.view_util')
+logger = logging.getLogger('reduction')
 
 def get_latest_job(request, reduction_process):
     """

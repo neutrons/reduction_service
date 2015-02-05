@@ -68,7 +68,7 @@
     {% if plot_1d_id %}
       <div class='wide_tile tile'>
         <plot_anchor></plot_anchor>
-        <a href="{% url 'plotting_adjust_1d' plot_1d_id %}/?back={{ back_url }}">adjust plot</a>
+        <a href="{% url 'plotting_adjust_1d' plot_1d_id %}?back={{ back_url }}">adjust plot</a>
       </div>
       <script>
         var x_label = $('<div />').html("{{ plot_object.layout.x_label|safe }}").text();

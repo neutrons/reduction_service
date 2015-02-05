@@ -168,7 +168,8 @@ def job_details(request, job_id):
                 plot_info = view_util.process_iqxy_output(request, remote_job, 
                                                           template_values['trans_id'], f)
                 template_values.update(plot_info)
-    
+#     import pprint
+#     logger.debug(pprint.pformat(template_values))
     return render_to_response('eqsans/reduction_job_details.html',
                               template_values)
 

@@ -257,7 +257,6 @@ def reduction_jobs(request, instrument_name):
     jobs = RemoteJob.objects.filter(transaction__owner=request.user)
     status_data = []
     for job in jobs:
-        
         if not job.transaction.is_active or job.reduction.get_config() is not None:
             continue
         j_data = {'id': job.remote_id,
@@ -274,6 +273,7 @@ def reduction_jobs(request, instrument_name):
     config_jobs = RemoteJobSet.objects.filter(transaction__owner=request.user)
     config_data = []
     for job in config_jobs:
+        logger.debug("Config jobs: %s"%job)
         if not job.transaction.is_active:
             continue
         j_data = {'id': job.id,
@@ -283,6 +283,7 @@ def reduction_jobs(request, instrument_name):
                   'experiments': job.configuration.get_experiments()
                  }
         config_data.append(j_data)
+        
     
     breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
     breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % (reverse('reduction.views.reduction_home', args=[instrument_name]), instrument_name)
@@ -571,6 +572,7 @@ def submit_job(request, reduction_id, instrument_name):
     # Start a new transaction
     transaction = remote.view_util.transaction(request, start=True)
     if transaction is None:
+        
         breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
         breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % (reverse('reduction.views.reduction_home', args=[instrument_name_lowercase]),
                                                                     instrument_name_lowercase)
@@ -583,6 +585,7 @@ def submit_job(request, reduction_id, instrument_name):
         template_values = reduction_service.view_util.fill_template_values(request, **template_values)
         return render_to_response('remote/failed_connection.html',
                                   template_values)
+        logger.debug("Created a transaction: %s",transaction)
 
     data = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id)
     code = instrument_forms.ReductionOptions.as_mantid_script(data, transaction.directory)
@@ -593,7 +596,7 @@ def submit_job(request, reduction_id, instrument_name):
                         properties=reduction_proc.properties,
                         transaction=transaction)
         job.save()
-        logger.debug("Remote job created: %s"%job)
+        logger.debug("Created a RemoteJob: %s",job)
     return redirect(reverse('reduction_reduction',
                                   kwargs={'reduction_id' : reduction_id, 'instrument_name': instrument_name_lowercase}))
 

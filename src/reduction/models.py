@@ -218,4 +218,8 @@ class RemoteJobSet(models.Model):
     configuration = models.ForeignKey(ReductionConfiguration)
     jobs = models.ManyToManyField(RemoteJob, related_name='_remote_set_jobs')
     timestamp = models.DateTimeField('timestamp', auto_now=True)
+    
+    def __str__(self):
+        s = "RemoteJobSet transaction id = %s is active = %s."%(self.transaction.trans_id,self.transaction.is_active)
+        return s
 

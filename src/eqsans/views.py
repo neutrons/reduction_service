@@ -39,10 +39,12 @@ def reduction_configuration_query(request, remote_set_id):
     job_set = get_object_or_404(RemoteJobSet, pk=remote_set_id)
     
     breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('reduction.views.reduction_home',args=['eqsans'])
+    breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('reduction.views.reduction_home',
+                                                                           kwargs={'instrument_name': 'eqsans' })
     breadcrumbs += " &rsaquo; <a href='%s'>configuration %s</a>" % (reverse('reduction.views.reduction_configuration',
                                         kwargs={'config_id' : job_set.configuration.id, 'instrument_name': 'eqsans' }), job_set.configuration.id)
-    breadcrumbs += " &rsaquo; <a href='%s'>jobs</a>" % reverse('reductions.views.reduction_jobs',args=['eqsans'])
+    breadcrumbs += " &rsaquo; <a href='%s'>jobs</a>" % reverse('reduction.views.reduction_jobs',
+                                                               kwargs={'instrument_name': 'eqsans' })
     breadcrumbs += " &rsaquo; job results"
     
     template_values = {'remote_set_id': remote_set_id,
@@ -135,12 +137,14 @@ def job_details(request, job_id):
     remote_job = get_object_or_404(RemoteJob, remote_id=job_id)
 
     breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('reduction.views.reduction_home',args=['eqsans'])
+    breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('reduction.views.reduction_home',
+                                                                           kwargs={'instrument_name': 'eqsans' })
     breadcrumbs += " &rsaquo; <a href='%s'>reduction %s</a>" % (reverse('reduction.views.reduction_options', 
                                                                         kwargs={'instrument_name': 'eqsans',
                                                                                 'reduction_id': remote_job.reduction.id }),
                                                                 remote_job.reduction.id)
-    breadcrumbs += " &rsaquo; <a href='%s'>jobs</a>" % reverse('reduction.views.reduction_jobs',args=['eqsans'])
+    breadcrumbs += " &rsaquo; <a href='%s'>jobs</a>" % reverse('reduction.views.reduction_jobs',
+                                                               kwargs={'instrument_name': 'eqsans' })
     breadcrumbs += " &rsaquo; %s" % job_id
 
     template_values = {'remote_job': remote_job,

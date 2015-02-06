@@ -1,5 +1,8 @@
 {% extends "reduction/reduction_base.html" %}
 {% block header %}
+<style>
+		.ui-autocomplete { height: 200px; overflow-y: scroll; overflow-x: hidden;}   
+</style>
 <script>
     function get_icat_info(run_number, element_id) {
         $.ajax({ url: "{{ icat_url }}"+run_number+"/", 
@@ -10,11 +13,47 @@
       $("#submit_button").button();
       $("#execute_jobs_button").button();
     });
+    
+    /*$(document).ready( function() {
+	 	$("#autocomplete1").autocomplete({
+	    	source: "/catalog/{{ instrument }}/{{ config_form.experiment.value }}/jsonruns",
+	    	minLength: 0,
+	  	}).autocomplete("widget").addClass("fixed-height");
+	});*/
+	
+	
+  $(function() {
+    /*Selects all long inputs, i.e., the runs
+    TODO: the forms that we add jobs are not done yet*/
+    $(".long_input input" ).autocomplete({
+      source: function( request, response ) {
+        $.ajax({
+          url: "/catalog/{{ instrument }}/{{ config_form.experiment.value }}/jsonrunslabels",
+          dataType: "json",
+          type: "GET",
+          cache: true,
+          success: function( data ) {
+            response( $.map( data, function( item ) {
+              return {
+                label: item.label,
+                value: item.value
+              }
+            }));
+          }
+      })},
+      minLength: 1,
+    }).autocomplete("widget");
+  });
+  
+	
 </script>
+
 {% endblock %}
 
 {% block content %}
+
 <h2>Configuration and reduction parameters</h2>
+		
 <form action="" method="POST">{% csrf_token %}
   <div class='tiled_area'>
     <div class='flexible tile'>
@@ -92,7 +131,7 @@
 </form>
 
 <script id="source" language="javascript" type="text/javascript">
-  $(document).ready(function() {
+ $(document).ready(function() {
     {% spaceless %}
     {% if config_form.transmission_empty.value %} get_icat_info('{{ config_form.transmission_empty.value }}', '{{ config_form.transmission_empty.id_for_label }}'); {% endif %}
     {% if config_form.sensitivity_file.value %} get_icat_info('{{ config_form.sensitivity_file.value }}','{{ config_form.sensitivity_file.id_for_label }}'); {% endif %}
@@ -106,5 +145,7 @@
         }
       });
     });
+
+   
 </script>
 {% endblock %}

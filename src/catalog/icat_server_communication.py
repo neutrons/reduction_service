@@ -192,6 +192,106 @@ def get_ipts_runs(instrument, ipts):
         logger.error("Communication with ICAT server failed: %s" % sys.exc_value)
     return run_data
 
+def _string_to_range(range_str):
+    """
+    Converts a string in the format of:
+    '1,2,5-7,10'
+    to python range:
+    [1, 2, 5, 6, 7, 10]
+    """
+    result = []
+    for part in range_str.split(','):
+        if '-' in part:
+            a, b = part.split('-')
+            a, b = int(a), int(b)
+            result.extend(range(a, b + 1))
+        else:
+            a = int(part)
+            result.append(a)
+    return result
+ 
+def get_ipts_run_range(instrument, ipts):
+    """
+        Get the list of runs range a given experiment
+        @param instrument name [string]
+        @param ipts: experiment name [string]
+        @return a list of run numbers
+        $ curl -s http://icat.sns.gov:2080/icat-rest-ws/experiment/SNS/EQSANS/IPTS-13502 |  tidy -xml -iq -
+        <?xml version="1.0" encoding="utf-8" standalone="yes"?>
+        <runs>
+          <runRange>46477-46581, 46586-46628</runRange>
+        </runs>
+    """
+    run_range = []
+    try:
+        t0 = time.time()
+        url = '/icat-rest-ws/experiment/SNS/%s/%s' % (instrument.upper(), ipts.upper())
+        conn = httplib.HTTPConnection(ICAT_DOMAIN, 
+                                      ICAT_PORT, timeout=5)
+        conn.request('GET', url)
+        r = conn.getresponse()
+        dom = xml.dom.minidom.parseString(r.read())
+        run_range_node_list = dom.getElementsByTagName('runRange')
+        
+        if run_range_node_list.length != 1:
+            return None
+        else:
+            run_range_str = run_range_node_list.item(0).firstChild.data
+            run_range = _string_to_range(run_range_str)
+            
+        ret = []
+        for i in run_range:
+            #ret.append({"value" : i})
+            ret.append('%d'%i)
+        run_range = ret
+
+        conn.close()
+        logger.debug("ICAT HTTP request %s:%s%s took %g sec" % (ICAT_DOMAIN, ICAT_PORT, url, (time.time()-t0)))
+    except Exception as e:
+        logger.exception(e)
+        logger.error("Communication with ICAT server failed: %s" % sys.exc_value)
+    return run_range
+
+def get_ipts_runs_as_json(instrument, ipts):
+    """
+        Get the list of runs and basic meta data for
+        a given experiment
+        @param instrument name [string]
+        @param ipts: experiment name [string]
+        @return a list of run numbers and labels as json
+        <run id="12801">
+            <title>Blank scanRT</title>
+            <startTime>2013-04-05T16:17:56.246-04:00</startTime>
+            <endTime>2013-04-05T16:40:12.938-04:00</endTime>
+            <duration>1336.6914</duration>
+            <protonCharge>1.20244649808e+12</protonCharge>
+            <totalCounts>1.3197872E7</totalCounts>
+        </run>
+    """
+    run_data = []
+    try:
+        t0 = time.time()
+        url = '/icat-rest-ws/experiment/SNS/%s/%s/all' % (instrument.upper(), ipts.upper())
+        conn = httplib.HTTPConnection(ICAT_DOMAIN, 
+                                      ICAT_PORT, timeout=10)
+        conn.request('GET', url)
+        r = conn.getresponse()
+        dom = xml.dom.minidom.parseString(r.read())
+        for r in dom.getElementsByTagName('run'):
+            run_id = r.attributes['id'].value
+            for n in r.childNodes:
+                if n.hasChildNodes():
+                    if n.nodeName in ['title']:
+                        run_title = urllib.unquote(get_text_from_xml(n.childNodes))
+            run_data.append({"label": "%s - %s"%(run_id,run_title), "value": run_id})
+        conn.close()
+        logger.debug("ICAT HTTP request as JSON %s:%s%s took %g sec" % (ICAT_DOMAIN, ICAT_PORT, url, (time.time()-t0)))
+    except Exception as e:
+        logger.exception(e)
+        logger.error("Communication with ICAT server failed: %s" % sys.exc_value)
+    return run_data
+
+
 def get_run_info(instrument, run_number):
     """
         Get ICAT info for the specified run
@@ -221,3 +321,4 @@ def get_run_info(instrument, run_number):
         logger.error("Communication with ICAT server failed: %s" % sys.exc_value)
         
     return run_info
+

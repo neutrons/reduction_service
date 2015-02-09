@@ -1,8 +1,5 @@
 {% extends "reduction/reduction_base.html" %}
 {% block header %}
-<style>
-		.ui-autocomplete { height: 200px; overflow-y: scroll; overflow-x: hidden;}   
-</style>
 <script>
     function get_icat_info(run_number, element_id) {
         $.ajax({ url: "{{ icat_url }}"+run_number+"/", 
@@ -13,38 +10,33 @@
       $("#submit_button").button();
       $("#execute_jobs_button").button();
     });
-    
-    /*$(document).ready( function() {
-	 	$("#autocomplete1").autocomplete({
-	    	source: "/catalog/{{ instrument }}/{{ config_form.experiment.value }}/jsonruns",
-	    	minLength: 0,
-	  	}).autocomplete("widget").addClass("fixed-height");
-	});*/
+	
+    /*
+    Function called only once! It populates the autocomplete from a remote json.
+    The filtering is made locally as the source is a local variable :)
+    */
+
+    $(function() {
+        var jsonurl = "/catalog/{{ instrument }}/{{ config_form.experiment.value }}/jsonrunslabels";
+        var selector = '.runcomplete input';
+        if  ($(selector).is('*')) {
+            $.ajax({
+                url: jsonurl,
+                type: 'get',
+                dataType: 'json',
+                async: true,
+                success: function(data) {
+                    //console.log(data);
+                    $(selector).autocomplete({
+                        source: data,
+                        minLength: 0,
+                    });
+                }
+            })
+        }
+    });
 	
 	
-  $(function() {
-    /*Selects all long inputs, i.e., the runs
-    TODO: the forms that we add jobs are not done yet*/
-    $(".long_input input" ).autocomplete({
-      source: function( request, response ) {
-        $.ajax({
-          url: "/catalog/{{ instrument }}/{{ config_form.experiment.value }}/jsonrunslabels",
-          dataType: "json",
-          type: "GET",
-          cache: true,
-          success: function( data ) {
-            response( $.map( data, function( item ) {
-              return {
-                label: item.label,
-                value: item.value
-              }
-            }));
-          }
-      })},
-      minLength: 1,
-    }).autocomplete("widget");
-  });
-  
 	
 </script>
 
@@ -68,13 +60,13 @@
             <tr><td title='Enter value for the overall scale factor'>{{ config_form.absolute_scale_factor.label_tag }}</td><td class='short_input'>{{ config_form.absolute_scale_factor.errors }}{{ config_form.absolute_scale_factor }}</td></tr>
             <tr><td title='Enter value for sample thickness, in cm'>{{ config_form.sample_thickness.label_tag }}</td><td class='short_input'>{{ config_form.sample_thickness.errors }}{{ config_form.sample_thickness }} [cm]</td></tr>
             <tr><td title='Enter the sample aperture diameter, in mm'>{{ config_form.sample_aperture_diameter.label_tag }}</td><td class='short_input'>{{ config_form.sample_aperture_diameter.errors }}{{ config_form.sample_aperture_diameter }} [mm]</td></tr>
-            <tr><td title='Enter a run number for your dark current [optional]'>{{ config_form.dark_current_run.label_tag }}</td><td class='long_input'>{{ config_form.dark_current_run.errors }}{{ config_form.dark_current_run }}</td></tr>
-            <tr><td title='Enter a sensitivity file or sensitivity run number'>{{ config_form.sensitivity_file.label_tag }}</td><td class='long_input'>{{ config_form.sensitivity_file.errors }}{{ config_form.sensitivity_file }}</td>
+            <tr><td title='Enter a run number for your dark current [optional]'>{{ config_form.dark_current_run.label_tag }}</td><td class='long_input runcomplete ui-widget'>{{ config_form.dark_current_run.errors }}{{ config_form.dark_current_run }}</td></tr>
+            <tr><td title='Enter a sensitivity file or sensitivity run number'>{{ config_form.sensitivity_file.label_tag }}</td><td class='long_input runcomplete ui-widget'>{{ config_form.sensitivity_file.errors }}{{ config_form.sensitivity_file }}</td>
                 <td title="Enter a minimum value for a pixel's relative signal">Min</td><td class='short_input'>{{ config_form.sensitivity_min.errors }}{{ config_form.sensitivity_min }}</td>
                 <td title="Enter a maximum value for a pixel's relative signal">Max</td><td class='short_input'>{{ config_form.sensitivity_max.errors }}{{ config_form.sensitivity_max }}</td></tr>
-            <tr><td title='Enter a run number for the empty transmission run'>{{ config_form.transmission_empty.label_tag }}</td><td class='long_input'>{{ config_form.transmission_empty.errors }}{{ config_form.transmission_empty }}</td></tr>
-            <tr><td title='Enter a run number for the beam center calculation'>{{ config_form.direct_beam_run.label_tag }}</td><td class='long_input'>{{ config_form.direct_beam_run.errors }}{{ config_form.direct_beam_run }}</td></tr>
-            <tr><td title='Enter a file path for your mask file [optional]'>{{ config_form.mask_file.label_tag }}</td><td class='long_input'>{{ config_form.mask_file.errors }}{{ config_form.mask_file }}</td></tr>
+            <tr><td title='Enter a run number for the empty transmission run'>{{ config_form.transmission_empty.label_tag }}</td><td class='long_input runcomplete ui-widget'>{{ config_form.transmission_empty.errors }}{{ config_form.transmission_empty }}</td></tr>
+            <tr><td title='Enter a run number for the beam center calculation'>{{ config_form.direct_beam_run.label_tag }}</td><td class='long_input runcomplete ui-widget'>{{ config_form.direct_beam_run.errors }}{{ config_form.direct_beam_run }}</td></tr>
+            <tr><td title='Enter a file path for your mask file [optional]'>{{ config_form.mask_file.label_tag }}</td><td class='long_input runcomplete ui-widget'>{{ config_form.mask_file.errors }}{{ config_form.mask_file }}</td></tr>
           </tbody>
         </table>
       {{ config_form.beam_radius }} {{ config_form.fit_frames_together }} {{ config_form.theta_dependent_correction }}
@@ -98,10 +90,10 @@
           {% for form in options_form %}
             <tr class='reduction_job'>
               {{ form.id }}{{ form.reduction_id }}
-              <td>{{ form.data_file.errors }}{{ form.data_file }}</td>
-              <td>{{ form.transmission_sample.errors }}{{ form.transmission_sample }}</td>
-              <td>{{ form.background_file.errors }}{{ form.background_file }}</td>
-              <td>{{ form.background_transmission_sample.errors }}{{ form.background_transmission_sample }}</td>
+              <td class='runcomplete ui-widget'>{{ form.data_file.errors }}{{ form.data_file }}</td>
+              <td class='runcomplete ui-widget'>{{ form.transmission_sample.errors }}{{ form.transmission_sample }}</td>
+              <td class='runcomplete ui-widget'>{{ form.background_file.errors }}{{ form.background_file }}</td>
+              <td class='runcomplete ui-widget'>{{ form.background_transmission_sample.errors }}{{ form.background_transmission_sample }}</td>
               <td>{{ form.nickname.errors }}{{ form.nickname }}</td>
               {% spaceless %}
               {% if form.reduction_id.value %}

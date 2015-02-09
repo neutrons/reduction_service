@@ -83,6 +83,31 @@
       $("#submit_reduction_button").button();
       $("#execute_job_button").button();
     });
+    
+        /*
+    Function called only once! It populates the autocomplete from a remote json.
+    The filtering is made locally as the source is a local variable :)
+    */
+
+    $(function() {
+        var jsonurl = "/catalog/{{ instrument }}/{{ options_form.experiment.value }}/jsonrunslabels";
+        var selector = '.runcomplete input';
+        if  ($(selector).is('*')) {
+            $.ajax({
+                url: jsonurl,
+                type: 'get',
+                dataType: 'json',
+                async: true,
+                success: function(data) {
+                    //console.log(data);
+                    $(selector).autocomplete({
+                        source: data,
+                        minLength: 0,
+                    });
+                }
+            })
+        }
+    });
 </script>
 {% endblock %}
 
@@ -106,9 +131,9 @@
       <table cellspacing="0" class="property_table">
         <tbody>
           <tr><th>{{ options_form.absolute_scale_factor.label_tag }}</th><td>{{ options_form.absolute_scale_factor.errors }}{{ options_form.absolute_scale_factor }}</td></tr>
-          <tr><th>{{ options_form.dark_current_run.label_tag }}</th><td>{{ options_form.dark_current_run.errors }}{{ options_form.dark_current_run }} <span id='dark_current_run_info'></span></td></tr>
+          <tr><th>{{ options_form.dark_current_run.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.dark_current_run.errors }}{{ options_form.dark_current_run }} <span id='dark_current_run_info'></span></td></tr>
           <tr><th>{{ options_form.sample_aperture_diameter.label_tag }}</th><td>{{ options_form.sample_aperture_diameter.errors }}{{ options_form.sample_aperture_diameter }} [mm]</td></tr>
-          <tr><th>{{ options_form.mask_file.label_tag }}</th><td>{{ options_form.mask_file.errors }}{{ options_form.mask_file }}</td></tr>
+          <tr><th>{{ options_form.mask_file.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.mask_file.errors }}{{ options_form.mask_file }}</td></tr>
         </tbody>
       </table>
     </div>
@@ -117,7 +142,7 @@
       <table cellspacing="0" class="property_table">
         <tbody>
           <tr><th>{{ options_form.fit_direct_beam.label_tag }}</th><td><a title='{{ options_form.fit_direct_beam.help_text }}' href='javascript:void(0);' onClick="toggle_beam_center();">{{ options_form.fit_direct_beam }}</a></td></tr>
-          <tr><th id="th_direct_beam_run">{{ options_form.direct_beam_run.label_tag }}</th><td>{{ options_form.direct_beam_run.errors }}{{ options_form.direct_beam_run }} <span id='direct_beam_run_info'></span></td></tr>
+          <tr><th id="th_direct_beam_run">{{ options_form.direct_beam_run.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.direct_beam_run.errors }}{{ options_form.direct_beam_run }} <span id='direct_beam_run_info'></span></td></tr>
           <tr><th id="th_beam_center_x">{{ options_form.beam_center_x.label_tag }}</th><td>{{ options_form.beam_center_x.errors }}{{ options_form.beam_center_x }} <span id="unit_beam_center_x">[pixel]</span></td></tr>
           <tr><th id="th_beam_center_y">{{ options_form.beam_center_y.label_tag }}</th><td>{{ options_form.beam_center_y.errors }}{{ options_form.beam_center_y }} <span id="unit_beam_center_y">[pixel]</span></td></tr>
         </tbody>
@@ -128,7 +153,7 @@
       <table cellspacing="0" class="property_table">
         <tbody>
           <tr><th>{{ options_form.perform_sensitivity.label_tag }}</th><td><a title='{{ options_form.perform_sensitivity.help_text }}' href='javascript:void(0);' onClick="toggle_sensitivity();">{{ options_form.perform_sensitivity }}</a></td></tr>
-          <tr><th id="th_sensitivity_file">{{ options_form.sensitivity_file.label_tag }}</th><td>{{ options_form.sensitivity_file.errors }}{{ options_form.sensitivity_file }} <span id='sensitivity_file_info'></span></td></tr>
+          <tr><th id="th_sensitivity_file">{{ options_form.sensitivity_file.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.sensitivity_file.errors }}{{ options_form.sensitivity_file }} <span id='sensitivity_file_info'></span></td></tr>
           <tr><th id="th_sensitivity_min">{{ options_form.sensitivity_min.label_tag }}</th><td>{{ options_form.sensitivity_min.errors }}{{ options_form.sensitivity_min }}</td></tr>
           <tr><th id="th_sensitivity_max">{{ options_form.sensitivity_max.label_tag }}</th><td>{{ options_form.sensitivity_max.errors }}{{ options_form.sensitivity_max }}</td></tr>
         </tbody>
@@ -139,10 +164,10 @@
       <h3>Sample:</h3><br>
       <table cellspacing="0" class="property_table">
         <tbody>
-          <tr><th>{{ options_form.data_file.label_tag }}</th><td>{{ options_form.data_file.errors }}{{ options_form.data_file }} <span id='data_file_info'></span></td></tr>
+          <tr><th>{{ options_form.data_file.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.data_file.errors }}{{ options_form.data_file }} <span id='data_file_info'></span></td></tr>
           <tr><th>{{ options_form.sample_thickness.label_tag }}</th><td>{{ options_form.sample_thickness.errors }}{{ options_form.sample_thickness }} [cm]</td></tr>
-          <tr><th>{{ options_form.transmission_sample.label_tag }}</th><td>{{ options_form.transmission_sample.errors }}{{ options_form.transmission_sample }} <span id='transmission_sample_info'></span></td></tr>
-          <tr><th>{{ options_form.transmission_empty.label_tag }}</th><td>{{ options_form.transmission_empty.errors }}{{ options_form.transmission_empty }} <span id='transmission_empty_info'></span></td></tr>
+          <tr><th>{{ options_form.transmission_sample.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.transmission_sample.errors }}{{ options_form.transmission_sample }} <span id='transmission_sample_info'></span></td></tr>
+          <tr><th>{{ options_form.transmission_empty.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.transmission_empty.errors }}{{ options_form.transmission_empty }} <span id='transmission_empty_info'></span></td></tr>
         </tbody>
       </table>
       {{ options_form.beam_radius }} {{ options_form.fit_frames_together }} {{ options_form.theta_dependent_correction }}
@@ -151,9 +176,9 @@
       <table cellspacing="0" class="property_table">
         <tbody>
           <tr><th>{{ options_form.subtract_background.label_tag }}</th><td><a title='{{ options_form.subtract_background.help_text }}' href='javascript:void(0);' onClick="toggle_background();">{{ options_form.subtract_background }}</a></td></tr>
-          <tr><th id="th_background_file">{{ options_form.background_file.label_tag }}</th><td>{{ options_form.background_file.errors }}{{ options_form.background_file }} <span id='background_file_info'></span></td></tr>
-          <tr><th id="th_background_transmission_sample">{{ options_form.background_transmission_sample.label_tag }}</th><td>{{ options_form.background_transmission_sample.errors }}{{ options_form.background_transmission_sample }} <span id='background_transmission_sample_info'></span></td></tr>
-          <tr><th id="th_background_transmission_empty">{{ options_form.background_transmission_empty.label_tag }}</th><td>{{ options_form.background_transmission_empty.errors }}{{ options_form.background_transmission_empty }} <span id='background_transmission_empty_info'></span></td></tr>
+          <tr><th id="th_background_file">{{ options_form.background_file.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.background_file.errors }}{{ options_form.background_file }} <span id='background_file_info'></span></td></tr>
+          <tr><th id="th_background_transmission_sample">{{ options_form.background_transmission_sample.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.background_transmission_sample.errors }}{{ options_form.background_transmission_sample }} <span id='background_transmission_sample_info'></span></td></tr>
+          <tr><th id="th_background_transmission_empty">{{ options_form.background_transmission_empty.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.background_transmission_empty.errors }}{{ options_form.background_transmission_empty }} <span id='background_transmission_empty_info'></span></td></tr>
         </tbody>
       </table>
     </div>

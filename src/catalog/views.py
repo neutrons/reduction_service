@@ -183,12 +183,19 @@ def runs_json(request, instrument, ipts):
 @cache_page(20)
 def experiments_json(request, instrument):
     """
-         Ajax call to get all the possible runs for an experiment (retrieved from ICAT)
+         Ajax call to get all the possible experiments (retrieved from ICAT)
          @param request: request object
          @param instrument: instrument name
          @param ipts: experiment id
     """ 
-    info_dict = get_experiments_as_json(instrument)
-    response = HttpResponse(json.dumps(info_dict), content_type="application/json")
+    experiment_list = get_experiments_as_json(instrument)
+    
+    for exp in experiment_list:
+        ipts = exp['value']
+        if users.view_util.is_experiment_member(request, instrument, ipts ) is False:
+            experiment_list.remove(exp)
+    
+    # TODO: Filter permissions
+    response = HttpResponse(json.dumps(experiment_list), content_type="application/json")
     return response
 

@@ -90,13 +90,21 @@
     */
 
     $(function() {
-        //var jsonurl = "/catalog/{{ instrument }}/{{ options_form.experiment.value }}/runsjson";
         var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=options_form.experiment.value %}";
         var selector = '.runcomplete input';
         if  ($(selector).is('*')) {
             set_autocomplete(selector,jsonurl);
         }
     });
+    
+    $(function() {
+        var jsonurl = "{% url 'catalog_experiments_json' instrument=instrument %}";
+        var selector = '.experimentcomplete input';
+        if  ($(selector).is('*')) {
+            set_autocomplete(selector,jsonurl);
+        }
+    });
+    
 </script>
 {% endblock %}
 
@@ -106,7 +114,7 @@
   <div class='tiled_area'><div class='flexible tile'>
     <table class='property_table'>
       <tr><th>{{ options_form.reduction_name.label_tag }}</th><td class='long_input'>{{ options_form.reduction_name }}</td></tr>
-      <tr><th title='Enter an experiment identifier or IPTS number'>{{ options_form.experiment.label_tag }}</th><td class='long_input'>{{ options_form.experiment }}</td></tr>
+      <tr><th title='Enter an experiment identifier or IPTS number'>{{ options_form.experiment.label_tag }}</th><td class='long_input experimentcomplete ui-widget'>{{ options_form.experiment }}</td></tr>
     </table>
   </div></div>
   <p>

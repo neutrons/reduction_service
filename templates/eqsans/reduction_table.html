@@ -16,7 +16,6 @@
     The filtering is made locally as the source is a local variable :)
     */
     $(function() {
-        //var jsonurl = "/catalog/{{ instrument }}/{{ config_form.experiment.value }}/runsjson";
         var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=config_form.experiment.value %}";
         var selector = '.runcomplete input';
         if  ($(selector).is('*')) {
@@ -24,7 +23,13 @@
         }
     });
 	
-	
+    $(function() {
+        var jsonurl = "{% url 'catalog_experiments_json' instrument=instrument %}";
+        var selector = '.experimentcomplete input';
+        if  ($(selector).is('*')) {
+            set_autocomplete(selector,jsonurl);
+        }
+    });	
 	
 </script>
 
@@ -44,7 +49,7 @@
       <div>
         <table cellspacing="0" class="property_table">
           <tbody>
-            <tr><td title='Enter an experiment identifier or IPTS number'><b>Experiment</b></td><td class='long_input'>{{ config_form.experiment.errors }}{{ config_form.experiment }}</td></tr>
+            <tr><td title='Enter an experiment identifier or IPTS number'><b>Experiment</b></td><td class='long_input experimentcomplete ui-widget'>{{ config_form.experiment.errors }}{{ config_form.experiment }}</td></tr>
             <tr><td title='Enter value for the overall scale factor'>{{ config_form.absolute_scale_factor.label_tag }}</td><td class='short_input'>{{ config_form.absolute_scale_factor.errors }}{{ config_form.absolute_scale_factor }}</td></tr>
             <tr><td title='Enter value for sample thickness, in cm'>{{ config_form.sample_thickness.label_tag }}</td><td class='short_input'>{{ config_form.sample_thickness.errors }}{{ config_form.sample_thickness }} [cm]</td></tr>
             <tr><td title='Enter the sample aperture diameter, in mm'>{{ config_form.sample_aperture_diameter.label_tag }}</td><td class='short_input'>{{ config_form.sample_aperture_diameter.errors }}{{ config_form.sample_aperture_diameter }} [mm]</td></tr>

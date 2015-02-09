@@ -11,7 +11,7 @@ from django.views.decorators.cache import cache_page
 from django.conf import settings
 from django.http import HttpResponse
 
-from icat_server_communication import get_ipts_runs, get_instruments, get_experiments, get_run_info, get_ipts_run_range, get_ipts_runs_as_json
+from icat_server_communication import get_ipts_runs, get_instruments, get_experiments, get_run_info, get_ipts_runs_as_json, get_experiments_as_json
 import catalog.view_util
 import remote.view_util
 import users.view_util
@@ -153,22 +153,22 @@ def download_link(request, job_id, filename):
                               template_values)
     
 
-@login_required
-#@cache_page(60)
-def run_range(request, instrument, ipts):
-    """
-         Ajax call to get all the possible runs for an experiment (retrieved from ICAT)
-         @param request: request object
-         @param instrument: instrument name
-         @param ipts: experiment id
-    """ 
-    info_dict = get_ipts_run_range(instrument, ipts)
-    response = HttpResponse(json.dumps(info_dict), content_type="application/json")
-    return response
+# @login_required
+# #@cache_page(60)
+# def run_range(request, instrument, ipts):
+#     """
+#          Ajax call to get all the possible runs for an experiment (retrieved from ICAT)
+#          @param request: request object
+#          @param instrument: instrument name
+#          @param ipts: experiment id
+#     """ 
+#     info_dict = get_ipts_run_range(instrument, ipts)
+#     response = HttpResponse(json.dumps(info_dict), content_type="application/json")
+#     return response
 
 @login_required
 @cache_page(20)
-def run_range_with_title(request, instrument, ipts):
+def runs_json(request, instrument, ipts):
     """
          Ajax call to get all the possible runs for an experiment (retrieved from ICAT)
          @param request: request object
@@ -176,6 +176,19 @@ def run_range_with_title(request, instrument, ipts):
          @param ipts: experiment id
     """ 
     info_dict = get_ipts_runs_as_json(instrument, ipts)
+    response = HttpResponse(json.dumps(info_dict), content_type="application/json")
+    return response
+
+@login_required
+@cache_page(20)
+def experiments_json(request, instrument):
+    """
+         Ajax call to get all the possible runs for an experiment (retrieved from ICAT)
+         @param request: request object
+         @param instrument: instrument name
+         @param ipts: experiment id
+    """ 
+    info_dict = get_experiments_as_json(instrument)
     response = HttpResponse(json.dumps(info_dict), content_type="application/json")
     return response
 

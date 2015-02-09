@@ -90,7 +90,8 @@
     */
 
     $(function() {
-        var jsonurl = "/catalog/{{ instrument }}/{{ options_form.experiment.value }}/jsonrunslabels";
+        //var jsonurl = "/catalog/{{ instrument }}/{{ options_form.experiment.value }}/runsjson";
+        var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=options_form.experiment.value %}";
         var selector = '.runcomplete input';
         if  ($(selector).is('*')) {
             $.ajax({

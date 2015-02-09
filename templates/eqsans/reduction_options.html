@@ -94,19 +94,7 @@
         var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=options_form.experiment.value %}";
         var selector = '.runcomplete input';
         if  ($(selector).is('*')) {
-            $.ajax({
-                url: jsonurl,
-                type: 'get',
-                dataType: 'json',
-                async: true,
-                success: function(data) {
-                    //console.log(data);
-                    $(selector).autocomplete({
-                        source: data,
-                        minLength: 0,
-                    });
-                }
-            })
+            set_autocomplete(selector,jsonurl);
         }
     });
 </script>

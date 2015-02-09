@@ -38,6 +38,22 @@
     function new_alert(msg) {
         document.getElementById('alert_message').innerHTML = msg;
     }
+    /* Function to populate the autocomplete from a remote json. */
+    function set_autocomplete(selector,jsonurl){
+		$.ajax({
+            url: jsonurl,
+            type: 'get',
+            dataType: 'json',
+            async: true,
+            success: function(data) {
+                //console.log(data);
+                $(selector).autocomplete({
+                    source: data,
+                    minLength: 0,
+                });
+            }
+        })
+    }
 </script>
 </head>
 <!--[if IE]><body class="ie"><![endif]--> 

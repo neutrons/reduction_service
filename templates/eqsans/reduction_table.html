@@ -15,25 +15,12 @@
     Function called only once! It populates the autocomplete from a remote json.
     The filtering is made locally as the source is a local variable :)
     */
-
     $(function() {
         //var jsonurl = "/catalog/{{ instrument }}/{{ config_form.experiment.value }}/runsjson";
         var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=config_form.experiment.value %}";
         var selector = '.runcomplete input';
         if  ($(selector).is('*')) {
-            $.ajax({
-                url: jsonurl,
-                type: 'get',
-                dataType: 'json',
-                async: true,
-                success: function(data) {
-                    //console.log(data);
-                    $(selector).autocomplete({
-                        source: data,
-                        minLength: 0,
-                    });
-                }
-            })
+            set_autocomplete(selector,jsonurl);
         }
     });
 	

@@ -29,7 +29,16 @@
         if  ($(selector).is('*')) {
             set_autocomplete(selector,jsonurl);
         }
-    });	
+    });
+	
+	/* if the user change the experiment number, the runs will be different!! */    
+	$(function() {
+	    $(".experimentcomplete input").on( "autocompletechange", function(event,ui) {
+	   		var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=12345 %}".replace(/12345/, $(this).val() );
+	        var selector = '.runcomplete input';
+	        set_autocomplete(selector,jsonurl);
+		});
+	});
 	
 </script>
 

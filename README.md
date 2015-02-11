@@ -99,7 +99,7 @@ python manage.py createcachetable webcache
 
 If the last line of the make file fails, just run it as sudo, e.g.:
 ```
-sudo cp /var/www/reduction_service/apache/apache_django_wsgi.conf  /etc/apache2/sites-enabled/reduction_service_wsgi.conf
+sudo cp /var/www/reduction_service/apache/apache_django_wsgi.conf  /etc/apache2/sites-available/reduction_service_wsgi.conf
 sudo a2ensite reduction_service_wsgi
 sudo service apache2 reload
 # or:

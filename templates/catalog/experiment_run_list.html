@@ -3,22 +3,55 @@
 
 {% block header %}
   <script>
-  function submit_job(reduce_url, batch_url) {
-    $("#dialog-confirm").dialog({
+	 function buildUrl(url, parameters){
+	  var qs = "";
+	  for(var key in parameters) {
+	    var value = parameters[key];
+	    qs += encodeURIComponent(key) + "=" + encodeURIComponent(value) + "&";
+	  }
+	  if (qs.length > 0){
+	    qs = qs.substring(0, qs.length-1); //chop off last "&"
+	    url = url + "?" + qs;
+	  }
+	  return url;
+	}
+  function submit_job(run) {
+  	var selector = "#dialog-confirm";
+    var text_list = {{ reduction_dialog|safe }} ; //json coming from the <instrument>/__init.__py
+    var button_list = new Array(); 
+    $(selector + " dl").empty(); // Make sure it's empty before adding new buttons
+    
+    text_list.forEach(function(entry) {
+        //console.log(entry);
+        $(selector + " dl").append('<dt>' + entry['name'] + '</dt><dd>' + entry['desc'] + '</dd>');
+        button_list.push({
+            text: entry['name'],
+            click: function() {
+                var json_post_as_string = JSON.stringify(entry['parameters']);
+                json_post_as_string = json_post_as_string.replace(/\${run}/g,run);
+                var url = buildUrl(entry['href'],JSON.parse(json_post_as_string));
+                console.log(url);
+				window.location.href = url;
+                $(this).dialog("close");
+            },
+        });
+    });
+
+    button_list.push({
+        text: "Cancel",
+        click: function() {
+            $(this).dialog("close");
+        }
+    });
+
+    $(selector).dialog({
         resizable: false,
         modal: true,
-        buttons: {
-              "Single": function() {
-                  window.location.href = reduce_url;
-                  $( this ).dialog( "close" );
-              },
-              "Batch": function() {
-                  window.location.href = batch_url;
-                  $( this ).dialog( "close" );
-              },
-        Cancel: function() { $( this ).dialog( "close" ); }
-        }
-      });
+        buttons: button_list,
+    });
+    
+
+      
   };
   $(function() { $("#dialog-confirm").hide(); });
   </script>
@@ -32,18 +65,28 @@
 <table class="reduction_table">
   <thead>
     <tr>
-      <th>Run</th>{% if reduction_url %}<th>Reduce</th>{% endif %}<th style='min-width:380px;'>Title</th><th>Duration [sec]</th><th>Total counts</th>
+      <th>Run</th>{% if reduction_dialog %}<th>Reduce</th>{% endif %}<th style='min-width:380px;'>Title</th><th>Duration [sec]</th><th>Total counts</th>
     </tr>
   </thead>
   <tbody>
   {% for r in run_data|dictsortreversed:'id' %}
-    <tr class="{% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}"><td>{% if r.webmon_url %}<a ref="nofollow" class="external" title="Click to open web monitor for this run in a new window" target="_blank" href="{{ r.webmon_url }}">{{ r.id }}</a>{% else %}{{ r.id }}{% endif %}</td>
-    {% if r.reduce_url %}<td>
-    <a class="gear" title="Click to reduce this run" target="_blank" href="javascript:void(0);" onClick="submit_job('{{ r.reduce_url }}', '{{ r.batch_url }}');"></a></td>{% endif %}
-    <td>{{ r.title }}
-       {% if r.endTime and r.startTime %}<div class='subtitle'>{{ r.startTime|timeperiod:r.endTime}}</div>{% endif %}
-    </td>
-    <td>{{ r.duration }}</td><td>{{ r.totalCounts }}</td></tr>
+    <tr class="{% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
+      <td>{% if r.webmon_url %}<a ref="nofollow" class="external" title="Click to open web monitor for this run in a new window" 
+             target="_blank" href="{{ r.webmon_url }}">{{ r.id }}</a>
+          {% else %}{{ r.id }}
+          {% endif %}
+      </td>
+      {% if reduction_dialog %}
+        <td> <a class="gear" title="Click to reduce this run" target="_blank" href="javascript:void(0);" 
+        onClick="submit_job('{{ r.id }}');"></a>
+        </td>
+      {% endif %}
+      <td>{{ r.title }}
+        {% if r.endTime and r.startTime %}<div class='subtitle'>{{ r.startTime|timeperiod:r.endTime}}</div>{% endif %}
+      </td>
+      <td>{{ r.duration }}</td>
+      <td>{{ r.totalCounts }}</td>
+    </tr>
   {% endfor %}
   </tbody>
 </table>

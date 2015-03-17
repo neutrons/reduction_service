@@ -19,6 +19,8 @@ import reduction_service.view_util
 import json
 import logging
 import time
+import inspect
+import pprint
 
 logger = logging.getLogger('catalog')
 
@@ -30,10 +32,13 @@ def instrument_list(request):
     """
     breadcrumbs = "home"
     instruments = get_instruments()
+    
+    logger.debug("Catalog: %s : List of instruments = %s"%(inspect.stack()[0][3],instruments))
+    
     template_values = {'breadcrumbs': breadcrumbs}
     if len(instruments)==0:
-        if settings.DEBUG:
-            instruments=['eqsans']
+#         if settings.DEBUG:
+#             instruments=['eqsans']
         template_values['user_alert'] = ['Could not get instrument list from the catalog']
     template_values['instruments'] = instruments
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
@@ -49,6 +54,9 @@ def experiment_list(request, instrument):
     """
     breadcrumbs = "<a href='%s'>home</a> &rsaquo; %s catalog" % (reverse('home'), instrument.lower())
     experiments = get_experiments(instrument.upper())
+    
+    logger.debug("Catalog: %s : len(experiment list) = %s for %s"%(inspect.stack()[0][3],len(experiments),instrument))
+    
     template_values = {'experiments': experiments,
                        'instrument': instrument,
                        'title': '%s experiments' % instrument.upper(),
@@ -63,16 +71,22 @@ def experiment_list(request, instrument):
 @login_required
 def experiment_run_list(request, instrument, ipts):
     """
-        Return a list of runs for a given experiment
+        Return a list of runs for a given experiment with the reduce link.
+        The reduce link will generate a JQuery Dialog unique per instrument
+        The configuration of the Dialog Box are in <instrument_name>.__init__.py
+        under the funtion get_reduction_dialog_settings(ipts, run)
         @param request: request object
         @param instrument: instrument name
         @param ipts: experiment name
     """
-    breadcrumbs = "<a href='%s'>home</a> &rsaquo; <a href='%s'>%s catalog</a> &rsaquo; %s" % (reverse('catalog.views.instrument_list'),
-                                                                                             reverse('catalog.views.experiment_list', args=[instrument]),
-                                                                                             instrument.lower(),
-                                                                                             ipts.lower(),
-                                                                                             )
+    
+    logger.debug("Catalog: %s : instrument = %s, IPTS = %s"%(inspect.stack()[0][3],instrument,ipts))
+    
+    breadcrumbs = "<a href='%s'>home</a> &rsaquo; <a href='%s'>%s catalog</a> &rsaquo; %s" % \
+        (reverse('catalog.views.instrument_list'),
+         reverse('catalog.views.experiment_list', args=[instrument]),
+         instrument.lower(),ipts.lower())
+        
     template_values = {'instrument': instrument,
                        'experiment': ipts,
                        'title': '%s %s' % (instrument.upper(), ipts.upper()),
@@ -83,12 +97,13 @@ def experiment_run_list(request, instrument, ipts):
     else:
         runs = get_ipts_runs(instrument.upper(), ipts)
         template_values['run_data'] = runs
-        if len(runs)==0:
+        if len(runs) == 0:
             template_values['user_alert'] = ['No runs were found for instrument %s experiment %s' % (instrument, ipts)]
+    # Fill in Fermi auth values, login info,
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     template_values = catalog.view_util.fill_template_values(request, **template_values)
-    return render_to_response('catalog/experiment_run_list.html',
-                              template_values)
+    
+    return render_to_response('catalog/experiment_run_list.html', template_values)
     
 @login_required
 @cache_page(120)

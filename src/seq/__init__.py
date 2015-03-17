@@ -1,8 +1,8 @@
 """
-    Functions to buildup reduction URLs for SEQ
+    Functions to buildup reduction URLs for EQSANS
     They are called by the catalog.view_util
     
-    TODO: This might havd to be merged with eqsans.__init__ into reduction.__init__ as this looks common stuff
+    TODO: This might havd to be merged with seq.__init__ into reduction.__init__ as this looks common stuff
     
     @author: R. Leal, Oak Ridge National Laboratory
     @author: M. Doucet, Oak Ridge National Laboratory
@@ -10,6 +10,37 @@
 """
 
 from django.core.urlresolvers import reverse
+import json
+
+INSTRUMENT_NAME="seq"
+
+def get_reduction_dialog_settings(ipts):
+    """
+    This return the json to generate the reduction dialog
+    """
+    dialog_json = [
+       {
+          "name":"SEQ Single",
+          "desc":"A <b>single</b> reduction, which will create a reduction job only for this run.",
+          "href": get_new_reduction_url(instrument_name = INSTRUMENT_NAME),
+          "parameters" : { "reduction_name" :  "Reduction for ${run}",
+                          "expt_name" : ipts,
+                          "data_file" : "${run}"
+                          }
+       },
+       {
+          "name":"SEQ Batch",
+          "desc":"A reduction <b>batch</b>, which will create a configuration that you can use with multiple runs.",
+          "href": get_new_batch_url(),
+          "parameters" : { "reduction_name" :  "Batch reduction for ${run}",
+                          "experiment" : ipts,
+                          "data_file" : "${run}"
+                          }
+       }
+    ]
+    #return dialog_json;
+    return json.dumps(dialog_json);
+
 
 def get_new_reduction_url(run=None, ipts=None, instrument_name=None):
     """
@@ -23,8 +54,8 @@ def get_new_reduction_url(run=None, ipts=None, instrument_name=None):
 
 def get_new_batch_url(run=None, ipts=None):
     if run is None:
-        return reverse('reduction.views.reduction_configuration', kwargs={'instrument_name': 'seq' })
-    return reverse('reduction.views.reduction_configuration',kwargs={'instrument_name': 'seq' })+"?reduction_name=Reduction for %s&experiment=%s&data_file=%s" % (run, ipts, run)
+        return reverse('reduction.views.reduction_configuration', kwargs={'instrument_name': INSTRUMENT_NAME })
+    return reverse('reduction.views.reduction_configuration',kwargs={'instrument_name': INSTRUMENT_NAME })+"?reduction_name=Reduction for %s&experiment=%s&data_file=%s" % (run, ipts, run)
 
 def get_remote_jobs_url(ipts=None, instrument_name=None):
     return reverse('reduction.views.reduction_jobs', args=[instrument_name])

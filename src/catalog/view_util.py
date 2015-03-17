@@ -12,6 +12,7 @@ import logging
 import sys
 import inspect
 import time
+import pprint
 
 logger = logging.getLogger('catalog')
 
@@ -25,6 +26,11 @@ def fill_template_values(request, **template_args):
         template_args['new_reduction_url'] = get_new_reduction_url(instrument)
         template_args['reduction_url'] = get_reduction_url(instrument)
         template_args['remote_url'] = get_remote_jobs_url(instrument)
+              
+        template_args['reduction_dialog'] = get_reduction_dialog_settings(instrument,
+            ipts = template_args['experiment'] if 'experiment' in template_args.keys() else None) 
+                                                                          
+        
     return template_args
 
 def _get_function_from_instrument_name(instrument_name,function_name):
@@ -106,3 +112,15 @@ def get_webmon_url(instrument, run=None, ipts=None):
         return "%s%s/%s/" % (settings.WEBMON_URL, instrument.lower(), run)
     return None
 
+def get_reduction_dialog_settings(instrument,ipts):
+    if instrument.lower() in settings.REDUCTION_AVAILABLE:
+        this_function_name = inspect.stack()[0][3]
+        func = _get_function_from_instrument_name(instrument, this_function_name)
+        if func is not None:
+            return func(ipts)
+        else:
+            logger.debug("%s has no function %s."%(instrument, this_function_name))
+            return None
+    else:
+        logger.debug("Reduction not available for %s."%(instrument))
+                                             

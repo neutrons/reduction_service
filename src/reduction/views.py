@@ -32,7 +32,8 @@ def _import_forms_from_app(instrument_name_lowercase):
 @login_required
 def reduction_home(request, instrument_name):
     """
-        Home page for the EQSANS reduction
+        Home page for the <instrument_name> reduction.
+        This will show a list of experiments for which the user have set up reductions.
         @param request: request object
     """
     logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
@@ -172,7 +173,13 @@ def delete_reduction(request, reduction_id, instrument_name):
 @login_required
 def reduction_options(request, reduction_id=None, instrument_name=None):
     """
-        Display the reduction options form
+        Display the reduction options form:
+        Scenarios:
+        - url(r'^(?P<instrument_name>\w+)/reduction/$',
+          - reduction_id is not None and create a new reduction
+        - url(r'^(?P<instrument_name>\w+)/reduction/(?P<reduction_id>\d+)/$',
+          - reduction_id exists and loads up the form from the DB
+            
         @param request: request object
         @param reduction_id: pk of reduction process object
     """
@@ -181,7 +188,6 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
     
     instrument_name_capitals = str.capitalize(str(instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
-    
     instrument_forms = _import_forms_from_app(instrument_name_lowercase)
     
     # Get reduction and configuration information

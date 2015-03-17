@@ -57,7 +57,7 @@ def get_new_reduction_url(instrument, run=None, ipts=None):
         this_function_name = inspect.stack()[0][3]
         func = _get_function_from_instrument_name(instrument, this_function_name)
         if func is not None:
-            return func(run, ipts,instrument_name=instrument.lower())
+            return func(run, ipts)
         else:
             logger.debug("%s has no function %s."%(instrument, this_function_name))
             return None

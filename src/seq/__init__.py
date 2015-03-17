@@ -22,7 +22,7 @@ def get_reduction_dialog_settings(ipts):
        {
           "name":"SEQ Single",
           "desc":"A <b>single</b> reduction, which will create a reduction job only for this run.",
-          "href": get_new_reduction_url(instrument_name = INSTRUMENT_NAME),
+          "href": get_new_reduction_url(),
           "parameters" : { "reduction_name" :  "Reduction for ${run}",
                           "expt_name" : ipts,
                           "data_file" : "${run}"
@@ -32,7 +32,7 @@ def get_reduction_dialog_settings(ipts):
           "name":"SEQ Batch",
           "desc":"A reduction <b>batch</b>, which will create a configuration that you can use with multiple runs.",
           "href": get_new_batch_url(),
-          "parameters" : { "reduction_name" :  "Batch reduction for ${run}",
+          "parameters" : { "reduction_name" :  "Batch reduction for exp %s and ${run}"%ipts,
                           "experiment" : ipts,
                           "data_file" : "${run}"
                           }
@@ -42,15 +42,15 @@ def get_reduction_dialog_settings(ipts):
     return json.dumps(dialog_json);
 
 
-def get_new_reduction_url(run=None, ipts=None, instrument_name=None):
+def get_new_reduction_url(run=None, ipts=None):
     """
         Returns the URL to use to create a new run
         @param run: run number [string or integer]
         @param ipts: experiment name [string]
     """
     if run is None:
-        return reverse('reduction.views.reduction_options', args=[instrument_name] )
-    return reverse('reduction.views.reduction_options', args=[instrument_name] )+"?reduction_name=Reduction for %s&expt_name=%s&data_file=%s" % (run, ipts, run)
+        return reverse('reduction.views.reduction_options', kwargs={'instrument_name': INSTRUMENT_NAME } )
+    return reverse('reduction.views.reduction_options', kwargs={'instrument_name': INSTRUMENT_NAME } )+"?reduction_name=Reduction for %s&expt_name=%s&data_file=%s" % (run, ipts, run)
 
 def get_new_batch_url(run=None, ipts=None):
     if run is None:

@@ -6,18 +6,36 @@
         <b>Fermi status</b><br>
         {% spaceless %}
         {% if fermi_authenticated %}
-        <div class='green'>Authenticated as: {{ fermi_uid }}</div>
+        <div class='green'>Authenticated as: <b>{{ fermi_uid }} </b></div>
         {% else %}
         <div class='red'>Not authenticated</div>
         {% endif %}
         {% endspaceless %}
-        <form action="{% url 'remote_authenticate'%}" method="post">{% csrf_token %}
+        <form action="{% url 'remote_authenticate'%}" method="post" class="form">{% csrf_token %}
           <input class="form_text" type="text" name="username" placeholder="username"><br>
           <input class="form_text" type="password" name="password" placeholder="password"><br>
           <input type="submit" id="login_button" value="log in" title="Log in to Fermi to be able to submit jobs">
           <input type="hidden" name="redirect" value="{{ current_path }}">
         </form>
-      </div>{% endblock %}
+        
+        {% if fermi_authenticated %}
+        <script>
+        $(".form").hide();
+        $(document).ready(function() {	
+        	$("#show").click(function() {
+            	$(".form").show();
+            	$("#show").hide();
+        	});
+   		 });
+        </script>
+        <a id="show" title="Click to login into Fermi with other user." href="javascript:void(0);">
+        	<span style='display:inline-block' class="ui-icon ui-icon-person"></span> Change User</a>
+        {% else %}
+        <script>$(".form").show();</script>
+        {% endif %}
+        
+      </div>
+      {% endblock %}
       {% block page_specific_tools %}{% endblock %}
       <div class="tool_area">
         <b>Catalog</b><br>

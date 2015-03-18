@@ -196,6 +196,7 @@
     {% if reduction_id %}<input title="Click to submit this reduction for execution" id="execute_job_button" type="button" value="submit" onclick='window.location.href = "{% url 'reduction_submit_job' 'eqsans' reduction_id %}"'/>{% endif %}
   </p>
 </form>
+{% if message %}<div class='green'><b>{{ message }} </b></div>{% endif %}
 
 <script type="text/javascript">
 

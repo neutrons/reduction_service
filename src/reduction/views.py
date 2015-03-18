@@ -17,6 +17,8 @@ import copy
 import importlib
 import inspect
 import logging
+from django.template.defaultfilters import pprint
+import pprint
 
 logger = logging.getLogger('reduction')
 
@@ -190,6 +192,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
     instrument_name_lowercase = str.lower(str(instrument_name))
     instrument_forms = _import_forms_from_app(instrument_name_lowercase)
     
+    template_values = {}
     # Get reduction and configuration information
     config_obj = None
     if reduction_id is not None:
@@ -197,13 +200,17 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
         config_obj = reduction_proc.get_config()
     
     if request.method == 'POST':
+        logger.debug(pprint.pformat(request.POST.items()))
+        
         options_form = instrument_forms.ReductionOptions(request.POST)
         # If the form is valid update or create an entry for it
         if options_form.is_valid():
             reduction_id = options_form.to_db(request.user, reduction_id)
+            template_values['message'] = "Reduction parameters for reduction %s were sucessfully updated."%reduction_id
             if reduction_id is not None:
                 return redirect(reverse('reduction.views.reduction_options',
-                                        kwargs={'reduction_id' : reduction_id, 'instrument_name' : instrument_name}))
+                                        kwargs={'reduction_id' : reduction_id, 'instrument_name' : instrument_name})+
+                                        "?message=%s"%template_values['message'])
     else:
         if reduction_id is not None:
             initial_values = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id)
@@ -230,18 +237,23 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
     icat_url = reverse('catalog.views.run_info', args=[instrument_name_capitals, '0000'])
     icat_url = icat_url.replace('/0000', '')
     # TODO: add New an Save-As functionality
-    template_values = {'options_form': options_form,
+    template_values.update({'options_form': options_form,
                        'title': '%s Reduction' % instrument_name_capitals,
                        'breadcrumbs': breadcrumbs,
                        'reduction_id': reduction_id,
                        'icat_url': icat_url,
-                       'instrument' : instrument_name_lowercase, }
+                       'instrument' : instrument_name_lowercase, })
     # Get existing jobs for this reduction
     if reduction_id is not None:
         existing_jobs = RemoteJob.objects.filter(reduction=reduction_proc)
         if len(existing_jobs) > 0:
             template_values['existing_jobs'] = existing_jobs.order_by('id')
         template_values['expt_list'] = reduction_proc.experiments.all()
+        
+    
+    if 'message' in request.GET:
+        template_values['message'] = request.GET['message']
+    
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     #logger.debug(pp.pformat(template_values))
     return render_to_response('%s/reduction_options.html' % instrument_name_lowercase,
@@ -318,8 +330,9 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
     
     instrument_name_capitals = str.capitalize(str(instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
-    
     instrument_forms = _import_forms_from_app(instrument_name_lowercase)
+    
+    template_values = {}
     
     # Create a form for the page
     default_extra = 1 if config_id is None and not (request.method == 'GET' and 'data_file' in request.GET) else 0
@@ -341,11 +354,14 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
             # Save the configuration
             config_id = config_form.to_db(request.user, config_id)
             # Save the individual reductions
+            template_values['message'] = "Configuration and reduction parameters were sucessfully updated."
             for form in options_form:
                 form.to_db(request.user, None, config_id)
             if config_id is not None:
                 return redirect(reverse('reduction.views.reduction_configuration',
-                                        kwargs={'config_id' : config_id, 'instrument_name': instrument_name }))
+                                        kwargs={'config_id' : config_id, 'instrument_name': instrument_name }) +
+                                "?message=%s"%template_values['message']
+                                )
         else:
             # There's a proble with the data, the validated form 
             # will automatically display what the problem is to the user
@@ -390,7 +406,7 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
     icat_url = reverse('catalog.views.run_info', args=[instrument_name_capitals, '0000'])
     icat_url = icat_url.replace('/0000', '')
     # TODO: add New an Save-As functionality
-    template_values = {'config_id': config_id,
+    template_values.update({'config_id': config_id,
                        'options_form': options_form,
                        'config_form': config_form,
                        'expt_list': expt_list,
@@ -398,9 +414,11 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
                        'title': '%s Reduction' % instrument_name_capitals,
                        'breadcrumbs': breadcrumbs,
                        'icat_url': icat_url,
-                       'instrument' : instrument_name, }
+                       'instrument' : instrument_name, })
 
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
+    if 'message' in request.GET:
+        template_values['message'] = request.GET['message']
     return render_to_response('%s/reduction_table.html' % instrument_name_lowercase,
                               template_values)
 
@@ -430,11 +448,13 @@ def reduction_configuration_submit(request, config_id, instrument_name):
                                configuration=reduction_config)
         job_set.save()
         # Loop through the reductions and submit them
+        JobIDs = []
         for item in reductions:
             data = instrument_forms.ReductionOptions.data_from_db(request.user, item.id)
             code = instrument_forms.ReductionOptions.as_mantid_script(data, transaction.directory)
             jobID = remote.view_util.submit_job(request, transaction, code)
             if jobID is not None:
+                JobIDs.append(jobID)
                 job = RemoteJob(reduction=item,
                                 remote_id=jobID,
                                 properties=item.properties,
@@ -442,7 +462,9 @@ def reduction_configuration_submit(request, config_id, instrument_name):
                 job.save()
                 job_set.jobs.add(job)
     return redirect(reverse('reduction.views.reduction_configuration',
-                            kwargs={'config_id' : config_id, 'instrument_name': instrument_name_lowercase}))
+                            kwargs={'config_id' : config_id, 'instrument_name': instrument_name_lowercase})+
+                    "?message=Jobs %s sucessfully submitted."%', '.join(JobIDs)
+                    )
 
 
 @login_required
@@ -589,9 +611,7 @@ def submit_job(request, reduction_id, instrument_name):
                                   kwargs={'reduction_id' : reduction_id, 'instrument_name': instrument_name_lowercase}),
                            'breadcrumbs': breadcrumbs, }
         template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-        return render_to_response('remote/failed_connection.html',
-                                  template_values)
-        logger.debug("Created a transaction: %s",transaction)
+        return render_to_response('remote/failed_connection.html', template_values)
 
     data = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id)
     code = instrument_forms.ReductionOptions.as_mantid_script(data, transaction.directory)
@@ -604,7 +624,10 @@ def submit_job(request, reduction_id, instrument_name):
         job.save()
         logger.debug("Created a RemoteJob: %s",job)
     return redirect(reverse('reduction_reduction',
-                                  kwargs={'reduction_id' : reduction_id, 'instrument_name': instrument_name_lowercase}))
+                                  kwargs={'reduction_id' : reduction_id, 
+                                          'instrument_name': instrument_name_lowercase})+(
+                    "?message=Job %s sucessfully submitted."%jobID)
+                    )
 
 
 ###################

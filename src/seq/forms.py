@@ -7,10 +7,12 @@
     @author: M. Doucet, Oak Ridge National Laboratory
     @copyright: 2015 Oak Ridge National Laboratory
 """
+
 from django import forms
 from django.shortcuts import get_object_or_404
 from reduction.models import ReductionProcess, ReductionConfiguration
-from reduction.models import Instrument, Experiment
+from reduction.models import Instrument
+from reduction.forms import process_experiment
 import time
 import sys
 import json
@@ -19,123 +21,28 @@ import copy
 logger = logging.getLogger('seq.forms')
 
 
-def _process_experiment(reduction_obj, expt_string):
-    """
-        Process the experiment string of a form and find/create
-        the appropriate Experiment object
-        @param reduction_obj: ReductionProcess or ReductionConfiguration object
-        @param expt_string: string taken from the reduction form
-    """
-    # Find experiment
-    uncategorized_expt = Experiment.objects.get_uncategorized('seq')
-    expts = expt_string.split(',')
-    for item in expts:
-        # Experiments have unique names of no more than 24 characters
-        expt_objs = Experiment.objects.filter(name=item.upper().strip()[:24])
-        if len(expt_objs)>0:
-            if expt_objs[0] not in reduction_obj.experiments.all():
-                reduction_obj.experiments.add(expt_objs[0])
-        else:
-            expt_obj = Experiment(name=item.upper().strip()[:24])
-            expt_obj.save()
-            reduction_obj.experiments.add(expt_obj)
-    
-    # Clean up the uncategorized experiment object if we found
-    # at least one suitable experiment to associate with this reduction
-    if len(expts)>0:
-        if uncategorized_expt in reduction_obj.experiments.all():
-            try:
-                reduction_obj.experiments.remove(uncategorized_expt)
-            except:
-                logger.error("Could not remote uncategorized expt: %s" % sys.exc_value)
-    else:
-        reduction_obj.experiments.add(uncategorized_expt)
-
-
-class ReductionConfigurationForm(forms.Form):
-    """
-        Configuration form for EQSANS reduction
-    """
-    # General information
-    reduction_name = forms.CharField(required=False, initial='Configuration')
-    experiment = forms.CharField(required=True, initial='uncategorized')
-    
-
-    @classmethod
-    def data_from_db(cls, user, reduction_config):
-        """
-            Return a dictionary that we can use to populate the initial
-            contents of a form
-            @param user: User object
-            @param reduction_config: ReductionConfiguration object
-        """
-        data = reduction_config.get_data_dict()
-        # Ensure all the fields are there
-        for f in cls.base_fields:
-            if not f in data:
-                data[f]=cls.base_fields[f].initial
-        expt_list = reduction_config.experiments.all()
-        data['experiment'] = ', '.join([str(e.name) for e in expt_list if len(str(e.name))>0])
-        return data
-
-    def to_db(self, user, config_id=None):
-        """
-            Save a configuration to the database
-            @param user: User object
-            @param config_id: PK of the config object to update (None for creation)
-        """
-        eqsans = Instrument.objects.get(name='eqsans')
-        # Find or create a reduction process entry and update it
-        if config_id is not None:
-            reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=user)
-            reduction_config.name = self.cleaned_data['reduction_name']
-        else:
-            reduction_config = ReductionConfiguration(owner=user,
-                                                      instrument=eqsans,
-                                                      name=self.cleaned_data['reduction_name'])
-            reduction_config.save()
-        
-        # Find experiment
-        _process_experiment(reduction_config, self.cleaned_data['experiment'])
-                
-        # Set the parameters associated with the reduction process entry
-        try:
-            property_dict = copy.deepcopy(self.cleaned_data)
-            # Make sure we have a background transmission empty
-            property_dict['background_transmission_empty']=property_dict['transmission_empty']
-            # This configuration requires that we fit the beam center
-            property_dict['fit_direct_beam'] = True
-            # Set the sensitivity calculation flag as needed
-            if len(property_dict['sensitivity_file'])>0:
-                property_dict['perform_sensitivity']=True
-            properties = json.dumps(property_dict)
-            reduction_config.properties = properties
-            reduction_config.save()
-        except:
-            logger.error("Could not process reduction properties: %s" % sys.exc_value)
-        
-        return reduction_config.pk
-
 
 class ReductionOptions(forms.Form):
     """
         Reduction parameter form
+        URL: /reduction/eqsans/reduction/
+        
     """
     # Reduction name
     reduction_name = forms.CharField(required=False)
     reduction_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     expt_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     experiment = forms.CharField(required=False, initial='uncategorized')
-    nickname = forms.CharField(required=False, initial='')
-    
-    # General options
-    
-    
-    # Data
+    # 
     data_file = forms.CharField(required=True)
+    vanadium_run = forms.CharField(required=False, initial='')
+    processed_vanadium_run = forms.CharField(required=False, initial='')
     
+    grouping_file = forms.ChoiceField(["1 x 1", "2 x 1", "2 x 2", "4 x 1", "4 x 2"])
+    energy_binning_min = forms.FloatField(required=True, initial=-1.0)
+    energy_binning_step = forms.FloatField(required=True, initial=0.005)
+    energy_binning_max = forms.FloatField(required=True, initial=0.95)
     
-    # Background
     
     
     @classmethod
@@ -147,13 +54,6 @@ class ReductionOptions(forms.Form):
         xml  = "<Reduction>\n"
         xml += "<instrument_name>SEQ</instrument_name>\n"
         xml += "<timestamp>%s</timestamp>\n" % time.ctime()
-        xml += "<Instrument>\n"
-        xml += "  <name>SEQ</name>\n"
-
-        xml += "  <UseDataDirectory>False</UseDataDirectory>\n"
-        xml += "  <OutputDirectory></OutputDirectory>\n" # TODO
-        xml += "</Instrument>\n"
-
         xml += "</Reduction>"
 
         return xml
@@ -219,7 +119,7 @@ class ReductionOptions(forms.Form):
             logger.error("Could not process reduction properties: %s" % sys.exc_value)
         
         # Find experiment
-        _process_experiment(reduction_proc, self.cleaned_data['experiment'])
+        process_experiment(reduction_proc, self.cleaned_data['experiment'])
                 
         return reduction_proc.pk
     
@@ -325,6 +225,4 @@ class ReductionOptions(forms.Form):
             Check whether the form data would produce a valid reduction script
         """
         return True
-    
-
 

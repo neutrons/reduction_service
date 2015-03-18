@@ -7,7 +7,8 @@
 from django import forms
 from django.shortcuts import get_object_or_404
 from reduction.models import ReductionProcess, ReductionConfiguration
-from reduction.models import Instrument, Experiment
+from reduction.models import Instrument
+from reduction.forms import process_experiment
 import time
 import sys
 import json
@@ -15,42 +16,13 @@ import logging
 import copy
 logger = logging.getLogger('eqsans.forms')
 
-def _process_experiment(reduction_obj, expt_string):
-    """
-        Process the experiment string of a form and find/create
-        the appropriate Experiment object
-        @param reduction_obj: ReductionProcess or ReductionConfiguration object
-        @param expt_string: string taken from the reduction form
-    """
-    # Find experiment
-    uncategorized_expt = Experiment.objects.get_uncategorized('eqsans')
-    expts = expt_string.split(',')
-    for item in expts:
-        # Experiments have unique names of no more than 24 characters
-        expt_objs = Experiment.objects.filter(name=item.upper().strip()[:24])
-        if len(expt_objs)>0:
-            if expt_objs[0] not in reduction_obj.experiments.all():
-                reduction_obj.experiments.add(expt_objs[0])
-        else:
-            expt_obj = Experiment(name=item.upper().strip()[:24])
-            expt_obj.save()
-            reduction_obj.experiments.add(expt_obj)
-    
-    # Clean up the uncategorized experiment object if we found
-    # at least one suitable experiment to associate with this reduction
-    if len(expts)>0:
-        if uncategorized_expt in reduction_obj.experiments.all():
-            try:
-                reduction_obj.experiments.remove(uncategorized_expt)
-            except:
-                logger.error("Could not remote uncategorized expt: %s" % sys.exc_value)
-    else:
-        reduction_obj.experiments.add(uncategorized_expt)
+
 
 
 class ReductionConfigurationForm(forms.Form):
     """
         Configuration form for EQSANS reduction
+        URL: /reduction/eqsans/configuration/
     """
     # General information
     reduction_name = forms.CharField(required=False, initial='Configuration')
@@ -110,7 +82,7 @@ class ReductionConfigurationForm(forms.Form):
             reduction_config.save()
         
         # Find experiment
-        _process_experiment(reduction_config, self.cleaned_data['experiment'])
+        process_experiment(reduction_config, self.cleaned_data['experiment'])
                 
         # Set the parameters associated with the reduction process entry
         try:
@@ -134,6 +106,8 @@ class ReductionConfigurationForm(forms.Form):
 class ReductionOptions(forms.Form):
     """
         Reduction parameter form
+        URL: /reduction/eqsans/reduction/
+        
     """
     # Reduction name
     reduction_name = forms.CharField(required=False)
@@ -350,7 +324,7 @@ class ReductionOptions(forms.Form):
             logger.error("Could not process reduction properties: %s" % sys.exc_value)
         
         # Find experiment
-        _process_experiment(reduction_proc, self.cleaned_data['experiment'])
+        process_experiment(reduction_proc, self.cleaned_data['experiment'])
                 
         return reduction_proc.pk
     

@@ -2,13 +2,124 @@
 {% block header %}
 <script>
 
+    function get_icat_info(run_number, element_id) {
+  		// run_number sometimes is None, adding this to avoid unecessary HTTP calls
+    	if (run_number && run_number != "None" ) {
+	        $.ajax({ url: "{{ icat_url }}"+run_number+"/", 
+	                 success: function(data) {
+	                        $('#'+element_id).replaceWith("<span class='subtitle' id='"+element_id+"'>"+data.title+"</span>");
+	                      }
+	                 , dataType: "json", timeout: 30000, cache: true});
+        }
+    }
+    
+    $(function() {
+      $("#tabs").tabs({ active: 1 });
+      $("#submit_reduction_button").button();
+      $("#execute_job_button").button();
+    });
+    
+        /*
+    Function called only once! It populates the autocomplete from a remote json.
+    The filtering is made locally as the source is a local variable :)
+    */
+
+    $(function() {
+        var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=options_form.experiment.value %}";
+        var selector = '.runcomplete input';
+        if  ($(selector).is('*')) {
+            set_autocomplete(selector,jsonurl);
+        }
+    });
+    
+    $(function() {
+        var jsonurl = "{% url 'catalog_experiments_json' instrument=instrument %}";
+        var selector = '.experimentcomplete input';
+        if  ($(selector).is('*')) {
+            set_autocomplete(selector,jsonurl);
+        }
+    });
+    
+	/* if the user change the experiment number, the runs will be different!! */    
+	$(function() {
+	    $(".experimentcomplete input").on( "autocompletechange", function(event,ui) {
+	   		var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=12345 %}".replace(/12345/, $(this).val() );
+	   		console.log(jsonurl)
+	        var selector = '.runcomplete input';
+	        set_autocomplete(selector,jsonurl);
+		});
+	});
+	
+    
 </script>
 {% endblock %}
 
 {% block content %}
 <h2>Reduction parameters for SEQ</h2>
+<form action="" method="POST">{% csrf_token %}
+  <div class='tiled_area'><div class='flexible tile'>
+    <table class='property_table'>
+      <tr><th>{{ options_form.reduction_name.label_tag }}</th><td class='long_input'>{{ options_form.reduction_name }}</td></tr>
+      <tr><th title='Enter an experiment identifier or IPTS number'>{{ options_form.experiment.label_tag }}</th><td class='long_input experimentcomplete ui-widget'>{{ options_form.experiment }}</td></tr>
+    </table>
+  </div></div>
+  <p>
+  <div id="tabs">
+    <ul>
+      <li><a href="#tabs-1">Basic options</a></li>
+      <li><a href="#tabs-2">Data</a></li>
+    </ul>
+    <div id="tabs-1">
+      <table cellspacing="0" class="property_table">
+        <tbody>
+          <tr><th>{{ options_form.grouping_file.label_tag }}</th><td>{{ options_form.grouping_file.errors }}{{ options_form.grouping_file }}</td></tr>
+          
+          <tr><th> Energy binning <br/>[% of E<sub>guess</sub>] </th> <td> 
+      		<span {% if options_form.energy_binning_min.errors %}class='highlight_row' title='{{ options_form.energy_binning_min.errors }}'{% endif %}>
+      		E<sub>min</sub> {{options_form.energy_binning_min }} </span> 
+      		E<sub>step</sub> {{options_form.energy_binning_step }} 
+      		E<sub>max</sub> {{options_form.energy_binning_max }} </td>
+      	  </tr>
+        </tbody>
+      </table>
+    </div>
 
-<p> TODO! </p>
+    <div id="tabs-2">
+      <h3>Sample:</h3><br>
+      <table cellspacing="0" class="property_table">
+        <tbody>
+          <tr><th>{{ options_form.data_file.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.data_file.errors }}{{ options_form.data_file }} <span id='data_file_info'></span></td></tr>          
+          <tr><th>{{ options_form.vanadium_run.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.vanadium_run.errors }}{{ options_form.vanadium_run }} <span id='vanadium_run'></span></td></tr>
+          <tr><th>{{ options_form.processed_vanadium_run.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.processed_vanadium_run.errors }}{{ options_form.processed_vanadium_run }} <span id='processed_vanadium_run'></span></td></tr>
+        </tbody>
+      </table>
+      
+      {{ options_form.beam_radius }} {{ options_form.fit_frames_together }} {{ options_form.theta_dependent_correction }}
 
+    </div>
+  </div>
+  <p>
+    <input title="Click to apply your changes to this reduction" id="submit_reduction_button" type="submit" value="update"/>
+    {% if reduction_id %}<input title="Click to submit this reduction for execution" id="execute_job_button" type="button" value="submit" onclick='window.location.href = "{% url 'reduction_submit_job' 'eqsans' reduction_id %}"'/>{% endif %}
+  </p>
+</form>
+{% if message %}<div class='green'><b>{{ message }} </b></div>{% endif %}
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+    get_icat_info('{{ options_form.data_file.value }}','data_file_info');
+    get_icat_info('{{ options_form.vanadium_run.value }}','transmission_sample_info');
+    get_icat_info('{{ options_form.processed_vanadium_run.value }}','transmission_empty_info');
+
+    // enter submit blocker
+    $(window).keydown(function(event){
+      if(event.keyCode == 13) {
+        event.preventDefault();
+        return false;
+      }
+    });
+});
+</script>
 {% endblock %}
 

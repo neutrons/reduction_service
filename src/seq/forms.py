@@ -38,7 +38,7 @@ class ReductionOptions(forms.Form):
     vanadium_run = forms.CharField(required=False, initial='')
     processed_vanadium_run = forms.CharField(required=False, initial='')
     
-    grouping_file = forms.ChoiceField(["1 x 1", "2 x 1", "2 x 2", "4 x 1", "4 x 2"])
+    grouping_file = forms.ChoiceField([(11,"1 x 1"), (21,"2 x 1"), (22,"2 x 2"), (41,"4 x 1"), (42,"4 x 2")])
     energy_binning_min = forms.FloatField(required=True, initial=-1.0)
     energy_binning_step = forms.FloatField(required=True, initial=0.005)
     energy_binning_max = forms.FloatField(required=True, initial=0.95)
@@ -50,6 +50,8 @@ class ReductionOptions(forms.Form):
         """
             Create XML from the current data.
             @param data: dictionary of reduction properties
+            
+            #TODO
         """
         xml  = "<Reduction>\n"
         xml += "<instrument_name>SEQ</instrument_name>\n"
@@ -58,15 +60,12 @@ class ReductionOptions(forms.Form):
 
         return xml
 
-    def to_db(self, user, reduction_id=None, config_id=None):
+    def to_db(self, user, reduction_id=None):
         """
             Save reduction properties to DB.
-            If we supply a config_id, the properties from that
-            configuration will take precedence.
-            If no config_id is supplied and the reduction_id 
-            provided is found to be associated to a configuration,
-            make a new copy of the reduction object so that we
-            don't corrupt the configured reduction.
+            
+            
+            
             @param user: User object
             @param reduction_id: pk of the ReductionProcess entry
             @param config_id: pk of the ReductionConfiguration entry
@@ -81,36 +80,22 @@ class ReductionOptions(forms.Form):
         if reduction_id is not None:
             reduction_proc = get_object_or_404(ReductionProcess, pk=reduction_id, owner=user)
             # If the user changed the data to be reduced, create a new reduction process entry
-            new_reduction = not reduction_proc.data_file==self.cleaned_data['data_file']
-            # If the reduction process is configured and the config isn't the provided one
-            config_obj = reduction_proc.get_config()
-            new_reduction = new_reduction or (config_obj is not None and not config_obj.id == config_id)
+            new_reduction = not reduction_proc.data_file == self.cleaned_data['data_file']
         else:
             new_reduction = True
             
         if new_reduction:
-            eqsans = Instrument.objects.get(name='eqsans')
-            reduction_proc = ReductionProcess(owner=user,
-                                              instrument=eqsans)
+            seq = Instrument.objects.get(name='seq')
+            reduction_proc = ReductionProcess(owner=user, instrument=seq)
         reduction_proc.name = self.cleaned_data['reduction_name']
         reduction_proc.data_file = self.cleaned_data['data_file']
         reduction_proc.save()
         
         # Set the parameters associated with the reduction process entry
-        config_property_dict = {}
+
         property_dict = copy.deepcopy(self.cleaned_data)
         property_dict['reduction_id'] = reduction_proc.id
-        if config_id is not None:
-            reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=user)
-            if reduction_proc not in reduction_config.reductions.all():
-                reduction_config.reductions.add(reduction_proc)
-            config_property_dict = json.loads(reduction_config.properties)
-            property_dict.update(config_property_dict)
-            reduction_proc.name = reduction_config.name
-            reduction_proc.save()
-            for item in reduction_config.experiments.all():
-                if item not in reduction_proc.experiments.all():
-                    reduction_proc.experiments.add(item)
+
         try:
             properties = json.dumps(property_dict)
             reduction_proc.properties = properties
@@ -136,8 +121,7 @@ class ReductionOptions(forms.Form):
         for f in cls.base_fields:
             if not f in data:
                 data[f]=cls.base_fields[f].initial
-        if len(data['background_file'])>0:
-            data['subtract_background']=True
+
         expt_list = reduction_proc.experiments.all()
         data['experiment'] = ', '.join([str(e.name) for e in expt_list if len(str(e.name))>0])
         return data

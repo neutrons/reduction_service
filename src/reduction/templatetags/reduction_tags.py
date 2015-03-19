@@ -1,5 +1,5 @@
 """
-    Template tags for eqsans django app
+    Template tags for django app
     
     @author: M. Doucet, Oak Ridge National Laboratory
     @copyright: 2014 Oak Ridge National Laboratory

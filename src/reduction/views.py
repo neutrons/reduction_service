@@ -150,6 +150,8 @@ def experiment(request, ipts, instrument_name):
     if 'icat_error' in icat_ipts:
         template_values['user_alert'] = [icat_ipts['icat_error']]
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
+    logger.debug(pprint.pformat(reductions))
+    
     return render_to_response('%s/experiment.html' % instrument_name_lowercase,
                               template_values)
     
@@ -200,7 +202,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
         config_obj = reduction_proc.get_config()
     
     if request.method == 'POST':
-        logger.debug(pprint.pformat(request.POST.items()))
+        #logger.debug(pprint.pformat(request.POST.items()))
         
         options_form = instrument_forms.ReductionOptions(request.POST)
         # If the form is valid update or create an entry for it

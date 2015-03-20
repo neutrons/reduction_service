@@ -322,7 +322,7 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
     """
         Show the reduction properties for a given configuration,
         along with all the reduction jobs associated with it.
-        Called when clicked Reduce->Batch Button
+        Called when clicked Reduce->Batch Button, or new configuration
         
         @param request: The request object
         @param config_id: The ReductionConfiguration pk
@@ -334,7 +334,18 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
     instrument_name_lowercase = str.lower(str(instrument_name))
     instrument_forms = _import_forms_from_app(instrument_name_lowercase)
     
+    try:
+        # just to make sure ReductionConfigurationForm is available!
+        instrument_forms.ReductionConfigurationForm
+    except:
+            # This instrument has no configuration. E.g. SEQ
+        return redirect(reverse('reduction.views.reduction_options',
+                                        kwargs={'instrument_name' : instrument_name})+
+                                        "?message=%s has no configuration feature."%instrument_name_capitals)
+    
     template_values = {}
+    
+    
     
     # Create a form for the page
     default_extra = 1 if config_id is None and not (request.method == 'GET' and 'data_file' in request.GET) else 0
@@ -342,6 +353,7 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
         extra = int(request.GET.get('extra', default_extra))
     except:
         extra = default_extra
+
     ReductionOptionsSet = formset_factory(instrument_forms.ReductionOptions, extra=extra)
 
     # The list of relevant experiments will be displayed on the page

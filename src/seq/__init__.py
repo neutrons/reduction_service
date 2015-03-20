@@ -20,7 +20,7 @@ def get_reduction_dialog_settings(ipts):
     """
     dialog_json = [
        {
-          "name":"SEQ Single",
+          "name":"Single",
           "desc":"A <b>single</b> reduction, which will create a reduction job only for this run.",
           "href": get_new_reduction_url(),
           "parameters" : { "reduction_name" :  "Reduction for ${run}",
@@ -28,15 +28,7 @@ def get_reduction_dialog_settings(ipts):
                           "data_file" : "${run}"
                           }
        },
-       {
-          "name":"SEQ Batch",
-          "desc":"A reduction <b>batch</b>, which will create a configuration that you can use with multiple runs.",
-          "href": get_new_batch_url(),
-          "parameters" : { "reduction_name" :  "Batch reduction for exp %s and ${run}"%ipts,
-                          "experiment" : ipts,
-                          "data_file" : "${run}"
-                          }
-       }
+
     ]
     #return dialog_json;
     return json.dumps(dialog_json);

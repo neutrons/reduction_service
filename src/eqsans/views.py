@@ -25,6 +25,8 @@ import StringIO
 import logging
 import inspect
 
+from reduction_service.view_util import Breadcrumbs
+
 logger = logging.getLogger('eqsans')
     
 @login_required
@@ -38,14 +40,13 @@ def reduction_configuration_query(request, remote_set_id):
     
     job_set = get_object_or_404(RemoteJobSet, pk=remote_set_id)
     
-    breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('reduction.views.reduction_home',
-                                                                           kwargs={'instrument_name': 'eqsans' })
-    breadcrumbs += " &rsaquo; <a href='%s'>configuration %s</a>" % (reverse('reduction.views.reduction_configuration',
-                                        kwargs={'config_id' : job_set.configuration.id, 'instrument_name': 'eqsans' }), job_set.configuration.id)
-    breadcrumbs += " &rsaquo; <a href='%s'>jobs</a>" % reverse('reduction.views.reduction_jobs',
-                                                               kwargs={'instrument_name': 'eqsans' })
-    breadcrumbs += " &rsaquo; job results"
+    breadcrumbs = Breadcrumbs()
+    breadcrumbs.append('eqsans reduction',reverse('reduction.views.reduction_home',
+                                                  kwargs={'instrument_name': 'eqsans' }))
+    breadcrumbs.append_configuration('eqsans', job_set.configuration.id)
+    breadcrumbs.append('jobs',reverse('reduction.views.reduction_jobs',
+                                      kwargs={'instrument_name': 'eqsans' }))
+    breadcrumbs.append("job results")
     
     template_values = {'remote_set_id': remote_set_id,
                        'configuration_title': job_set.configuration.name,
@@ -136,17 +137,14 @@ def job_details(request, job_id):
     
     remote_job = get_object_or_404(RemoteJob, remote_id=job_id)
 
-    breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>eqsans reduction</a>" % reverse('reduction.views.reduction_home',
-                                                                           kwargs={'instrument_name': 'eqsans' })
-    breadcrumbs += " &rsaquo; <a href='%s'>reduction %s</a>" % (reverse('reduction.views.reduction_options', 
-                                                                        kwargs={'instrument_name': 'eqsans',
-                                                                                'reduction_id': remote_job.reduction.id }),
-                                                                remote_job.reduction.id)
-    breadcrumbs += " &rsaquo; <a href='%s'>jobs</a>" % reverse('reduction.views.reduction_jobs',
-                                                               kwargs={'instrument_name': 'eqsans' })
-    breadcrumbs += " &rsaquo; %s" % job_id
-
+    breadcrumbs = Breadcrumbs()
+    breadcrumbs.append('eqsans reduction',reverse('reduction.views.reduction_home',
+                                                  kwargs={'instrument_name': 'eqsans' }))
+    breadcrumbs.append_reduction_options('eqsans', remote_job.reduction.id )
+    breadcrumbs.append('jobs',reverse('reduction.views.reduction_jobs',
+                                      kwargs={'instrument_name': 'eqsans' }))
+    breadcrumbs.append("job %s" % job_id)
+    
     template_values = {'remote_job': remote_job,
                        'parameters': remote_job.get_data_dict(),
                        'reduction_id': remote_job.reduction.id,

@@ -12,6 +12,7 @@ from django.conf import settings
 
 import reduction_service.view_util
 import remote.view_util
+from reduction_service.view_util import Breadcrumbs
 
 import logging
 
@@ -43,7 +44,7 @@ def authenticate(request):
         if form.is_valid():
             status, reason = remote.view_util.authenticate(request)
             if status is not 200:
-                breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
+                breadcrumbs = Breadcrumbs()                
                 message = "Could not authenticate with Fermi"
                 if len(reason)>0:
                     message += "<p>Server message: %s" % reason

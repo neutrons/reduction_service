@@ -11,11 +11,10 @@ from django.conf import settings
 import logging
 import sys
 import inspect
-import time
-import pprint
 
 logger = logging.getLogger('catalog')
 
+    
 def fill_template_values(request, **template_args):
     """
         Fill template values for catalog app

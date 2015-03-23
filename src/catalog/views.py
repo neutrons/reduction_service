@@ -22,6 +22,8 @@ import time
 import inspect
 import pprint
 
+from reduction_service.view_util import Breadcrumbs
+
 logger = logging.getLogger('catalog')
 
 @login_required
@@ -30,7 +32,7 @@ def instrument_list(request):
         Return a list of available instruments
         @param request: request object
     """
-    breadcrumbs = "home"
+    breadcrumbs = Breadcrumbs("home", None)
     instruments = get_instruments()
     
     logger.debug("Catalog: %s : List of instruments = %s"%(inspect.stack()[0][3],instruments))
@@ -52,7 +54,10 @@ def experiment_list(request, instrument):
         @param request: request object
         @param instrument: instrument name
     """
-    breadcrumbs = "<a href='%s'>home</a> &rsaquo; %s catalog" % (reverse('home'), instrument.lower())
+    
+    breadcrumbs = Breadcrumbs("home", reverse('home'))
+    breadcrumbs.append("%s catalog"%instrument.lower())
+    
     experiments = get_experiments(instrument.upper())
     
     logger.debug("Catalog: %s : len(experiment list) = %s for %s"%(inspect.stack()[0][3],len(experiments),instrument))
@@ -82,10 +87,11 @@ def experiment_run_list(request, instrument, ipts):
     
     logger.debug("Catalog: %s : instrument = %s, IPTS = %s"%(inspect.stack()[0][3],instrument,ipts))
     
-    breadcrumbs = "<a href='%s'>home</a> &rsaquo; <a href='%s'>%s catalog</a> &rsaquo; %s" % \
-        (reverse('catalog.views.instrument_list'),
-         reverse('catalog.views.experiment_list', args=[instrument]),
-         instrument.lower(),ipts.lower())
+    
+    
+    breadcrumbs = Breadcrumbs("home", reverse('catalog.views.instrument_list'))
+    breadcrumbs.append_experiment_list(instrument)
+    breadcrumbs.append(ipts.lower())
         
     template_values = {'instrument': instrument,
                        'experiment': ipts,
@@ -131,8 +137,10 @@ def download_autoreduced(request, instrument, ipts):
     # Start a new transaction
     transaction = remote.view_util.transaction(request, start=True)
     if transaction is None:
-        breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-        breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % (reverse('catalog.views.experiment_list', args=[instrument]), instrument)
+        
+        breadcrumbs = Breadcrumbs()
+        breadcrumbs.append_experiment_list(instrument)
+        
         template_values = {'message':"Could not connect to Fermi and establish transaction",
                            'back_url': reverse('catalog.views.experiment_list', args=[instrument]),
                            'breadcrumbs': breadcrumbs,}

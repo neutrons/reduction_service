@@ -12,6 +12,9 @@ import remote.view_util
 import logging
 logger = logging.getLogger('reduction')
 
+
+
+
 def get_latest_job(request, reduction_process):
     """
         Return the latest completed job for this reduction

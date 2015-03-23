@@ -20,6 +20,8 @@ import logging
 from django.template.defaultfilters import pprint
 import pprint
 
+from reduction_service.view_util import Breadcrumbs
+
 logger = logging.getLogger('reduction')
 
 def _import_forms_from_app(instrument_name_lowercase):
@@ -43,8 +45,10 @@ def reduction_home(request, instrument_name):
     instrument = get_object_or_404(Instrument, name=instrument_name)
     
     experiments = Experiment.objects.experiments_for_instrument(instrument, owner=request.user)
-
-    breadcrumbs = "<a href='%s'>home</a> &rsaquo; %s reduction" % (reverse(settings.LANDING_VIEW), instrument_name)
+    
+    breadcrumbs = Breadcrumbs()
+    breadcrumbs.append("%s reduction"%instrument_name)    
+    
     template_values = {'title': str.capitalize(str(instrument_name)) + ' Reduction',
                        'experiments':experiments,
                        'breadcrumbs': breadcrumbs,
@@ -132,11 +136,10 @@ def experiment(request, ipts, instrument_name):
             # data_dict['latest_job'] = reverse('eqsans.views.reduction_configuration_query', args=[latest_job.id])
         configurations.append(data_dict)
     
-    breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % (reverse('reduction.views.reduction_home', args=[instrument_name_lowercase]),
-                                                                     instrument_name_lowercase)
+    breadcrumbs = Breadcrumbs()
+    breadcrumbs.append_reduction(instrument_name_lowercase)
+    breadcrumbs.append(ipts.lower())
     
-    breadcrumbs += " &rsaquo; %s" % ipts.lower()
     template_values = {'reductions': reductions,
                        'configurations': configurations,
                        'title': '%s %s' % (instrument_name_capitals, ipts),
@@ -150,7 +153,7 @@ def experiment(request, ipts, instrument_name):
     if 'icat_error' in icat_ipts:
         template_values['user_alert'] = [icat_ipts['icat_error']]
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    logger.debug(pprint.pformat(reductions))
+    #logger.debug(pprint.pformat(reductions))
     
     return render_to_response('%s/experiment.html' % instrument_name_lowercase,
                               template_values)
@@ -222,18 +225,15 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
                 initial_values['experiment'] = request.GET['expt_name']
         options_form = instrument_forms.ReductionOptions(initial=initial_values)
     
-    breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % (reverse('reduction.views.reduction_home', args=[instrument_name_lowercase]),
-                                                                instrument_name_lowercase)
-
+    breadcrumbs = Breadcrumbs()
+    breadcrumbs.append_reduction(instrument_name_lowercase)
+    
     if config_obj is not None:
-        breadcrumbs += " &rsaquo; <a href='%s'>configuration %s</a>" % (reverse('reduction.views.reduction_configuration',  
-                                                                                kwargs={'config_id' : config_obj.id, 'instrument_name' : instrument_name})
-                                                                        , config_obj.id)
+        breadcrumbs.append_configuration(instrument_name_lowercase,config_obj.id)
     if reduction_id is not None:
-        breadcrumbs += " &rsaquo; reduction %s" % reduction_id
+        breadcrumbs.append("reduction %s" % reduction_id)
     else:
-        breadcrumbs += " &rsaquo; new reduction"
+        breadcrumbs.append("new reduction")
 
     # ICAT info url
     icat_url = reverse('catalog.views.run_info', args=[instrument_name_capitals, '0000'])
@@ -304,10 +304,9 @@ def reduction_jobs(request, instrument_name):
                  }
         config_data.append(j_data)
         
-    
-    breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % (reverse('reduction.views.reduction_home', args=[instrument_name]), instrument_name)
-    breadcrumbs += " &rsaquo; jobs"
+    breadcrumbs = Breadcrumbs()
+    breadcrumbs.append_reduction(str.lower(str(instrument_name)))
+    breadcrumbs.append("jobs")
     template_values = {'status_data': status_data,
                        'config_data': config_data,
                        'back_url': request.path,
@@ -408,13 +407,12 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
             expt_list = reduction_config.experiments.all()
             job_list = RemoteJobSet.objects.filter(configuration=reduction_config)
 
-    breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % (reverse('reduction.views.reduction_home', args=[instrument_name_lowercase]),
-                                                                     instrument_name_lowercase)
+    breadcrumbs = Breadcrumbs()
+    breadcrumbs.append_reduction(instrument_name_lowercase)
     if config_id is not None:
-        breadcrumbs += " &rsaquo; configuration %s" % config_id
+        breadcrumbs.append("configuration %s" % config_id)
     else:
-        breadcrumbs += " &rsaquo; new configuration"
+        breadcrumbs.append("new configuration")
 
     # ICAT info url
     icat_url = reverse('catalog.views.run_info', args=[instrument_name_capitals, '0000'])
@@ -539,11 +537,10 @@ def reduction_script(request, reduction_id, instrument_name):
     
     data = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id)
     
-    breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-    breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % (reverse('reduction.views.reduction_home',
-                                                                        args=[instrument_name_lowercase]),
-                                                                instrument_name_lowercase)
-    breadcrumbs += " &rsaquo; <a href='.'>reduction %s</a> &rsaquo; script" % reduction_id
+    breadcrumbs = Breadcrumbs()
+    breadcrumbs.append_reduction(instrument_name_lowercase)
+    breadcrumbs.append("reduction %s"%reduction_id,".")
+    breadcrumbs.append("script")
     
     template_values = {'reduction_name': data['reduction_name'],
                        'breadcrumbs': breadcrumbs,
@@ -615,11 +612,10 @@ def submit_job(request, reduction_id, instrument_name):
     transaction = remote.view_util.transaction(request, start=True)
     if transaction is None:
         
-        breadcrumbs = "<a href='%s'>home</a>" % reverse(settings.LANDING_VIEW)
-        breadcrumbs += " &rsaquo; <a href='%s'>%s reduction</a>" % (reverse('reduction.views.reduction_home', args=[instrument_name_lowercase]),
-                                                                    instrument_name_lowercase)
-        breadcrumbs += " &rsaquo; <a href='%s'>reduction</a>" % reverse('reduction.views.reduction_options',
-                                  kwargs={'reduction_id' : reduction_id, 'instrument_name': instrument_name_lowercase})
+        breadcrumbs = Breadcrumbs()
+        breadcrumbs.append_reduction(instrument_name_lowercase)
+        breadcrumbs.append_reduction_options(instrument_name_lowercase, reduction_id)
+        
         template_values = {'message':"Could not connect to Fermi and establish transaction",
                            'back_url': reverse('reduction.views.reduction_options',
                                   kwargs={'reduction_id' : reduction_id, 'instrument_name': instrument_name_lowercase}),

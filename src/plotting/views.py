@@ -5,6 +5,7 @@ from django.conf import settings
 from django.http import HttpResponse
 import reduction_service.view_util
 from plotting.models import Plot1D, Plot2D, PlotLayout
+from reduction_service.view_util import Breadcrumbs
 
 import logging
 logger = logging.getLogger('plotting')
@@ -66,7 +67,9 @@ def adjust_2d(request, plot_id):
         
     """
     plot_2d = get_object_or_404(Plot2D, pk=plot_id, owner=request.user)
-    breadcrumbs = "<a href='%s'>home</a>  &rsaquo; plotting" % reverse(settings.LANDING_VIEW)
+    breadcrumbs = Breadcrumbs()
+    breadcrumbs.append("plotting")
+    
     template_values = {'plot_2d': plot_2d,
                        'breadcrumbs': breadcrumbs}
     if 'back' in request.GET:

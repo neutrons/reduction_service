@@ -11,6 +11,7 @@ from django.conf import settings
 from users.view_util import fill_template_values
 
 import remote.view_util
+from reduction_service.view_util import Breadcrumbs
 
 def perform_login(request):
     """
@@ -39,7 +40,8 @@ def perform_login(request):
         return redirect(reverse(settings.LANDING_VIEW))
     else:
         # Breadcrumbs
-        breadcrumbs = "<a href='%s'>home</a> &rsaquo; login" % reverse(settings.LANDING_VIEW)
+        breadcrumbs = Breadcrumbs()
+        breadcrumbs.append("login")
         
         template_values = {'breadcrumbs': breadcrumbs,
                            'login_failure': login_failure}

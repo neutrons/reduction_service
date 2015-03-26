@@ -15,9 +15,10 @@ import json
 import logging
 import copy
 import os.path
-from django.template import Template, Context
 import pprint
-import re
+
+
+from reduction_service.forms_util import build_script
 
 logger = logging.getLogger('eqsans.forms')
 
@@ -359,22 +360,13 @@ class ReductionOptions(forms.Form):
             @param data: dictionary of reduction properties
             @param output_path: output path to use in the script
         """
-        script = None
+        
         script_file_path = os.path.join(scripts_location,'reduce.py')
-        if os.path.isfile(script_file_path):
-            with open(script_file_path) as f:
-                lines = f.readlines()
-                text = '\n'.join(lines)
-                template = Template(text)
-                default_values = get_default_values_from_form(cls.base_fields)
-                data.update(default_values)
-                data.update({'output_path' : output_path})
-                logger.debug(pprint.pformat(data))
-                context = Context(data)
-                script = template.render(context)
-                script_filtered = "\n".join([ll.rstrip() for ll in script.splitlines() if ll.strip()])
-        logger.debug(script_filtered)
+        data.update({'output_path' : output_path})
+        script = build_script(script_file_path, cls, data)
+        logger.debug("\n-------------------------\n"+script+"\n-------------------------\n")
         return script
+        
 
     def is_reduction_valid(self):
         """
@@ -383,13 +375,5 @@ class ReductionOptions(forms.Form):
         return True
     
 
-def get_default_values_from_form(base_fields):
-    """
-    Iterates form.base_fields and returns a new dic
-    with key_default = form.base_fields[key].initial
-    """
-    out_dic = {}
-    for k,v in base_fields.iteritems():
-        out_dic[k+"_default"] = v.initial
-    return out_dic
+
         

@@ -20,8 +20,8 @@ TotalChargeNormalization()
 SetAbsoluteScale({{ absolute_scale_factor }})
 {% endif %}
 
-AzimuthalAverage(n_bins=100, n_subpix=1, log_binning=False) # TODO
-IQxQy(nbins=100) # TODO
+AzimuthalAverage(n_bins=100, n_subpix=1, log_binning=False)
+IQxQy(nbins=100)
 OutputPath('{{ output_path }}')  
         
 UseConfigTOFTailsCutoff(True)
@@ -41,7 +41,7 @@ DarkCurrentFile='{{dark_current_run}}'
 {% if fit_direct_beam %}
 DirectBeamCenter('{{fit_direct_beam}}') 
 {% else %}
-SetBeamCenter({{beam_center_x}},{{beam_center_y}})
+SetBeamCenter({{beam_center_x}}, {{beam_center_y}})
 {% endif %}
 
 {% if perform_sensitivity %}            
@@ -59,7 +59,7 @@ beam_radius_val = {{beam_radius}}
 beam_radius_val = {{beam_radius_default}}
 {% endif %}
 
-DirectBeamTransmission({{transmission_sample}}, {{transmission_empty}}, beam_radius=beam_radius_val)
+DirectBeamTransmission('{{transmission_sample}}', '{{transmission_empty}}', beam_radius=beam_radius_val)
         
 ThetaDependentTransmission({{theta_dependent_correction}})
 

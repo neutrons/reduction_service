@@ -1,7 +1,6 @@
 # EQSANS reduction script
 import mantid
 from mantid.simpleapi import *
-
 from reduction_workflow.instruments.sans.sns_command_interface import *
 
 config = ConfigService.Instance()
@@ -55,12 +54,12 @@ NoSensitivityCorrection()
 {% endif %}
 
 {% if beam_radius %}
-beam_radius={{beam_radius}}
+beam_radius_val = {{beam_radius}}
 {% else %}
-beam_radius={{cls.base_fields['beam_radius'].initial}}
+beam_radius_val = {{beam_radius_default}}
 {% endif %}
 
-DirectBeamTransmission({{transmission_sample}}, {{transmission_empty}}, beam_radius={{beam_radius}})
+DirectBeamTransmission({{transmission_sample}}, {{transmission_empty}}, beam_radius=beam_radius_val)
         
 ThetaDependentTransmission({{theta_dependent_correction}})
 
@@ -76,7 +75,7 @@ CombineTransmissionFits({{fit_frames_together}})
 Background('{{background_file}}')
 BckThetaDependentTransmission({{theta_dependent_correction}})
 BckCombineTransmissionFits({{fit_frames_together}})
-BckDirectBeamTransmission('{{background_transmission_sample}}', '{{background_transmission_empty}}', beam_radius=beam_radius)
+BckDirectBeamTransmission('{{background_transmission_sample}}', '{{background_transmission_empty}}', beam_radius=beam_radius_val)
 {% endif %}    
         
 SaveIq(process='None')

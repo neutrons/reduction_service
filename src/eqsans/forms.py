@@ -14,9 +14,14 @@ import sys
 import json
 import logging
 import copy
+import os.path
+from django.template import Template, Context
+import pprint
+import re
+
 logger = logging.getLogger('eqsans.forms')
 
-
+scripts_location = os.path.join(os.path.dirname(__file__),"scripts")
 
 
 class ReductionConfigurationForm(forms.Form):
@@ -354,75 +359,21 @@ class ReductionOptions(forms.Form):
             @param data: dictionary of reduction properties
             @param output_path: output path to use in the script
         """
-        script =  "# EQSANS reduction script\n"
-        script += "import mantid\n"
-        script += "from mantid.simpleapi import *\n"
-        script += "from reduction_workflow.instruments.sans.sns_command_interface import *\n"
-        script += "config = ConfigService.Instance()\n"
-        script += "config['instrumentName']='EQSANS'\n"
-
-        if 'mask_file' in data and len(data['mask_file'])>0:
-            script += "mask_ws = Load(Filename=\"%s\")\n" % data['mask_file']
-            script += "ws, masked_detectors = ExtractMask(InputWorkspace=mask_ws, OutputWorkspace=\"__edited_mask\")\n"
-            script += "detector_ids = [int(i) for i in masked_detectors]\n"
-
-        script += "EQSANS()\n"
-        script += "SolidAngle(detector_tubes=True)\n"
-        script += "TotalChargeNormalization()\n"
-        if data['absolute_scale_factor'] is not None:
-            script += "SetAbsoluteScale(%s)\n" % data['absolute_scale_factor']
-
-        script += "AzimuthalAverage(n_bins=100, n_subpix=1, log_binning=False)\n" # TODO
-        script += "IQxQy(nbins=100)\n" # TODO
-        script += "OutputPath(\"%s\")\n" % output_path
-        
-        script += "UseConfigTOFTailsCutoff(True)\n"
-        script += "UseConfigMask(True)\n"
-        script += "Resolution(sample_aperture_diameter=%s)\n" % data['sample_aperture_diameter']
-        script += "PerformFlightPathCorrection(True)\n"
-        
-        if 'mask_file' in data and len(data['mask_file'])>0:
-            script += "MaskDetectors(detector_ids)\n"
-        if data['dark_current_run'] and len(data['dark_current_run'])>0:
-            script += "DarkCurrentFile='%s',\n" % data['dark_current_run']
-        
-        if data['fit_direct_beam']:
-            script += "DirectBeamCenter(\"%s\")\n" % data['direct_beam_run']
-        else:
-            script += "SetBeamCenter(%s, %s)\n" % (data['beam_center_x'],
-                                                   data['beam_center_y'])
-            
-        if data['perform_sensitivity']:
-            script += "SensitivityCorrection(\"%s\", min_sensitivity=%s, max_sensitivity=%s, use_sample_dc=True)\n" % \
-                        (data['sensitivity_file'], data['sensitivity_min'], data['sensitivity_max'])
-        else:
-            script += "NoSensitivityCorrection()\n"
-            
-        beam_radius = data['beam_radius']
-        if beam_radius is None:
-            beam_radius=cls.base_fields['beam_radius'].initial
-        script += "DirectBeamTransmission(\"%s\", \"%s\", beam_radius=%s)\n" % (data['transmission_sample'],
-                                                                                data['transmission_empty'],
-                                                                                beam_radius)
-        
-        script += "ThetaDependentTransmission(%s)\n" % data['theta_dependent_correction']
-        if data['nickname'] is not None and len(data['nickname'])>0:
-            script += "AppendDataFile([\"%s\"], \"%s\")\n" % (data['data_file'], data['nickname'])
-        else:
-            script += "AppendDataFile([\"%s\"])\n" % data['data_file']
-        script += "CombineTransmissionFits(%s)\n" % data['fit_frames_together']
-        
-        if data['subtract_background']:
-            script += "Background(\"%s\")\n" % data['background_file']
-            script += "BckThetaDependentTransmission(%s)\n" % data['theta_dependent_correction']
-            script += "BckCombineTransmissionFits(%s)\n" % data['fit_frames_together']
-            script += "BckDirectBeamTransmission(\"%s\", \"%s\", beam_radius=%g)\n" % (data['background_transmission_sample'],
-                                                                                       data['background_transmission_empty'],
-                                                                                       beam_radius)
-        
-        script += "SaveIq(process='None')\n"
-        script += "Reduce()"
-
+        script = None
+        script_file_path = os.path.join(scripts_location,'reduce.py')
+        if os.path.isfile(script_file_path):
+            with open(script_file_path) as f:
+                lines = f.readlines()
+                text = '\n'.join(lines)
+                template = Template(text)
+                default_values = get_default_values_from_form(cls.base_fields)
+                data.update(default_values)
+                data.update({'output_path' : output_path})
+                logger.debug(pprint.pformat(data))
+                context = Context(data)
+                script = template.render(context)
+                script_filtered = "\n".join([ll.rstrip() for ll in script.splitlines() if ll.strip()])
+        logger.debug(script_filtered)
         return script
 
     def is_reduction_valid(self):
@@ -432,4 +383,13 @@ class ReductionOptions(forms.Form):
         return True
     
 
-
+def get_default_values_from_form(base_fields):
+    """
+    Iterates form.base_fields and returns a new dic
+    with key_default = form.base_fields[key].initial
+    """
+    out_dic = {}
+    for k,v in base_fields.iteritems():
+        out_dic[k+"_default"] = v.initial
+    return out_dic
+        

@@ -89,8 +89,8 @@
       <table cellspacing="0" class="property_table">
         <tbody>
           <tr><th>{{ options_form.data_file.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.data_file.errors }}{{ options_form.data_file }} <span id='data_file_info'></span></td></tr>          
-          <tr><th>{{ options_form.vanadium_run.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.vanadium_run.errors }}{{ options_form.vanadium_run }} <span id='vanadium_run'></span></td></tr>
-          <tr><th>{{ options_form.processed_vanadium_run.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.processed_vanadium_run.errors }}{{ options_form.processed_vanadium_run }} <span id='processed_vanadium_run'></span></td></tr>
+          <tr><th>{{ options_form.raw_vanadium.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.raw_vanadium.errors }}{{ options_form.raw_vanadium }} <span id='raw_vanadium'></span></td></tr>
+          <tr><th>{{ options_form.processed_vanadium.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.processed_vanadium.errors }}{{ options_form.processed_vanadium }} <span id='processed_vanadium'></span></td></tr>
         </tbody>
       </table>
       
@@ -109,8 +109,8 @@
 
 $(document).ready(function() {
     get_icat_info('{{ options_form.data_file.value }}','data_file_info');
-    get_icat_info('{{ options_form.vanadium_run.value }}','transmission_sample_info');
-    get_icat_info('{{ options_form.processed_vanadium_run.value }}','transmission_empty_info');
+    get_icat_info('{{ options_form.raw_vanadium.value }}','raw_vanadium_info');
+    get_icat_info('{{ options_form.processed_vanadium.value }}','processed_vanadium_info');
 
     // enter submit blocker
     $(window).keydown(function(event){

@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from reduction.models import ReductionProcess, ReductionConfiguration
 from reduction.models import Instrument
 from reduction.forms import process_experiment
+from reduction_service.forms_util import build_script
 import time
 import sys
 import json
@@ -17,13 +18,8 @@ import copy
 import os.path
 import pprint
 
-
-from reduction_service.forms_util import build_script
-
 logger = logging.getLogger('eqsans.forms')
-
 scripts_location = os.path.join(os.path.dirname(__file__),"scripts")
-
 
 class ReductionConfigurationForm(forms.Form):
     """

@@ -546,8 +546,7 @@ def reduction_script(request, reduction_id, instrument_name):
                        'breadcrumbs': breadcrumbs,
                        'code': instrument_forms.ReductionOptions.as_mantid_script(data) }
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    return render_to_response('%s/reduction_script.html' % instrument_name_lowercase,
-                              template_values)
+    return render_to_response('reduction/reduction_script.html', template_values)
 
 @login_required
 def py_reduction_script(request, reduction_id, instrument_name):

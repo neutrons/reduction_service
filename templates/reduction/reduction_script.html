@@ -11,9 +11,11 @@
 <h2>Mantid reduction script</h2>
 Reduction name: <a href='.' title='Go back to reduction parameters'>{{ reduction_name|default:"No title set" }}</a>
 
-<div class="reduction_code">
-<pre><code>{{ code|safe }}</code></pre>
+<div>
+<pre><code class="python">{{ code|safe }}</code></pre>
 </div>
+
+<script>hljs.initHighlightingOnLoad();</script>
 
 {% if errors %}
 <div class="error_section">

@@ -56,11 +56,11 @@
       <div class="tool_area">
         <b>Reduction</b><br>
         <ul>
-          <li><a href="{% url 'reduction_reduction_home' instrument %}" title="Go to reduction home for this instrument">reduction home</a></li>
+          <li><a href="{% url 'reduction_home' instrument %}" title="Go to reduction home for this instrument">reduction home</a></li>
           <li><a href="{% url 'reduction_new_configuration' instrument %}" title="Start a new configuration to use with multiple reductions">new configuration</a></li>
-          <li><a href="{% url 'reduction_new_reduction' instrument %}" title="Start a new single reduction">new reduction</a></li>
+          <li><a href="{% url 'reduction_options' instrument %}" title="Start a new single reduction">new reduction</a></li>
           {% if reduction_id %}
-          <li><a href="{% url 'reduction_reduction_script' instrument reduction_id%}" title="See reduction script">see script</a></li>
+          <li><a href="{% url 'reduction_script' instrument reduction_id%}" title="See reduction script">see script</a></li>
           <li><a href="{% url 'reduction_py_reduction_script' instrument reduction_id%}" title="Download python script">download python</a></li>
           <li><a href="{% url 'reduction_xml_reduction_script' instrument reduction_id%}" title="Download Mantid xml file">download xml</a></li>
           {% endif %}
@@ -69,12 +69,12 @@
       <div class="tool_area">
         <b>Remote jobs</b><br>
         <ul>
-          <li><a href="{% url 'reduction_reduction_jobs' instrument%}" title="See remote jobs">see all jobs</a></li>
+          <li><a href="{% url 'reduction_jobs' instrument%}" title="See remote jobs">see all jobs</a></li>
           {% if config_id %}
-          <li><a href="{% url 'reduction_configuration_submit' instrument config_id %}" title="Submit jobs for this configuration">submit jobs</a></li>
+          <li><a href="{% url 'configuration_submit' instrument config_id %}" title="Submit jobs for this configuration">submit jobs</a></li>
           {% if existing_job_sets and existing_job_sets|length > 0 %}
           {% for job in existing_job_sets %}
-          <li><a href="{% url 'reduction_configuration_query' instrument job.id%}" title="See job details">job set {{ job.id }}</a></li>
+          <li><a href="{% url 'configuration_query' instrument job.id%}" title="See job details">job set {{ job.id }}</a></li>
           {% endfor %}
           {% endif %}
           {% endif %}
@@ -87,7 +87,7 @@
           {% endif %}
           {% endif %}
           {% if trans_id %}
-          <li><a href="{% url 'remote_stop_transaction' trans_id %}?back_url={% url 'reduction_reduction_jobs' instrument %}" title="Delete this job and all the files associated with this transaction">delete this job</a></li>
+          <li><a href="{% url 'remote_stop_transaction' trans_id %}?back_url={% url 'reduction_jobs' instrument %}" title="Delete this job and all the files associated with this transaction">delete this job</a></li>
           {% endif %}
         </ul>
       </div>

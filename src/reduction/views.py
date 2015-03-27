@@ -133,7 +133,7 @@ def experiment(request, ipts, instrument_name):
         if len(latest_jobs) > 0:
             latest_job = latest_jobs.latest('id')
             data_dict['latest_job'] = latest_job.id
-            # data_dict['latest_job'] = reverse('eqsans.views.reduction_configuration_query', args=[latest_job.id])
+            # data_dict['latest_job'] = reverse('eqsans.views.configuration_query', args=[latest_job.id])
         configurations.append(data_dict)
     
     breadcrumbs = Breadcrumbs()
@@ -439,7 +439,7 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
 
     
 @login_required
-def reduction_configuration_submit(request, config_id, instrument_name):
+def configuration_submit(request, config_id, instrument_name):
     """
         Submit all reductions for this configuration.
         @param request: request object
@@ -480,7 +480,7 @@ def reduction_configuration_submit(request, config_id, instrument_name):
 
 
 @login_required
-def reduction_configuration_job_delete(request, config_id, reduction_id, instrument_name):
+def configuration_job_delete(request, config_id, reduction_id, instrument_name):
     """
         Delete a reduction from a configuration
         @param request: request object
@@ -500,7 +500,7 @@ def reduction_configuration_job_delete(request, config_id, reduction_id, instrum
                                         kwargs={'config_id' : config_id, 'instrument_name': instrument_name_lowercase}))
     
 @login_required
-def reduction_configuration_delete(request, config_id, instrument_name):
+def configuration_delete(request, config_id, instrument_name):
     """
         Delete a configuration
         @param request: request object
@@ -632,7 +632,7 @@ def submit_job(request, reduction_id, instrument_name):
                         transaction=transaction)
         job.save()
         logger.debug("Created a RemoteJob: %s",job)
-    return redirect(reverse('reduction_reduction',
+    return redirect(reverse('reduction',
                                   kwargs={'reduction_id' : reduction_id, 
                                           'instrument_name': instrument_name_lowercase})+(
                     "?message=Job %s sucessfully submitted."%jobID)
@@ -643,17 +643,17 @@ def submit_job(request, reduction_id, instrument_name):
 
     
 @login_required
-def reduction_configuration_query(request, remote_set_id, instrument_name):
+def configuration_query(request, remote_set_id, instrument_name):
     logger.debug("%s remote_set_id=%s instrument_name=%s"%(inspect.stack()[0][3],remote_set_id,instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
-    return redirect(reverse('%s.views.reduction_configuration_query'%instrument_name_lowercase,
+    return redirect(reverse('%s.views.configuration_query'%instrument_name_lowercase,
                                   kwargs={'remote_set_id' : remote_set_id,}))
     
 @login_required
-def reduction_configuration_iq(request, remote_set_id, instrument_name):
+def configuration_iq(request, remote_set_id, instrument_name):
     logger.debug("%s remote_set_id=%s instrument_name=%s"%(inspect.stack()[0][3],remote_set_id,instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
-    return redirect(reverse('%s.views.reduction_configuration_iq'%instrument_name_lowercase,
+    return redirect(reverse('%s.views.configuration_iq'%instrument_name_lowercase,
                                   kwargs={'remote_set_id' : remote_set_id,}))
 
 @login_required

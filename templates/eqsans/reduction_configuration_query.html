@@ -26,7 +26,7 @@
   {% for job_info in job_set_info %}
     <div class='sub-tile'>
       Job <a href="{% url 'eqsans_job_details' job_info.job_id %}" title="See detailed result for this job">
-      	{{ job_info.job_id }}</a> - Data: <b>{{ job_info.parameters.data_file }}</b> (<a href="{% url 'reduction_reduction' reduction_id=job_info.reduction_id instrument_name=instrument %}" title='Edit latest version of this reduction'>edit <span style="padding-bottom:3px" class="ui-button ui-icon ui-icon-pencil"></span></a>)
+      	{{ job_info.job_id }}</a> - Data: <b>{{ job_info.parameters.data_file }}</b> (<a href="{% url 'reduction' reduction_id=job_info.reduction_id instrument_name=instrument %}" title='Edit latest version of this reduction'>edit <span style="padding-bottom:3px" class="ui-button ui-icon ui-icon-pencil"></span></a>)
       <ul>
         <li>Status: {{ job_info.JobStatus }}</li>
         <li>Start time: {{ job_info.StartDate }}</li>

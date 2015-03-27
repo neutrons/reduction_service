@@ -14,12 +14,14 @@ from reduction.models import ReductionProcess
 from reduction.models import Instrument
 from reduction.forms import process_experiment
 from reduction_service.forms_util import build_script
+from django.core.exceptions import ValidationError
 import time
 import sys
 import json
 import logging
 import copy
 import os.path
+import re
 
 logger = logging.getLogger('seq.forms')
 scripts_location = os.path.join(os.path.dirname(__file__),"scripts")
@@ -166,3 +168,82 @@ class ReductionOptions(forms.Form):
         """
         return True
 
+def validate_integer_list(value):
+    """
+        Allow for "1,2,3" and "1-3"
+        
+        @param value: string value to parse
+    """
+    # Look for a list of ranges
+    range_list = value.split(',')
+    for _ in range_list:
+        for item in range.split('-'):
+            try:
+                int(item.strip())
+            except:
+                raise ValidationError(u'Error parsing %s for a range of integers' % value)
+
+class MaskForm(forms.Form):
+    """
+        Simple form for a mask entry.
+        A combination of banks, tubes, pixels can be specified.
+    """
+    bank = forms.CharField(required=False, initial='', validators=[validate_integer_list])
+    tube = forms.CharField(required=False, initial='', validators=[validate_integer_list])
+    pixel = forms.CharField(required=False, initial='', validators=[validate_integer_list])
+    remove = forms.BooleanField(required=False, initial=False)
+    
+    @classmethod
+    def to_tokens(cls, value):
+        """
+            Takes a block of Mantid script and extract the
+            dictionary argument. The template should be like
+            
+            MaskBTPParameters({'Bank':'', 'Tube':'', 'Pixel':''})
+            
+            @param value: string value for the code snippet
+        """
+        mask_list = []
+        try:
+            lines = value.split('\n')
+            for line in lines:
+                if 'MaskBTPParameters' in line:
+                    mask_strings = re.findall("append\((.+)\)", line.strip())
+                    for item in mask_strings:
+                        mask_list.append( eval(item.lower()) )
+        except:
+            logging.error("MaskForm count not parse a command line: %s" % sys.exc_value)
+        return mask_list
+    
+    @classmethod
+    def to_python(cls, mask_list, indent='    '):
+        """
+            Take a block of Mantid script from a list of mask forms
+            
+            @param mask_list: list of MaskForm objects
+            @param indent: string indentation to add to each line
+        """
+        command_list = ''
+        for mask in mask_list:
+            if 'remove' in mask.cleaned_data and mask.cleaned_data['remove'] == True:
+                continue
+            command_str = str(mask)
+            if len(command_str)>0:
+                command_list += "%s%s\n" % (indent, command_str)
+        return command_list
+
+    def __str__(self):
+        """
+            Return a string representing the Mantid command to run
+            for this mask item.
+        """
+        entry_dict = {}
+        if 'bank' in self.cleaned_data and len(self.cleaned_data['bank'].strip())>0:
+            entry_dict["Bank"] = str(self.cleaned_data['bank'])
+        if 'tube' in self.cleaned_data and len(self.cleaned_data['tube'].strip())>0:
+            entry_dict["Tube"] = str(self.cleaned_data['tube'])
+        if 'pixel' in self.cleaned_data and len(self.cleaned_data['pixel'].strip())>0:
+            entry_dict["Pixel"] = str(self.cleaned_data['pixel'])
+        if len(entry_dict)==0:
+            return ""
+        return "MaskBTPParameters.append(%s)" % str(entry_dict)

@@ -18,7 +18,7 @@
 {% endblock %}
 
 {% block content %}
-<h2>Results for reduction jobs for <a href="{% url 'reduction_configuration' config_id=configuration_id  instrument_name=instrument %}" title="Click to see the latest version of this configuration">{% if configuration_title|length > 0 %}{{ configuration_title }}{% else %}configuration {{ configuration_id }}{% endif %}</a></h2>
+<h2>Results for reduction jobs for <a href="{% url 'configuration_options' config_id=configuration_id  instrument_name=instrument %}" title="Click to see the latest version of this configuration">{% if configuration_title|length > 0 %}{{ configuration_title }}{% else %}configuration {{ configuration_id }}{% endif %}</a></h2>
 <p>
 <div class='tiled_area'>
   <div class='tile'>

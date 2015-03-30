@@ -30,7 +30,7 @@ from reduction_service.view_util import Breadcrumbs
 logger = logging.getLogger('eqsans')
     
 @login_required
-def reduction_configuration_query(request, remote_set_id):
+def configuration_query(request, remote_set_id):
     """
         Query all jobs in a job set
         @param request: request object
@@ -88,10 +88,10 @@ def reduction_configuration_query(request, remote_set_id):
  
     # Link to download all I(q) files
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    return render_to_response('eqsans/reduction_configuration_query.html', template_values)
+    return render_to_response('eqsans/configuration_query.html', template_values)
     
 @login_required
-def reduction_configuration_iq(request, remote_set_id):
+def configuration_iq(request, remote_set_id):
     """
         @param request: request object
         @param remote_id: pk of RemoteJobSet object

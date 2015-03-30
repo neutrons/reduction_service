@@ -35,7 +35,7 @@ def build_script(script_file_path, form, data):
             template = Template(text)
             default_values = _get_default_values_from_form(form)
             data.update(default_values)
-            logger.debug(pprint.pformat(data))
+            #logger.debug(pprint.pformat(data))
             context = Context(data)
             script = template.render(context)
             script_filtered = "\n".join([ll.rstrip() for ll in script.splitlines() if ll.strip()])

@@ -181,11 +181,8 @@ def delete_reduction(request, reduction_id, instrument_name):
 def reduction_options(request, reduction_id=None, instrument_name=None):
     """
         Display the reduction options form:
-        Scenarios:
-        - url(r'^(?P<instrument_name>\w+)/reduction/$',
-          - reduction_id is not None and create a new reduction
-        - url(r'^(?P<instrument_name>\w+)/reduction/(?P<reduction_id>\d+)/$',
-          - reduction_id exists and loads up the form from the DB
+        
+        If reduction_id exists already then it can be submitted as a new job
             
         @param request: request object
         @param reduction_id: pk of reduction process object
@@ -208,7 +205,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
         #logger.debug(pprint.pformat(request.POST.items()))
         
         options_form = instrument_forms.ReductionOptions(request.POST)
-        # If the form is valid update or create an entry for it
+        # If the form is valid update or create an entry for it (if the data_file is different, a new entry is created!)
         if options_form.is_valid():
             reduction_id = options_form.to_db(request.user, reduction_id)
             template_values['message'] = "Reduction parameters for reduction %s were sucessfully updated."%reduction_id
@@ -264,7 +261,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
 @login_required
 def reduction_jobs(request, instrument_name):
     """
-        Return a list of the remote reduction jobs for EQSANS.
+        Return a list of the remote reduction jobs.
         The jobs are those that are owned by the user and have an
         entry in the database.
         
@@ -317,7 +314,7 @@ def reduction_jobs(request, instrument_name):
                               template_values)    
 
 @login_required
-def reduction_configuration(request, config_id=None, instrument_name=None):
+def configuration_options(request, config_id=None, instrument_name=None):
     """
         Show the reduction properties for a given configuration,
         along with all the reduction jobs associated with it.
@@ -335,6 +332,7 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
     
     try:
         # just to make sure ReductionConfigurationForm is available!
+        # SEQ does not have ReductionConfigurationForm!
         instrument_forms.ReductionConfigurationForm
     except:
             # This instrument has no configuration. E.g. SEQ
@@ -360,6 +358,8 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
     job_list = None
     # Deal with data submission
     if request.method == 'POST':
+        
+        #logger.debug(pprint.pformat(request.POST.items()))
         options_form = ReductionOptionsSet(request.POST)
         config_form = instrument_forms.ReductionConfigurationForm(request.POST)
         # If the form is valid update or create an entry for it
@@ -371,7 +371,7 @@ def reduction_configuration(request, config_id=None, instrument_name=None):
             for form in options_form:
                 form.to_db(request.user, None, config_id)
             if config_id is not None:
-                return redirect(reverse('reduction.views.reduction_configuration',
+                return redirect(reverse('reduction.views.configuration_options',
                                         kwargs={'config_id' : config_id, 'instrument_name': instrument_name }) +
                                 "?message=%s"%template_values['message']
                                 )
@@ -473,7 +473,7 @@ def configuration_submit(request, config_id, instrument_name):
                                 transaction=transaction)
                 job.save()
                 job_set.jobs.add(job)
-    return redirect(reverse('reduction.views.reduction_configuration',
+    return redirect(reverse('reduction.views.configuration_options',
                             kwargs={'config_id' : config_id, 'instrument_name': instrument_name_lowercase})+
                     "?message=Jobs %s sucessfully submitted."%', '.join(JobIDs)
                     )
@@ -496,7 +496,7 @@ def configuration_job_delete(request, config_id, reduction_id, instrument_name):
     if reduction_proc in reduction_config.reductions.all():
         reduction_config.reductions.remove(reduction_proc)
         reduction_proc.delete()
-    return redirect(reverse('reduction.views.reduction_configuration',
+    return redirect(reverse('reduction.views.configuration_options',
                                         kwargs={'config_id' : config_id, 'instrument_name': instrument_name_lowercase}))
     
 @login_required

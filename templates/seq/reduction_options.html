@@ -80,6 +80,10 @@
       		E<sub>step</sub> {{options_form.energy_binning_step }} 
       		E<sub>max</sub> {{options_form.energy_binning_max }} </td>
       	  </tr>
+      	  
+      	  <tr><th>{{ options_form.masked_bank.label_tag }}</th><td class='long_input' title="{{options_form.masked_bank.help_text}}" >{{ options_form.masked_bank.errors }}{{ options_form.masked_bank }}</td></tr>
+      	  <tr><th>{{ options_form.masked_tube.label_tag }}</th><td class='long_input' title="{{options_form.masked_tube.help_text}}" >{{ options_form.masked_tube.errors }}{{ options_form.masked_tube }}</td></tr>
+      	  <tr><th>{{ options_form.masked_pixel.label_tag }}</th><td class='long_input' title="{{options_form.masked_pixel.help_text}}" >{{ options_form.masked_pixel.errors }}{{ options_form.masked_pixel }}</td></tr>
         </tbody>
       </table>
     </div>

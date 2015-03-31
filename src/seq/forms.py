@@ -24,7 +24,7 @@ import os.path
 import re
 
 logger = logging.getLogger('seq.forms')
-scripts_location = os.path.join(os.path.dirname(__file__),"scripts")
+scripts_location = os.path.join(os.path.dirname(__file__), "scripts")
 
 class ReductionOptions(forms.Form):
     """
@@ -42,15 +42,22 @@ class ReductionOptions(forms.Form):
     raw_vanadium = forms.CharField(required=False, initial='')
     processed_vanadium = forms.CharField(required=False, initial='')
     
-    grouping_file = forms.ChoiceField([("/SNS/SEQ/shared/autoreduce/SEQ_1x1_grouping.xml","1 x 1"),
-                                       ("/SNS/SEQ/shared/autoreduce/SEQ_2x1_grouping.xml","2 x 1"),
-                                       ("/SNS/SEQ/shared/autoreduce/SEQ_2x2_grouping.xml","2 x 2"),
-                                       ("/SNS/SEQ/shared/autoreduce/SEQ_4x1_grouping.xml","4 x 1"),
-                                       ("/SNS/SEQ/shared/autoreduce/SEQ_4x2_grouping.xml","4 x 2")])
+    grouping_file = forms.ChoiceField([("/SNS/SEQ/shared/autoreduce/SEQ_1x1_grouping.xml", "1 x 1"),
+                                       ("/SNS/SEQ/shared/autoreduce/SEQ_2x1_grouping.xml", "2 x 1"),
+                                       ("/SNS/SEQ/shared/autoreduce/SEQ_2x2_grouping.xml", "2 x 2"),
+                                       ("/SNS/SEQ/shared/autoreduce/SEQ_4x1_grouping.xml", "4 x 1"),
+                                       ("/SNS/SEQ/shared/autoreduce/SEQ_4x2_grouping.xml", "4 x 2")])
     energy_binning_min = forms.FloatField(required=True, initial=-1.0)
     energy_binning_step = forms.FloatField(required=True, initial=0.005)
     energy_binning_max = forms.FloatField(required=True, initial=0.95)
     
+    error_message_mask = {'invalid': "Not a valid ranged input. Use for example: 1-8,121-128"}
+    masked_bank = forms.RegexField(regex=r'^[\d\-,]+$', required=False, help_text="Use ranged input. E.g.: 1-8,121-128.",
+                                   error_messages=error_message_mask, initial="99-102,114,115,75,76,38,64")
+    masked_tube = forms.RegexField(regex=r'^[\d\-,]+$', required=False, help_text="Use ranged input. E.g.: 1-8,121-128.",
+                                   error_messages=error_message_mask)
+    masked_pixel = forms.RegexField(regex=r'^[\d\-,]+$', required=False, help_text="Use ranged input. E.g.: 1-8,121-128.",
+                                    error_messages=error_message_mask, initial="1-8,121-128")
     
     
     @classmethod
@@ -61,7 +68,7 @@ class ReductionOptions(forms.Form):
             
             #TODO
         """
-        xml  = "<Reduction>\n"
+        xml = "<Reduction>\n"
         xml += "<instrument_name>SEQ</instrument_name>\n"
         xml += "<timestamp>%s</timestamp>\n" % time.ctime()
         xml += "</Reduction>"
@@ -128,10 +135,10 @@ class ReductionOptions(forms.Form):
         # Ensure all the fields are there
         for f in cls.base_fields:
             if not f in data:
-                data[f]=cls.base_fields[f].initial
+                data[f] = cls.base_fields[f].initial
 
         expt_list = reduction_proc.experiments.all()
-        data['experiment'] = ', '.join([str(e.name) for e in expt_list if len(str(e.name))>0])
+        data['experiment'] = ', '.join([str(e.name) for e in expt_list if len(str(e.name)) > 0])
         return data
     
     @classmethod
@@ -155,10 +162,10 @@ class ReductionOptions(forms.Form):
                 #Typically an empty string '', choose 2x1 or some other grouping file created by GenerateGroupingSNSInelastic or GenerateGroupingPowder
             
         """
-        script_file_path = os.path.join(scripts_location,'reduce.py')
+        script_file_path = os.path.join(scripts_location, 'reduce.py')
         data.update({'output_path' : output_path})
         script = build_script(script_file_path, cls, data)
-        logger.debug("\n-------------------------\n"+script+"\n-------------------------\n")
+        logger.debug("\n-------------------------\n" + script + "\n-------------------------\n")
         return script
 
 
@@ -210,7 +217,7 @@ class MaskForm(forms.Form):
                 if 'MaskBTPParameters' in line:
                     mask_strings = re.findall("append\((.+)\)", line.strip())
                     for item in mask_strings:
-                        mask_list.append( eval(item.lower()) )
+                        mask_list.append(eval(item.lower()))
         except:
             logging.error("MaskForm count not parse a command line: %s" % sys.exc_value)
         return mask_list
@@ -228,7 +235,7 @@ class MaskForm(forms.Form):
             if 'remove' in mask.cleaned_data and mask.cleaned_data['remove'] == True:
                 continue
             command_str = str(mask)
-            if len(command_str)>0:
+            if len(command_str) > 0:
                 command_list += "%s%s\n" % (indent, command_str)
         return command_list
 
@@ -238,12 +245,12 @@ class MaskForm(forms.Form):
             for this mask item.
         """
         entry_dict = {}
-        if 'bank' in self.cleaned_data and len(self.cleaned_data['bank'].strip())>0:
+        if 'bank' in self.cleaned_data and len(self.cleaned_data['bank'].strip()) > 0:
             entry_dict["Bank"] = str(self.cleaned_data['bank'])
-        if 'tube' in self.cleaned_data and len(self.cleaned_data['tube'].strip())>0:
+        if 'tube' in self.cleaned_data and len(self.cleaned_data['tube'].strip()) > 0:
             entry_dict["Tube"] = str(self.cleaned_data['tube'])
-        if 'pixel' in self.cleaned_data and len(self.cleaned_data['pixel'].strip())>0:
+        if 'pixel' in self.cleaned_data and len(self.cleaned_data['pixel'].strip()) > 0:
             entry_dict["Pixel"] = str(self.cleaned_data['pixel'])
-        if len(entry_dict)==0:
+        if len(entry_dict) == 0:
             return ""
         return "MaskBTPParameters.append(%s)" % str(entry_dict)

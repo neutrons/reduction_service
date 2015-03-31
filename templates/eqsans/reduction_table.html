@@ -99,10 +99,10 @@
               <td>{{ form.nickname.errors }}{{ form.nickname }}</td>
               {% spaceless %}
               {% if form.reduction_id.value %}
-              <td title='Click to remove this reduction job'><a href='{% url 'configuration_job_delete' 'eqsans' config_id form.reduction_id.value %}'><span class="ui-icon ui-icon-trash"></span></a></td>
-              <td title='Click to view this reduction job in a new window'><a href='{% url 'reduction' 'eqsans' form.reduction_id.value %}' target='_blank'><span class="ui-icon ui-icon-pencil"></span></a></td>
+              <td title='Click to remove this reduction job'><a href='{% url 'eqsans:configuration_job_delete' config_id form.reduction_id.value %}'><span class="ui-icon ui-icon-trash"></span></a></td>
+              <td title='Click to view this reduction job in a new window'><a href='{% url 'reduction_options' 'eqsans' form.reduction_id.value %}' target='_blank'><span class="ui-icon ui-icon-pencil"></span></a></td>
               {% elif config_id %}
-              <td title='Click to remove this reduction job'><a href='{% url 'configuration_options' instrument config_id %}'><span class="ui-icon ui-icon-trash"></span></a></td>
+              <td title='Click to remove this reduction job'><a href='{% url 'eqsans:configuration_options' config_id %}'><span class="ui-icon ui-icon-trash"></span></a></td>
               {% endif %}
               {% endspaceless %}
               {% if form.reduction_id.value %}<td title='Submit this job by itself, without submitting all the other jobs'><a href="{% url 'reduction_submit_job' 'eqsans' form.reduction_id.value %}"><span class="ui-icon ui-icon-refresh"></span></a></td>{% endif %}
@@ -119,7 +119,7 @@
           </tbody>
         </table>
       <input id='submit_button' type="submit" value="update"/>
-      {% if config_id %}<input title="Click to submit this list of reductions for execution" id="execute_jobs_button" type="button" value="submit" onclick='window.location.href = "{% url 'configuration_submit' 'eqsans' config_id %}"'/>{% endif %}
+      {% if config_id %}<input title="Click to submit this list of reductions for execution" id="execute_jobs_button" type="button" value="submit" onclick='window.location.href = "{% url 'eqsans:configuration_submit' config_id %}"'/>{% endif %}
     </div>
   </div>
 </form>

@@ -22,7 +22,7 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Results for <a href="{% url 'reduction' reduction_id=remote_job.reduction.id instrument_name=instrument %}" title='Click to see the latest version of this reduction'>
+    <h2>Results for <a href="{% url 'reduction_options' reduction_id=remote_job.reduction.id instrument_name=instrument %}" title='Click to see the latest version of this reduction'>
     	{% if remote_job.reduction.name|length > 0 %}{{ remote_job.reduction.name }}{% else %}reduction {{ remote_job.reduction.id }}{% endif %}</a></h2>
     <div class='tiled_area'>
       <div class='tile'>

@@ -24,14 +24,15 @@ from reduction_service.view_util import Breadcrumbs
 
 logger = logging.getLogger('reduction')
 
-def _import_forms_from_app(instrument_name_lowercase):
+def _import_module_from_app(instrument_name_lowercase, module_name):
     """
-    Note that all forms must be in reduction.<instrument name>.forms
+    Note that all forms must be in reduction.<instrument name>.<module>
     @return the forms module from an instrument name 
     """
-    module_str = "%s.forms"%instrument_name_lowercase
-    instrument_forms = importlib.import_module(module_str)
-    return instrument_forms
+    module_str = "%s.%s"%(instrument_name_lowercase,module_name)
+    instrument_module = importlib.import_module(module_str)
+    return instrument_module
+   
 
 @login_required
 def reduction_home(request, instrument_name):
@@ -94,7 +95,7 @@ def experiment(request, ipts, instrument_name):
         red_list = ReductionProcess.objects.filter(owner=request.user,
                                                    data_file__contains=request.GET['run_number'])
         if len(red_list) == 0:
-            create_url = reverse('reduction.views.reduction_options',
+            create_url = reverse('reduction_options',
                                   kwargs={'instrument_name': instrument_name_lowercase})
             create_url += '?reduction_name=Reduction for r%s' % request.GET['run_number']
             create_url += '&expt_id=%d' % experiment_obj.id
@@ -113,8 +114,9 @@ def experiment(request, ipts, instrument_name):
         data_dict['config'] = r.get_config()
         latest_job = reduction.view_util.get_latest_job(request, r)
         if latest_job is not None:
-            data_dict['completed_job'] = reverse('%s.views.job_details'%instrument_name,
-                                                  args=[latest_job.remote_id])
+            data_dict['completed_job'] = reverse('reduction_job_details',
+                                                 kwargs={'job_id' : latest_job.remote_id,
+                                                         'instrument_name': instrument_name_lowercase })
         try:
             run_id = int(data_dict['data_file'])
             data_dict['webmon_url'] = "https://monitor.sns.gov/report/%s/%s/" %(instrument_name,run_id)
@@ -145,7 +147,7 @@ def experiment(request, ipts, instrument_name):
                        'title': '%s %s' % (instrument_name_capitals, ipts),
                        'breadcrumbs': breadcrumbs,
                        'ipts_number': ipts,
-                       'back_url': reverse('reduction.views.experiment', kwargs={'ipts' : ipts, 'instrument_name': instrument_name_lowercase }),
+                       'back_url': reverse('reduction_experiment', kwargs={'ipts' : ipts, 'instrument_name': instrument_name_lowercase }),
                        'icat_info': icat_ipts,
                        'form': reduction_start_form,
                        'is_categorized': not IS_UNCATEGORIZED,
@@ -172,7 +174,7 @@ def delete_reduction(request, reduction_id, instrument_name):
     reduction_proc.delete()
     if 'back_url' in request.GET:
         return redirect(request.GET['back_url'])
-    return redirect(reverse('reduction.views.reduction_home', args=[instrument_name]))
+    return redirect(reverse('reduction_home', args=[instrument_name]))
 
 
 
@@ -192,7 +194,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
     
     instrument_name_capitals = str.capitalize(str(instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
-    instrument_forms = _import_forms_from_app(instrument_name_lowercase)
+    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
     
     template_values = {}
     # Get reduction and configuration information
@@ -210,7 +212,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
             reduction_id = options_form.to_db(request.user, reduction_id)
             template_values['message'] = "Reduction parameters for reduction %s were sucessfully updated."%reduction_id
             if reduction_id is not None:
-                return redirect(reverse('reduction.views.reduction_options',
+                return redirect(reverse('reduction_options',
                                         kwargs={'reduction_id' : reduction_id, 'instrument_name' : instrument_name})+
                                         "?message=%s"%template_values['message'])
     else:
@@ -313,213 +315,13 @@ def reduction_jobs(request, instrument_name):
     return render_to_response('%s/reduction_jobs.html' % instrument_name,
                               template_values)    
 
-@login_required
-def configuration_options(request, config_id=None, instrument_name=None):
-    """
-        Show the reduction properties for a given configuration,
-        along with all the reduction jobs associated with it.
-        Called when clicked Reduce->Batch Button, or new configuration
-        
-        @param request: The request object
-        @param config_id: The ReductionConfiguration pk
-    """
-    
-    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
-    
-    instrument_name_capitals = str.capitalize(str(instrument_name))
-    instrument_name_lowercase = str.lower(str(instrument_name))
-    instrument_forms = _import_forms_from_app(instrument_name_lowercase)
-    
-    try:
-        # just to make sure ReductionConfigurationForm is available!
-        # SEQ does not have ReductionConfigurationForm!
-        instrument_forms.ReductionConfigurationForm
-    except:
-            # This instrument has no configuration. E.g. SEQ
-        return redirect(reverse('reduction.views.reduction_options',
-                                        kwargs={'instrument_name' : instrument_name})+
-                                        "?message=%s has no configuration feature."%instrument_name_capitals)
-    
-    template_values = {}
-    
-    
-    
-    # Create a form for the page
-    default_extra = 1 if config_id is None and not (request.method == 'GET' and 'data_file' in request.GET) else 0
-    try:
-        extra = int(request.GET.get('extra', default_extra))
-    except:
-        extra = default_extra
 
-    ReductionOptionsSet = formset_factory(instrument_forms.ReductionOptions, extra=extra)
-
-    # The list of relevant experiments will be displayed on the page
-    expt_list = None
-    job_list = None
-    # Deal with data submission
-    if request.method == 'POST':
-        
-        #logger.debug(pprint.pformat(request.POST.items()))
-        options_form = ReductionOptionsSet(request.POST)
-        config_form = instrument_forms.ReductionConfigurationForm(request.POST)
-        # If the form is valid update or create an entry for it
-        if options_form.is_valid() and config_form.is_valid():
-            # Save the configuration
-            config_id = config_form.to_db(request.user, config_id)
-            # Save the individual reductions
-            template_values['message'] = "Configuration and reduction parameters were sucessfully updated."
-            for form in options_form:
-                form.to_db(request.user, None, config_id)
-            if config_id is not None:
-                return redirect(reverse('reduction.views.configuration_options',
-                                        kwargs={'config_id' : config_id, 'instrument_name': instrument_name }) +
-                                "?message=%s"%template_values['message']
-                                )
-        else:
-            # There's a proble with the data, the validated form 
-            # will automatically display what the problem is to the user
-            pass
-    else:
-        # Deal with the case of creating a new configuration
-        if config_id is None:
-            initial_values = []
-            if 'data_file' in request.GET:
-                initial_values = [{'data_file': request.GET.get('data_file', '')}]
-            options_form = ReductionOptionsSet(initial=initial_values)
-            initial_config = {}
-            if 'experiment' in request.GET:
-                initial_config['experiment'] = request.GET.get('experiment', '')
-            if 'reduction_name' in request.GET:
-                initial_config['reduction_name'] = request.GET.get('reduction_name', '')
-            config_form = instrument_forms.ReductionConfigurationForm(initial=initial_config)
-        # Retrieve existing configuration
-        else:
-            reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
-            initial_config = instrument_forms.ReductionConfigurationForm.data_from_db(request.user, reduction_config)
-            
-            initial_values = []
-            for item in reduction_config.reductions.all():
-                props = instrument_forms.ReductionOptions.data_from_db(request.user, item.pk)
-                initial_values.append(props)
-                
-            options_form = ReductionOptionsSet(initial=initial_values)
-            config_form = instrument_forms.ReductionConfigurationForm(initial=initial_config)
-            expt_list = reduction_config.experiments.all()
-            job_list = RemoteJobSet.objects.filter(configuration=reduction_config)
-
-    breadcrumbs = Breadcrumbs()
-    breadcrumbs.append_reduction(instrument_name_lowercase)
-    if config_id is not None:
-        breadcrumbs.append("configuration %s" % config_id)
-    else:
-        breadcrumbs.append("new configuration")
-
-    # ICAT info url
-    icat_url = reverse('catalog.views.run_info', args=[instrument_name_capitals, '0000'])
-    icat_url = icat_url.replace('/0000', '')
-    # TODO: add New an Save-As functionality
-    template_values.update({'config_id': config_id,
-                       'options_form': options_form,
-                       'config_form': config_form,
-                       'expt_list': expt_list,
-                       'existing_job_sets': job_list,
-                       'title': '%s Reduction' % instrument_name_capitals,
-                       'breadcrumbs': breadcrumbs,
-                       'icat_url': icat_url,
-                       'instrument' : instrument_name, })
-
-    template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    if 'message' in request.GET:
-        template_values['message'] = request.GET['message']
-    return render_to_response('%s/reduction_table.html' % instrument_name_lowercase,
-                              template_values)
 
 
 
 
     
-@login_required
-def configuration_submit(request, config_id, instrument_name):
-    """
-        Submit all reductions for this configuration.
-        @param request: request object
-        @param config_id: pk of configuration
-    """
-    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
-    
-    instrument_name_lowercase = str.lower(str(instrument_name))
-    
-    instrument_forms = _import_forms_from_app(instrument_name_lowercase)
-    
-    reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
-    reductions = reduction_config.reductions.all()
-    if len(reductions) > 0:
-        # Start a new transaction
-        transaction = remote.view_util.transaction(request, start=True)
-        job_set = RemoteJobSet(transaction=transaction,
-                               configuration=reduction_config)
-        job_set.save()
-        # Loop through the reductions and submit them
-        JobIDs = []
-        for item in reductions:
-            data = instrument_forms.ReductionOptions.data_from_db(request.user, item.id)
-            code = instrument_forms.ReductionOptions.as_mantid_script(data, transaction.directory)
-            jobID = remote.view_util.submit_job(request, transaction, code)
-            if jobID is not None:
-                JobIDs.append(jobID)
-                job = RemoteJob(reduction=item,
-                                remote_id=jobID,
-                                properties=item.properties,
-                                transaction=transaction)
-                job.save()
-                job_set.jobs.add(job)
-    return redirect(reverse('reduction.views.configuration_options',
-                            kwargs={'config_id' : config_id, 'instrument_name': instrument_name_lowercase})+
-                    "?message=Jobs %s sucessfully submitted."%', '.join(JobIDs)
-                    )
 
-
-@login_required
-def configuration_job_delete(request, config_id, reduction_id, instrument_name):
-    """
-        Delete a reduction from a configuration
-        @param request: request object
-        @param config_id: pk of configuration this reduction belongs to
-        @param reduction_id: pk of the reduction object
-    """
-    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
-    
-    instrument_name_lowercase = str.lower(str(instrument_name))
-    
-    reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
-    reduction_proc = get_object_or_404(ReductionProcess, pk=reduction_id, owner=request.user)
-    if reduction_proc in reduction_config.reductions.all():
-        reduction_config.reductions.remove(reduction_proc)
-        reduction_proc.delete()
-    return redirect(reverse('reduction.views.configuration_options',
-                                        kwargs={'config_id' : config_id, 'instrument_name': instrument_name_lowercase}))
-    
-@login_required
-def configuration_delete(request, config_id, instrument_name):
-    """
-        Delete a configuration
-        @param request: request object
-        @param config_id: pk of configuration this reduction belongs to
-    """
-    
-    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
-    
-    instrument_name_lowercase = str.lower(str(instrument_name))
-    
-    reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
-    for item in reduction_config.reductions.all():
-        reduction_config.reductions.remove(item)
-        item.delete()
-    reduction_config.delete()
-    if 'back_url' in request.GET:
-        return redirect(request.GET['back_url'])
-    return redirect(reverse('reduction.views.reduction_home', args=[instrument_name_lowercase]))
-    
 @login_required
 def reduction_script(request, reduction_id, instrument_name):
     """
@@ -533,7 +335,7 @@ def reduction_script(request, reduction_id, instrument_name):
     
     instrument_name_lowercase = str.lower(str(instrument_name))
     
-    instrument_forms = _import_forms_from_app(instrument_name_lowercase)
+    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
     
     data = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id)
     
@@ -560,7 +362,7 @@ def py_reduction_script(request, reduction_id, instrument_name):
     logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument_name_lowercase = str.lower(str(instrument_name))
-    instrument_forms = _import_forms_from_app(instrument_name_lowercase)
+    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
     
     data = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id) 
     response = HttpResponse(instrument_forms.ReductionOptions.as_mantid_script(data))
@@ -582,7 +384,7 @@ def xml_reduction_script(request, reduction_id, instrument_name):
     logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument_name_lowercase = str.lower(str(instrument_name))
-    instrument_forms = _import_forms_from_app(instrument_name_lowercase)
+    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
     data = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id) 
     response = HttpResponse(instrument_forms.ReductionOptions.as_xml(data))
     response['Content-Disposition'] = 'attachment; filename="%s_reduction.xml"' % instrument_name_lowercase
@@ -602,7 +404,7 @@ def submit_job(request, reduction_id, instrument_name):
     logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument_name_lowercase = str.lower(str(instrument_name))
-    instrument_forms = _import_forms_from_app(instrument_name_lowercase)
+    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
     
     # TODO: Make sure the submission errors are clearly reported
     reduction_proc = get_object_or_404(ReductionProcess, pk=reduction_id, owner=request.user)
@@ -616,7 +418,7 @@ def submit_job(request, reduction_id, instrument_name):
         breadcrumbs.append_reduction_options(instrument_name_lowercase, reduction_id)
         
         template_values = {'message':"Could not connect to Fermi and establish transaction",
-                           'back_url': reverse('reduction.views.reduction_options',
+                           'back_url': reverse('reduction_options',
                                   kwargs={'reduction_id' : reduction_id, 'instrument_name': instrument_name_lowercase}),
                            'breadcrumbs': breadcrumbs, }
         template_values = reduction_service.view_util.fill_template_values(request, **template_values)
@@ -632,34 +434,77 @@ def submit_job(request, reduction_id, instrument_name):
                         transaction=transaction)
         job.save()
         logger.debug("Created a RemoteJob: %s",job)
-    return redirect(reverse('reduction',
+    return redirect(reverse('reduction_options',
                                   kwargs={'reduction_id' : reduction_id, 
                                           'instrument_name': instrument_name_lowercase})+(
                     "?message=Job %s sucessfully submitted."%jobID)
                     )
 
 
-###################
-
-    
-@login_required
-def configuration_query(request, remote_set_id, instrument_name):
-    logger.debug("%s remote_set_id=%s instrument_name=%s"%(inspect.stack()[0][3],remote_set_id,instrument_name))
-    instrument_name_lowercase = str.lower(str(instrument_name))
-    return redirect(reverse('%s.views.configuration_query'%instrument_name_lowercase,
-                                  kwargs={'remote_set_id' : remote_set_id,}))
-    
-@login_required
-def configuration_iq(request, remote_set_id, instrument_name):
-    logger.debug("%s remote_set_id=%s instrument_name=%s"%(inspect.stack()[0][3],remote_set_id,instrument_name))
-    instrument_name_lowercase = str.lower(str(instrument_name))
-    return redirect(reverse('%s.views.configuration_iq'%instrument_name_lowercase,
-                                  kwargs={'remote_set_id' : remote_set_id,}))
 
 @login_required
 def job_details(request, job_id, instrument_name):
-    logger.debug("%s job_id=%s instrument_name=%s"%(inspect.stack()[0][3],job_id,instrument_name))
+    """
+        Show status of a given remote job.
+        
+        @param request: request object
+        @param job_id: pk of the RemoteJob object
+        
+    """
     instrument_name_lowercase = str.lower(str(instrument_name))
-    forward_url = reverse('%s_job_details'%instrument_name_lowercase, kwargs={'job_id' : job_id})
-    return redirect(forward_url)
+    instrument_name_capitals = str.capitalize(str(instrument_name))
+    
+    logger.debug("Views: %s job_id=%s"%(inspect.stack()[0][3],job_id))
+    
+    remote_job = get_object_or_404(RemoteJob, remote_id=job_id)
+
+    breadcrumbs = Breadcrumbs()
+    breadcrumbs.append('eqsans reduction',reverse('reduction_home',
+                                                  kwargs={'instrument_name': instrument_name_lowercase }))
+    breadcrumbs.append_reduction_options(instrument_name_lowercase, remote_job.reduction.id )
+    breadcrumbs.append('jobs',reverse('reduction_jobs',
+                                      kwargs={'instrument_name': instrument_name_lowercase }))
+    breadcrumbs.append("job %s" % job_id)
+    
+    template_values = {'remote_job': remote_job,
+                       'parameters': remote_job.get_data_dict(),
+                       'reduction_id': remote_job.reduction.id,
+                       'breadcrumbs': breadcrumbs,
+                       'back_url': request.path,
+                       'instrument': instrument_name_lowercase}
+    template_values = remote.view_util.fill_job_dictionary(request, job_id, **template_values)
+    template_values = reduction_service.view_util.fill_template_values(request, **template_values)
+    template_values['title'] = "%s job results"%instrument_name_capitals
+    
+    # Go through the files and find data to plot
+    if 'job_files' in template_values and 'trans_id' in template_values:
+        view_util = _import_module_from_app(instrument_name_lowercase,'view_util')
+        template_values = view_util.set_into_template_values_job_files(template_values, request, remote_job)
+#     import pprint
+#     logger.debug(pprint.pformat(template_values))
+    return render_to_response('%s/reduction_job_details.html'%instrument_name_lowercase,
+                              template_values)
+###################
+
+    
+# @login_required
+# def configuration_query(request, remote_set_id, instrument_name):
+#     logger.debug("%s remote_set_id=%s instrument_name=%s"%(inspect.stack()[0][3],remote_set_id,instrument_name))
+#     instrument_name_lowercase = str.lower(str(instrument_name))
+#     return redirect(reverse('%s.views.configuration_query'%instrument_name_lowercase,
+#                                   kwargs={'remote_set_id' : remote_set_id,}))
+#     
+# @login_required
+# def configuration_iq(request, remote_set_id, instrument_name):
+#     logger.debug("%s remote_set_id=%s instrument_name=%s"%(inspect.stack()[0][3],remote_set_id,instrument_name))
+#     instrument_name_lowercase = str.lower(str(instrument_name))
+#     return redirect(reverse('%s.views.configuration_iq'%instrument_name_lowercase,
+#                                   kwargs={'remote_set_id' : remote_set_id,}))
+
+# @login_required
+# def job_details(request, job_id, instrument_name):
+#     logger.debug("%s job_id=%s instrument_name=%s"%(inspect.stack()[0][3],job_id,instrument_name))
+#     instrument_name_lowercase = str.lower(str(instrument_name))
+#     forward_url = reverse('%s_job_details'%instrument_name_lowercase, kwargs={'job_id' : job_id})
+#     return redirect(forward_url)
     

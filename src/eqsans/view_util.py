@@ -118,4 +118,17 @@ def process_Iqxy_data(file_content):
     y_str = y[:].__repr__()
     x_str = x[:].__repr__()
     return data_str_2d, x_str, y_str, 0.0, z_max
+
+
+def set_into_template_values_job_files(template_values, request, remote_job):
+    for f in template_values['job_files']:
+        if f.endswith('_Iq.txt'):
+            plot_info = process_iq_output(request, remote_job, 
+                                                    template_values['trans_id'], f)
+            template_values.update(plot_info)
+        elif f.endswith('_Iqxy.nxs'):
+            plot_info = process_iqxy_output(request, remote_job, 
+                                                      template_values['trans_id'], f)
+            template_values.update(plot_info)
+    return template_values
         

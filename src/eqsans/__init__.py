@@ -49,16 +49,16 @@ def get_new_reduction_url(run=None, ipts=None):
         @param ipts: experiment name [string]
     """
     if run is None:
-        return reverse('reduction.views.reduction_options', kwargs={'instrument_name': INSTRUMENT_NAME } )
-    return reverse('reduction.views.reduction_options', kwargs={'instrument_name': INSTRUMENT_NAME } )+"?reduction_name=Reduction for %s&expt_name=%s&data_file=%s" % (run, ipts, run)
+        return reverse('reduction', kwargs={'instrument_name': INSTRUMENT_NAME } )
+    return reverse('reduction', kwargs={'instrument_name': INSTRUMENT_NAME } )+"?reduction_name=Reduction for %s&expt_name=%s&data_file=%s" % (run, ipts, run)
 
 def get_new_batch_url(run=None, ipts=None):
     if run is None:
-        return reverse('reduction.views.configuration_options', kwargs={'instrument_name': INSTRUMENT_NAME })
-    return reverse('reduction.views.configuration_options',kwargs={'instrument_name': INSTRUMENT_NAME })+"?reduction_name=Reduction for %s&experiment=%s&data_file=%s" % (run, ipts, run)
+        return reverse('eqsans:configuration')
+    return reverse('eqsans:configuration')+"?reduction_name=Reduction for %s&experiment=%s&data_file=%s" % (run, ipts, run)
 
 def get_remote_jobs_url(ipts=None, instrument_name=None):
-    return reverse('reduction.views.reduction_jobs', args=[instrument_name])
+    return reverse('reduction_jobs', args=[instrument_name])
 
 def get_reduction_url(ipts=None, instrument_name=None):
-    return reverse('reduction.views.reduction_home', args=[instrument_name] )
+    return reverse('reduction_home', args=[instrument_name] )

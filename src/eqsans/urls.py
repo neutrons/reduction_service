@@ -1,10 +1,14 @@
 from django.conf.urls import patterns, url
-from django.contrib import admin
-#admin.autodiscover()
 
 urlpatterns = patterns('',
-    url(r'^squery/(?P<job_id>[\w\-\.]+)/$', 'eqsans.views.job_details', name='eqsans_job_details'),
-    url(r'^sconfiguration/query/(?P<remote_set_id>\d+)/$', 'eqsans.views.configuration_query', name='eqsans_configuration_query'),
-    url(r'^sconfiguration/iq/(?P<remote_set_id>\d+)/$', 'eqsans.views.configuration_iq', name='eqsans_configuration_iq'),
     url(r'^squery/dummy$', 'eqsans.views.test_result'),
+    
+    url(r'^configuration/$' , 'eqsans.views.configuration_options', name='configuration'),
+    url(r'^configuration/(?P<config_id>\d+)/$' , 'eqsans.views.configuration_options', name='configuration_options'),
+    url(r'^configuration/(?P<config_id>\d+)/delete$' , 'eqsans.views.configuration_delete', name='configuration_delete'),
+    url(r'^configuration/(?P<config_id>\d+)/submit$' , 'eqsans.views.configuration_submit', name='configuration_submit'),
+    url(r'^configuration/(?P<config_id>\d+)/(?P<reduction_id>\d+)/delete$', 'eqsans.views.configuration_job_delete', name='configuration_job_delete'),
+    url(r'^configuration/iq/(?P<remote_set_id>\d+)/$', 'eqsans.views.configuration_iq', name='configuration_iq'),
+    url(r'^configuration/query/(?P<remote_set_id>\d+)/$', 'eqsans.views.configuration_query', name='configuration_query'),
+    
 )

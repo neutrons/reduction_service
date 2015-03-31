@@ -18,15 +18,15 @@
 {% endblock %}
 
 {% block content %}
-<h2>Results for reduction jobs for <a href="{% url 'configuration_options' config_id=configuration_id  instrument_name=instrument %}" title="Click to see the latest version of this configuration">{% if configuration_title|length > 0 %}{{ configuration_title }}{% else %}configuration {{ configuration_id }}{% endif %}</a></h2>
+<h2>Results for reduction jobs for <a href="{% url 'eqsans:configuration_options' config_id=configuration_id %}" title="Click to see the latest version of this configuration">{% if configuration_title|length > 0 %}{{ configuration_title }}{% else %}configuration {{ configuration_id }}{% endif %}</a></h2>
 <p>
 <div class='tiled_area'>
   <div class='tile'>
   {% if not job_set_info %}No job information could be retrieved{% endif %}
   {% for job_info in job_set_info %}
     <div class='sub-tile'>
-      Job <a href="{% url 'eqsans_job_details' job_info.job_id %}" title="See detailed result for this job">
-      	{{ job_info.job_id }}</a> - Data: <b>{{ job_info.parameters.data_file }}</b> (<a href="{% url 'reduction' reduction_id=job_info.reduction_id instrument_name=instrument %}" title='Edit latest version of this reduction'>edit <span style="padding-bottom:3px" class="ui-button ui-icon ui-icon-pencil"></span></a>)
+      Job <a href="{% url 'reduction_job_details' instrument job_info.job_id %}" title="See detailed result for this job">
+      	{{ job_info.job_id }}</a> - Data: <b>{{ job_info.parameters.data_file }}</b> (<a href="{% url 'reduction_options' reduction_id=job_info.reduction_id instrument_name=instrument %}" title='Edit latest version of this reduction'>edit <span style="padding-bottom:3px" class="ui-button ui-icon ui-icon-pencil"></span></a>)
       <ul>
         <li>Status: {{ job_info.JobStatus }}</li>
         <li>Start time: {{ job_info.StartDate }}</li>
@@ -47,7 +47,7 @@
       {% endif %}
     {% endfor %}
     </ul>
-    {% if job_files %}<input title="Click to download all I(q) files" id="download_iq_button" type="button" value="download I(q)" onclick='window.location.href = "{% url 'eqsans_configuration_iq' remote_set_id %}"'/>{% endif %}
+    {% if job_files %}<input title="Click to download all I(q) files" id="download_iq_button" type="button" value="download I(q)" onclick='window.location.href = "{% url 'eqsans:configuration_iq' remote_set_id %}"'/>{% endif %}
   </div>
 </div>
 <div class='tiled_area'>

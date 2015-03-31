@@ -37,23 +37,22 @@ class Breadcrumbs(object):
     
     def append_reduction(self,instrument):
         self.append("%s reduction"%instrument, 
-                    reverse('reduction.views.reduction_home', args=[instrument]))
+                    reverse('reduction_home', args=[instrument]))
     
     def append_reduction_options(self,instrument, reduction_id):
         self.append("%s reduction"%instrument, 
-                    reverse('reduction.views.reduction_options',
+                    reverse('reduction_options',
                             kwargs={'reduction_id' : reduction_id,
                                     'instrument_name': instrument}) )
     
     def append_configuration(self,instrument, configuration_id):
         self.append("configuration %s"%configuration_id, 
-                    reverse('reduction.views.configuration_options',
-                               kwargs={'config_id' : configuration_id,
-                                       'instrument_name' : instrument}) )
+                    reverse('%s:configuration_options'%instrument,
+                               kwargs={'config_id' : configuration_id}) )
 
     def append_reduction_jobs(self,instrument):
         self.append("%s jobs"%instrument, 
-                    reverse('reduction.views.reduction_jobs',
+                    reverse('reduction_jobs',
                             kwargs={'instrument_name': instrument}))
                 
     def append_experiment_list(self,instrument):

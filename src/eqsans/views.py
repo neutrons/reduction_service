@@ -25,9 +25,159 @@ import StringIO
 import logging
 import inspect
 
+from eqsans.forms import ReductionConfigurationForm, ReductionOptions
 from reduction_service.view_util import Breadcrumbs
 
-logger = logging.getLogger('eqsans')
+instrument_name = 'eqsans'
+instrument_name_capitals = str.capitalize(str(instrument_name))
+instrument_name_lowercase = str.lower(str(instrument_name))
+logger = logging.getLogger(instrument_name_lowercase)
+
+
+@login_required
+def configuration_options(request, config_id=None):
+    """
+        Show the reduction properties for a given configuration,
+        along with all the reduction jobs associated with it.
+        Called when clicked Reduce->Batch Button, or new configuration
+        
+        @param request: The request object
+        @param config_id: The ReductionConfiguration pk
+    """
+    
+    logger.debug("configuration_options: %s"%inspect.stack()[0][3])
+    
+    template_values = {}
+    
+    
+    
+    # Create a form for the page
+    default_extra = 1 if config_id is None and not (request.method == 'GET' and 'data_file' in request.GET) else 0
+    try:
+        extra = int(request.GET.get('extra', default_extra))
+    except:
+        extra = default_extra
+
+    ReductionOptionsSet = formset_factory(ReductionOptions, extra=extra)
+
+    # The list of relevant experiments will be displayed on the page
+    expt_list = None
+    job_list = None
+    # Deal with data submission
+    if request.method == 'POST':
+        
+        #logger.debug(pprint.pformat(request.POST.items()))
+        options_form = ReductionOptionsSet(request.POST)
+        config_form = ReductionConfigurationForm(request.POST)
+        # If the form is valid update or create an entry for it
+        if options_form.is_valid() and config_form.is_valid():
+            # Save the configuration
+            config_id = config_form.to_db(request.user, config_id)
+            # Save the individual reductions
+            template_values['message'] = "Configuration and reduction parameters were sucessfully updated."
+            for form in options_form:
+                form.to_db(request.user, None, config_id)
+            if config_id is not None:
+                return redirect(reverse('eqsans:configuration_options',
+                                        kwargs={'config_id' : config_id} ) +
+                                "?message=%s"%template_values['message']
+                                )
+        else:
+            # There's a proble with the data, the validated form 
+            # will automatically display what the problem is to the user
+            pass
+    else:
+        # Deal with the case of creating a new configuration
+        if config_id is None:
+            initial_values = []
+            if 'data_file' in request.GET:
+                initial_values = [{'data_file': request.GET.get('data_file', '')}]
+            options_form = ReductionOptionsSet(initial=initial_values)
+            initial_config = {}
+            if 'experiment' in request.GET:
+                initial_config['experiment'] = request.GET.get('experiment', '')
+            if 'reduction_name' in request.GET:
+                initial_config['reduction_name'] = request.GET.get('reduction_name', '')
+            config_form = ReductionConfigurationForm(initial=initial_config)
+        # Retrieve existing configuration
+        else:
+            reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
+            initial_config = ReductionConfigurationForm.data_from_db(request.user, reduction_config)
+            
+            initial_values = []
+            for item in reduction_config.reductions.all():
+                props = ReductionOptions.data_from_db(request.user, item.pk)
+                initial_values.append(props)
+                
+            options_form = ReductionOptionsSet(initial=initial_values)
+            config_form = ReductionConfigurationForm(initial=initial_config)
+            expt_list = reduction_config.experiments.all()
+            job_list = RemoteJobSet.objects.filter(configuration=reduction_config)
+
+    breadcrumbs = Breadcrumbs()
+    breadcrumbs.append_reduction(instrument_name_lowercase)
+    if config_id is not None:
+        breadcrumbs.append("configuration %s" % config_id)
+    else:
+        breadcrumbs.append("new configuration")
+
+    # ICAT info url
+    icat_url = reverse('catalog.views.run_info', args=[instrument_name_capitals, '0000'])
+    icat_url = icat_url.replace('/0000', '')
+    # TODO: add New an Save-As functionality
+    template_values.update({'config_id': config_id,
+                       'options_form': options_form,
+                       'config_form': config_form,
+                       'expt_list': expt_list,
+                       'existing_job_sets': job_list,
+                       'title': '%s Reduction' % instrument_name_capitals,
+                       'breadcrumbs': breadcrumbs,
+                       'icat_url': icat_url,
+                       'instrument' : instrument_name, })
+
+    template_values = reduction_service.view_util.fill_template_values(request, **template_values)
+    if 'message' in request.GET:
+        template_values['message'] = request.GET['message']
+    return render_to_response('%s/reduction_table.html' % instrument_name_lowercase,
+                              template_values)
+
+@login_required
+def configuration_job_delete(request, config_id, reduction_id):
+    """
+        Delete a reduction from a configuration
+        @param request: request object
+        @param config_id: pk of configuration this reduction belongs to
+        @param reduction_id: pk of the reduction object
+    """
+    logger.debug("Reduction: %s"%(inspect.stack()[0][3]))
+    
+    reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
+    reduction_proc = get_object_or_404(ReductionProcess, pk=reduction_id, owner=request.user)
+    if reduction_proc in reduction_config.reductions.all():
+        reduction_config.reductions.remove(reduction_proc)
+        reduction_proc.delete()
+    return redirect(reverse('eqsans:configuration_options', kwargs={'config_id' : config_id}))
+    
+@login_required
+def configuration_delete(request, config_id, instrument_name):
+    """
+        Delete a configuration
+        @param request: request object
+        @param config_id: pk of configuration this reduction belongs to
+    """
+    
+    logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
+    
+    instrument_name_lowercase = str.lower(str(instrument_name))
+    
+    reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
+    for item in reduction_config.reductions.all():
+        reduction_config.reductions.remove(item)
+        item.delete()
+    reduction_config.delete()
+    if 'back_url' in request.GET:
+        return redirect(request.GET['back_url'])
+    return redirect(reverse('reduction_home', args=[instrument_name_lowercase]))
     
 @login_required
 def configuration_query(request, remote_set_id):
@@ -41,11 +191,10 @@ def configuration_query(request, remote_set_id):
     job_set = get_object_or_404(RemoteJobSet, pk=remote_set_id)
     
     breadcrumbs = Breadcrumbs()
-    breadcrumbs.append('eqsans reduction',reverse('reduction.views.reduction_home',
-                                                  kwargs={'instrument_name': 'eqsans' }))
-    breadcrumbs.append_configuration('eqsans', job_set.configuration.id)
-    breadcrumbs.append('jobs',reverse('reduction.views.reduction_jobs',
-                                      kwargs={'instrument_name': 'eqsans' }))
+    breadcrumbs.append('eqsans reduction',reverse('reduction_home',
+                                                  kwargs={'instrument_name': instrument_name_lowercase }))
+    breadcrumbs.append_configuration(instrument_name_lowercase, job_set.configuration.id)
+    breadcrumbs.append('jobs',reverse('reduction_jobs', kwargs={'instrument_name': instrument_name_lowercase}))
     breadcrumbs.append("job results")
     
     template_values = {'remote_set_id': remote_set_id,
@@ -56,7 +205,7 @@ def configuration_query(request, remote_set_id):
                        'trans_id': job_set.transaction.trans_id,
                        'job_directory': job_set.transaction.directory,
                        'back_url': request.path,
-                       'instrument': 'eqsans'}
+                       'instrument': instrument_name_lowercase}
     
     # Get status of each job
     job_set_info = []
@@ -121,55 +270,42 @@ def configuration_iq(request, remote_set_id):
     str_io.close()
     return resp
 
-
-
 @login_required
-def job_details(request, job_id):
+def configuration_submit(request, config_id):
     """
-        Show status of a given remote job.
-        
+        Submit all reductions for this configuration.
         @param request: request object
-        @param job_id: pk of the RemoteJob object
-        
+        @param config_id: pk of configuration
     """
+    logger.debug("Reduction: %s"%(inspect.stack()[0][3]))
     
-    logger.debug("EQSANS: %s job_id=%s"%(inspect.stack()[0][3],job_id))
-    
-    remote_job = get_object_or_404(RemoteJob, remote_id=job_id)
+    reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
+    reductions = reduction_config.reductions.all()
+    if len(reductions) > 0:
+        # Start a new transaction
+        transaction = remote.view_util.transaction(request, start=True)
+        job_set = RemoteJobSet(transaction=transaction,
+                               configuration=reduction_config)
+        job_set.save()
+        # Loop through the reductions and submit them
+        JobIDs = []
+        for item in reductions:
+            data = ReductionOptions.data_from_db(request.user, item.id)
+            code = ReductionOptions.as_mantid_script(data, transaction.directory)
+            jobID = remote.view_util.submit_job(request, transaction, code)
+            if jobID is not None:
+                JobIDs.append(jobID)
+                job = RemoteJob(reduction=item,
+                                remote_id=jobID,
+                                properties=item.properties,
+                                transaction=transaction)
+                job.save()
+                job_set.jobs.add(job)
+    return redirect(reverse('eqsans:configuration_options',
+                            kwargs={'config_id' : config_id})+
+                    "?message=Jobs %s sucessfully submitted."%', '.join(JobIDs)
+                    )
 
-    breadcrumbs = Breadcrumbs()
-    breadcrumbs.append('eqsans reduction',reverse('reduction.views.reduction_home',
-                                                  kwargs={'instrument_name': 'eqsans' }))
-    breadcrumbs.append_reduction_options('eqsans', remote_job.reduction.id )
-    breadcrumbs.append('jobs',reverse('reduction.views.reduction_jobs',
-                                      kwargs={'instrument_name': 'eqsans' }))
-    breadcrumbs.append("job %s" % job_id)
-    
-    template_values = {'remote_job': remote_job,
-                       'parameters': remote_job.get_data_dict(),
-                       'reduction_id': remote_job.reduction.id,
-                       'breadcrumbs': breadcrumbs,
-                       'back_url': request.path,
-                       'instrument': 'eqsans'}
-    template_values = remote.view_util.fill_job_dictionary(request, job_id, **template_values)
-    template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    template_values['title'] = "EQSANS job results"
-    
-    # Go through the files and find data to plot
-    if 'job_files' in template_values and 'trans_id' in template_values:
-        for f in template_values['job_files']:
-            if f.endswith('_Iq.txt'):
-                plot_info = view_util.process_iq_output(request, remote_job, 
-                                                        template_values['trans_id'], f)
-                template_values.update(plot_info)
-            elif f.endswith('_Iqxy.nxs'):
-                plot_info = view_util.process_iqxy_output(request, remote_job, 
-                                                          template_values['trans_id'], f)
-                template_values.update(plot_info)
-#     import pprint
-#     logger.debug(pprint.pformat(template_values))
-    return render_to_response('eqsans/reduction_job_details.html',
-                              template_values)
 
 @login_required
 def test_result(request, job_id='-1'):

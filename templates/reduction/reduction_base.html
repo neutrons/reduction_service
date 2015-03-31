@@ -57,11 +57,7 @@
         <b>Reduction</b><br>
         <ul>
           <li><a href="{% url 'reduction_home' instrument %}" title="Go to reduction home for this instrument">reduction home</a></li>
-          
-          {% comment %}
-          <li><a href="{% url 'eqsans:configuration' %}" title="Start a new configuration to use with multiple reductions">new configuration</a></li>
-          {% endcomment %}
-          
+          {% block reduction_instrument_specific %} {% endblock %}
           <li><a href="{% url 'reduction' instrument %}" title="Start a new single reduction">new reduction</a></li>
           {% if reduction_id %}
           <li><a href="{% url 'reduction_script' instrument reduction_id%}" title="See reduction script">see script</a></li>
@@ -74,18 +70,7 @@
         <b>Remote jobs</b><br>
         <ul>
           <li><a href="{% url 'reduction_jobs' instrument%}" title="See remote jobs">see all jobs</a></li>
-          {% if config_id %}
-          {% comment %}
-          <li><a href="{% url 'configuration_submit' instrument config_id %}" title="Submit jobs for this configuration">submit jobs</a></li>
-          {% endcomment %}
-          {% if existing_job_sets and existing_job_sets|length > 0 %}
-          {% for job in existing_job_sets %}
-          {% comment %}
-          <li><a href="{% url 'configuration_query' instrument job.id%}" title="See job details">job set {{ job.id }}</a></li>
-          {% endcomment %}
-          {% endfor %}
-          {% endif %}
-          {% endif %}
+		  {% block jobs_instrument_specific %} {% endblock %}
           {% if reduction_id %}
           <li><a href="{% url 'reduction_submit_job' instrument reduction_id%}" title="Submit this reduction job">submit this job</a></li>
           {% if existing_jobs and existing_jobs|length > 0 %}

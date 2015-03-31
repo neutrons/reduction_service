@@ -44,8 +44,8 @@ def _get_function_from_instrument_name(instrument_name,function_name):
         func_to_call = getattr(module, function_name)
         return func_to_call
     except Exception as e:
-        logger.exception(e)
-        logger.error('Error getting function <%s> from module <%s>: %s' %(function_name, module_str, sys.exc_value) )
+        #logger.exception(e)
+        #logger.error('Error getting function <%s> from module <%s>: %s' %(function_name, module_str, sys.exc_value) )
         return None
 
 def get_new_reduction_url(instrument, run=None, ipts=None):

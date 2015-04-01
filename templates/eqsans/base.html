@@ -1,17 +1,17 @@
 {% extends "reduction/reduction_base.html" %}
 
-      {% block reduction_instrument_specific %}
-          <li><a href="{% url 'eqsans:configuration' %}" title="Start a new configuration to use with multiple reductions">new configuration</a></li>
-      {% endblock %}
-      
-      
-      {% block jobs_instrument_specific %}
-          {% if config_id %}
-          <li><a href="{% url 'configuration_submit' instrument config_id %}" title="Submit jobs for this configuration">submit jobs</a></li>
-          {% if existing_job_sets and existing_job_sets|length > 0 %}
-          {% for job in existing_job_sets %}
-          <li><a href="{% url 'configuration_query' instrument job.id%}" title="See job details">job set {{ job.id }}</a></li>
-          {% endfor %}
-          {% endif %}
-          {% endif %}
-      {% endblock %}
+  {% block reduction_instrument_specific %}
+      <li><a href="{% url 'eqsans:configuration' %}" title="Start a new configuration to use with multiple reductions">new configuration</a></li>
+  {% endblock %}
+  
+  
+  {% block jobs_instrument_specific %}
+      {% if config_id %}
+	      <li><a href="{% url 'configuration_submit' instrument config_id %}" title="Submit jobs for this configuration">submit jobs</a></li>
+	      {% if existing_job_sets and existing_job_sets|length > 0 %}
+		      {% for job in existing_job_sets %}
+		      	<li><a href="{% url 'configuration_query' instrument job.id%}" title="See job details">job set {{ job.id }}</a></li>
+		      {% endfor %}
+	      {% endif %}
+      {% endif %}
+  {% endblock %}

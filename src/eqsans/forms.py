@@ -17,6 +17,7 @@ import logging
 import copy
 import os.path
 import pprint
+from eqsans import INSTRUMENT_NAME
 
 logger = logging.getLogger('eqsans.forms')
 scripts_location = os.path.join(os.path.dirname(__file__),"scripts")
@@ -72,7 +73,7 @@ class ReductionConfigurationForm(forms.Form):
             @param user: User object
             @param config_id: PK of the config object to update (None for creation)
         """
-        eqsans = Instrument.objects.get(name='eqsans')
+        eqsans = Instrument.objects.get(name=INSTRUMENT_NAME)
         # Find or create a reduction process entry and update it
         if config_id is not None:
             reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=user)
@@ -296,7 +297,7 @@ class ReductionOptions(forms.Form):
             new_reduction = True
             
         if new_reduction:
-            eqsans = Instrument.objects.get(name='eqsans')
+            eqsans = Instrument.objects.get(name=INSTRUMENT_NAME)
             reduction_proc = ReductionProcess(owner=user,
                                               instrument=eqsans)
         reduction_proc.name = self.cleaned_data['reduction_name']

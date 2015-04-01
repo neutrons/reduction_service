@@ -28,19 +28,17 @@ scripts_location = os.path.join(os.path.dirname(__file__), "scripts")
 
 class ReductionOptions(forms.Form):
     """
-        Reduction parameter form
-        URL: /reduction/eqsans/reduction/
-        
+        Reduction parameter form       
     """
     # Reduction name
-    reduction_name = forms.CharField(required=False)
+    reduction_name = forms.CharField(required=False, initial=time.strftime("Reduction of %Y-%m-%d %H:%M:%S", time.localtime()) )
     reduction_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     expt_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     experiment = forms.CharField(required=False, initial='uncategorized')
     # 
     data_file = forms.CharField(required=True)
-    raw_vanadium = forms.CharField(required=False, initial='')
-    processed_vanadium = forms.CharField(required=False, initial='')
+    raw_vanadium = forms.CharField(required=True)
+    processed_vanadium = forms.CharField(required=True)
     
     grouping_file = forms.ChoiceField([("/SNS/SEQ/shared/autoreduce/SEQ_1x1_grouping.xml", "1 x 1"),
                                        ("/SNS/SEQ/shared/autoreduce/SEQ_2x1_grouping.xml", "2 x 1"),

@@ -22,7 +22,7 @@ import pprint
 
 from reduction_service.view_util import Breadcrumbs
 
-logger = logging.getLogger('reduction')
+logger = logging.getLogger('reduction.views')
 
 def _import_module_from_app(instrument_name_lowercase, module_name):
     """

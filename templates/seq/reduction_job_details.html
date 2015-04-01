@@ -1,0 +1,54 @@
+{% extends "eqsans/base.html" %}
+{% load staticfiles %}
+
+{% block header %}
+  <link rel="stylesheet" href="{% static 'css/plotting.css' %}" type="text/css" title="no title" charset="utf-8">
+  <link rel="stylesheet" href="{% static 'css/plotting_print.css' %}" type="text/css" media="print" title="no title" charset="utf-8">
+  <script type="text/javascript" src="{% static 'thirdparty/d3.v3/d3.v3.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/plotting.js' %}"></script>
+
+{% endblock %}
+
+{% block content %}
+    <h2>Results for <a href="{% url 'reduction_options' reduction_id=remote_job.reduction.id instrument_name=instrument %}" title='Click to see the latest version of this reduction'>
+    	{% if remote_job.reduction.name|length > 0 %}{{ remote_job.reduction.name }}{% else %}reduction {{ remote_job.reduction.id }}{% endif %}</a></h2>
+    <div class='tiled_area'>
+      <div class='tile'>
+        Job {{ job_id }}
+        <ul>
+          <li>Status: {{ job_info.JobStatus }}</li>
+          <li>Start time: {{ job_info.StartDate }}</li>
+          <li>End time: {{ job_info.CompletionDate }}</li>
+        </ul>
+      </div>
+      
+      <div class='tile'>
+        Reduction parameters
+        <ul>
+          <li>Sample data: {{ parameters.data_file }}</li>
+          <li>Raw vanadium: {{ parameters.raw_vanadium }}</li>
+          <li>Processed vanadium: {{ parameters.processed_vanadium }}</li>
+          <li>Masked banks: {{ parameters.masked_bank }}</li>
+          <li>Masked pixels: {{ parameters.masked_pixel }}</li>
+          <li>Masked tubes: {{ parameters.masked_tube }}</li> 
+          <li>Energy Binning :: Min:{{ parameters.energy_binning_min }} Step:{{ parameters.energy_binning_step }} Max:{{ parameters.energy_binning_max }}</li>
+        </ul>
+      </div>
+      <div class='tile'>
+        Job directory: {{ job_directory }}
+        <ul>
+        {% for file in job_files %}
+          {% url 'remote_download' trans_id file as download_url %}
+          {% if download_url %}
+          <li><a href="{{ download_url }}">{{ file }}</a></li>
+          {% else %}
+          <li>{{ file }}</li>
+          {% endif %}
+        {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    </div>
+    {% endif %}
+{% endblock %}

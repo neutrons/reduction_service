@@ -142,7 +142,16 @@ if __name__ == "__main__":
     #MaskBTPParameters.append({'Bank':"108",'Tube':"4"})
     #MaskBTPParameters.append({'Bank':"141"})
     #MaskBTPParameters.append({'Bank':"70"})
-    {{ mask }}
+    
+    {% if masked_bank %}
+    MaskBTPParameters.append({'Bank':"{{masked_bank}}"})
+    {% endif %}
+    {% if masked_tube %}
+    MaskBTPParameters.append({'Tube':"{{masked_tube}}"})
+    {% endif %}
+    {% if masked_pixel %}
+    MaskBTPParameters.append({'Pixel':"{{masked_pixel}}"})
+    {% endif %}
 
  # only for the runs in IPTS-11831
  #   MaskBTPParameters.append({'Bank':"61-74,98-113,137-150"})
@@ -151,19 +160,9 @@ if __name__ == "__main__":
     NXSPE_flag=True
 
     NormalizedVanadiumEqualToOne = True
-
-    #check number of arguments
-    if (len(sys.argv) != 3): 
-        print "autoreduction code requires a filename and an output directory"
-        sys.exit()
-    if not(os.path.isfile(sys.argv[1])):
-        print "data file ", sys.argv[1], " not found"
-        sys.exit()
-    else:
-        filename = sys.argv[1]
-        outdir = sys.argv[2]
-        if filename.endswith('.nxs'):
-            outdir+='LEGACY/'
+        
+    filename = "{{data_file}}"
+    outdir = "{{output_path}}"
 
     elog=ExperimentLog()
     elog.setLogList('vChTrans,Speed1,Phase1,Speed2,Phase2,Speed3,Phase3,EnergyRequest,s1t,s1r,s1l,s1b,vAttenuator2,vAttenuator1,svpressure,dvpressure')
@@ -197,7 +196,7 @@ if __name__ == "__main__":
                                         {{ energy_binning_max }}*EGuess]  #Typical values are -0.5*EGuess, 0.005*EGuess, 0.95*EGuess
         DGSdict['SofPhiEIsDistribution']='0' # keep events
         DGSdict['HardMaskFile']=HardMaskFile
-        DGSdict['GroupingFile']="{{grouping}}"#'/SNS/SEQ/shared/autoreduce/SEQ_2x2_grouping.xml' #Typically an empty string '', choose 2x1 or some other grouping file created by GenerateGroupingSNSInelastic or GenerateGroupingPowder
+        DGSdict['GroupingFile']="{{grouping_file}}"#'/SNS/SEQ/shared/autoreduce/SEQ_2x2_grouping.xml' #Typically an empty string '', choose 2x1 or some other grouping file created by GenerateGroupingSNSInelastic or GenerateGroupingPowder
         DGSdict['IncidentBeamNormalisation']='None'  #NEXUS file does not have any normaliztion, but the nxspe IS normalized later in code by charge
         DGSdict['UseBoundsForDetVan']='1'
         DGSdict['DetVanIntRangeHigh']=IntegrationRange[1]

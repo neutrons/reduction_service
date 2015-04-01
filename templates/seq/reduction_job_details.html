@@ -4,15 +4,44 @@
 {% block header %}
   <link rel="stylesheet" href="{% static 'css/plotting.css' %}" type="text/css" title="no title" charset="utf-8">
   <link rel="stylesheet" href="{% static 'css/plotting_print.css' %}" type="text/css" media="print" title="no title" charset="utf-8">
-  <script type="text/javascript" src="{% static 'thirdparty/d3.v3/d3.v3.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'js/plotting.js' %}"></script>
 
+ <script>
+ // File preview
+  function preview_pre(title, url) {
+  	var windowWidth = $(window).width();
+	var windowHeight = $(window).height();
+  	$.ajax({
+  		url: url,
+  		success: function(result){
+        	$("body").append('<div id="dialog-preview"><pre>' + result + '<pre></div>');
+        	$("#dialog-preview").dialog({
+        		title: title,
+        		resizable: false,
+        		maxHeight : windowHeight - 150,
+				maxWidth : windowWidth -150,
+				minWidth : windowWidth -250,
+        		close: function( event, ui ) {$("#dialog-preview").remove();}
+     		})
+     		.css({overflow:"auto"})
+     		;
+    	}
+    });
+  };
+  $(function() { $("#dialog-preview").hide(); });
+  // closes the dialog when click outside
+  $(document).mouseup(function(e) {
+	  var alert_box = $(".ui-widget-overlay");
+	  if (alert_box.has(e.target).length === 0)
+	     $("#dialog-preview").dialog("close");
+  });
+
+  </script>
+  
 {% endblock %}
 
 {% block content %}
     <h2>Results for <a href="{% url 'reduction_options' reduction_id=remote_job.reduction.id instrument_name=instrument %}" title='Click to see the latest version of this reduction'>
-    	{% if remote_job.reduction.name|length > 0 %}{{ remote_job.reduction.name }}{% else %}reduction {{ remote_job.reduction.id }}{% endif %}</a></h2>
-    <div class='tiled_area'>
+    	{% if remote_job.reduction.name|length > 0 %}{{ remote_job.reduction.name }}{% else %}reduction {{ remote_job.reduction.id }}{% endif %}</a></h2>    <div class='tiled_area'>
       <div class='tile'>
         Job {{ job_id }}
         <ul>
@@ -40,7 +69,7 @@
         {% for file in job_files %}
           {% url 'remote_download' trans_id file as download_url %}
           {% if download_url %}
-          <li><a href="{{ download_url }}">{{ file }}</a></li>
+          <li><a href="{{ download_url }}">{{ file }}</a>&nbsp; <a title="Click to preview this file." onClick="preview_pre('{{ file }}','{{ download_url }}');"><span style='display:inline-block' class="ui-icon ui-icon-zoomin"></span></a></li>
           {% else %}
           <li>{{ file }}</li>
           {% endif %}
@@ -50,5 +79,8 @@
     </div>
 
     </div>
-    {% endif %}
+
 {% endblock %}
+
+
+

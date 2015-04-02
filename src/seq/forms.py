@@ -51,12 +51,49 @@ class ReductionOptions(forms.Form):
     
     error_message_mask = {'invalid': "Not a valid ranged input. Use for example: 1-8,121-128"}
     masked_bank = forms.RegexField(regex=r'^[\d\-,]+$', required=False, help_text="Use ranged input. E.g.: 1-8,121-128.",
-                                   error_messages=error_message_mask, initial="99-102,114,115,75,76,38,64")
+                                   error_messages=error_message_mask, initial="38,64,75,76,99-102,114,115")
     masked_tube = forms.RegexField(regex=r'^[\d\-,]+$', required=False, help_text="Use ranged input. E.g.: 1-8,121-128.",
                                    error_messages=error_message_mask)
     masked_pixel = forms.RegexField(regex=r'^[\d\-,]+$', required=False, help_text="Use ranged input. E.g.: 1-8,121-128.",
-                                    error_messages=error_message_mask, initial="1-8,121-128")
+                                    error_messages=error_message_mask, initial="1-8")#,121-128")
     
+    
+    # 
+    def clean_masked_bank(self):
+        data = self.cleaned_data['masked_bank']
+        if len(data) > 0:
+            data = self._hyphen_range(data)
+        return data
+    
+    def clean_masked_tube(self):
+        data = self.cleaned_data['masked_tube']
+        if len(data) > 0:
+            data = self._hyphen_range(data)
+        return data
+    
+    def clean_masked_pixel(self):
+        data = self.cleaned_data['masked_pixel']
+        if len(data) > 0:
+            data = self._hyphen_range(data)
+        return data
+
+    
+    def _hyphen_range(self, s):
+        """ Takes a range in form of "a-b" and generate a list of numbers between a and b inclusive.
+        Also accepts comma separated ranges like "a-b,c-d,f" will build a list which will include
+        Numbers from a to b, a to d and f"""
+        s="".join(s.split())#removes white space
+        r=set()
+        for x in s.split(','):
+            t=x.split('-')
+            if len(t) not in [1,2]:
+                logger.error("hash_range is given its arguement as "+s+" which seems not correctly formated.")
+            r.add(int(t[0])) if len(t)==1 else r.update(set(range(int(t[0]),int(t[1])+1)))
+        l=list(r)
+        l.sort()
+        l_in_str = ','.join(str(x) for x in l)
+        return l_in_str
+
     
     @classmethod
     def as_xml(cls, data):

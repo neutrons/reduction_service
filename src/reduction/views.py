@@ -273,7 +273,7 @@ def reduction_jobs(request, instrument_name):
     
     instrument_name = str(instrument_name).lower()
     
-    jobs = RemoteJob.objects.filter(transaction__owner=request.user)
+    jobs = RemoteJob.objects.filter(transaction__owner=request.user).filter(reduction__instrument__name=instrument_name )
     status_data = []
     for job in jobs:
         if not job.transaction.is_active or job.reduction.get_config() is not None:

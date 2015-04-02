@@ -310,14 +310,18 @@ def download_file(request, trans_id, filename):
           https://fermi.ornl.gov/MantidRemote/download?TransID=90&File=submit.sh
     """
     try:
+
         conn = httplib.HTTPSConnection(settings.FERMI_HOST, timeout=60)
-        conn.request('GET', '%sdownload?TransID=%s&File=%s' % (settings.FERMI_BASE_URL, trans_id, filename),
+        url = '%sdownload?TransID=%s&File=%s' % (settings.FERMI_BASE_URL, trans_id, filename)
+        logger.debug("Getting: %s"%url)
+        conn.request('GET', url,
                      headers={'Cookie':request.session.get('fermi', '')})
         r = conn.getresponse()
         if r.status == 200:
             return r.read()
         else:
             logger.error("Could not get file from compute node: %s" % r.status)
+            logger.error( r.read() )
     except:
         logger.error("Could not get file from compute node: %s" % sys.exc_value)
     return None

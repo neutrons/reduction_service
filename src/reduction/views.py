@@ -459,7 +459,7 @@ def job_details(request, job_id, instrument_name):
     remote_job = get_object_or_404(RemoteJob, remote_id=job_id)
 
     breadcrumbs = Breadcrumbs()
-    breadcrumbs.append('eqsans reduction',reverse('reduction_home',
+    breadcrumbs.append('%s reduction'%instrument_name_lowercase,reverse('reduction_home',
                                                   kwargs={'instrument_name': instrument_name_lowercase }))
     breadcrumbs.append_reduction_options(instrument_name_lowercase, remote_job.reduction.id )
     breadcrumbs.append('jobs',reverse('reduction_jobs',
@@ -481,7 +481,7 @@ def job_details(request, job_id, instrument_name):
         view_util = _import_module_from_app(instrument_name_lowercase,'view_util')
         template_values = view_util.set_into_template_values_job_files(template_values, request, remote_job)
 #     import pprint
-#     logger.debug(pprint.pformat(template_values))
+    logger.debug(pprint.pformat(template_values))
     return render_to_response('%s/reduction_job_details.html'%instrument_name_lowercase,
                               template_values)
 ###################

@@ -27,3 +27,70 @@
     </div>
     {% endif %}
 {% endblock %}
+
+{% block analysis_box %}
+  <div class="analysis_tools">
+      {% block top_tool_area %}<div class="top_tool_area">
+        <b>Fermi status</b><br>
+        {% spaceless %}
+        {% if fermi_authenticated %}
+        <div class='green'>Authenticated as: <b>{{ fermi_uid }} </b></div>
+        {% else %}
+        <div class='red'>Not authenticated</div>
+        {% endif %}
+        {% endspaceless %}
+        <form action="{% url 'remote_authenticate'%}" method="post" class="form">{% csrf_token %}
+          <input class="form_text" type="text" name="username" placeholder="username"><br>
+          <input class="form_text" type="password" name="password" placeholder="password"><br>
+          <input type="submit" id="login_button" value="log in" title="Log in to Fermi to be able to submit jobs">
+          <input type="hidden" name="redirect" value="{{ current_path }}">
+        </form>
+        
+        {% if fermi_authenticated %}
+        <script>
+        $(".form").hide();
+        $(document).ready(function() {	
+        	$("#show").click(function() {
+            	$(".form").show();
+            	$("#show").hide();
+        	});
+   		 });
+        </script>
+        <a id="show" title="Click to login into Fermi with other user." href="javascript:void(0);">
+        	<span style='display:inline-block' class="ui-icon ui-icon-person"></span> Change User</a>
+        {% else %}
+        <script>$(".form").show();</script>
+        {% endif %}
+        
+      </div>
+      {% endblock %}
+
+
+      <div class="tool_area">
+        <b>Catalog</b><br>
+        <ul>
+          <li><a href="{% url 'catalog_experiments' instrument %}" title="See all experiments for this instrument">see experiments</a></li>
+          {% spaceless %}
+          {% if ipts_number and is_categorized %}
+          <li><a href="{% url 'catalog_runs' instrument ipts_number%}" title="See all runs for this experiment">see {{ ipts_number }} runs</a></li>
+          {% endif %}
+          {% endspaceless %}
+        </ul>
+      </div>
+      <div class="tool_area">
+        <b>Reduction</b><br>
+        <ul>
+          <li><a href="{% url 'reduction_home' instrument %}" title="Go to reduction home for this instrument">reduction home</a></li>
+          {% block reduction_instrument_specific %} {% endblock %}
+          <li><a href="{% url 'reduction' instrument %}" title="Start a new single reduction">new reduction</a></li>
+        </ul>
+      </div>
+      <div class="tool_area">
+        <b>Remote jobs</b><br>
+        <ul>
+          <li><a href="{% url 'reduction_jobs' instrument%}" title="See remote jobs">see all jobs</a></li>
+		  {% block jobs_instrument_specific %} {% endblock %}
+        </ul>
+      </div>
+  </div>
+{% endblock %}

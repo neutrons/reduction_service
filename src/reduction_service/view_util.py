@@ -76,14 +76,14 @@ def fill_template_values(request, **template_args):
     # It may be the case that we are currently viewing a part of the site
     # belonging to an instrument-specific app. In this case, we'll already have
     # an instrument entry in the dictionary. We should exclude that instrument.
-    
+    reduction_apps = []
     instrument = None
     if 'instrument' in template_args:
         instrument = template_args['instrument']
-    reduction_apps = []
-    for instr in ['eqsans']:
-        if not instrument==instr:
-            reduction_apps.append({'name':instr,
-                                   'url': reverse('reduction.views.reduction_home', args=[instr])})
+        
+#     for instr in ['eqsans']:
+#         if not instrument==instr:
+        reduction_apps.append({'name':instrument,
+                           'url': reverse('reduction_home', args=[instrument])})
     template_args['reduction_apps'] = reduction_apps
     return template_args

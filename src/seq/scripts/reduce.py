@@ -166,6 +166,9 @@ from matplotlib.pyplot import *
 import numpy
 
 def preprocessVanadium(Raw,Processed,Parameters):
+    
+    Raw = "SEQ_" + Raw + '.nxs.h5'
+    
     if os.path.isfile(Processed):
         LoadNexus(Filename=Processed,OutputWorkspace="__VAN")
         dictvan={'UseProcessedDetVan':'1','DetectorVanadiumInputWorkspace':'__VAN'}
@@ -178,8 +181,10 @@ def preprocessVanadium(Raw,Processed,Parameters):
     return dictvan
         
 def preprocessData(filename):
-    f1 = os.path.split(filename)[-1]
-    runnum = int(f1.strip('SEQ_').replace('.nxs.h5',''))
+    #f1 = os.path.split(filename)[-1]
+    #runnum = int(f1.strip('SEQ_').replace('.nxs.h5',''))
+    runnum = int(filename)
+    filename = "SEQ_" + filename + '.nxs.h5'
     __MonWS=LoadNexusMonitors(Filename=filename)
 
     #PV streamer not running. Copying logs from some other run

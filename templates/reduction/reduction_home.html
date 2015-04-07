@@ -1,8 +1,8 @@
-{% extends "reduction/reduction_base.html" %}
+{% extends instrument|add:"/base.html" %}
 
 
 {% block content %}
-<h2>List of experiments for which you have set up reductions.</h2>
+<h2>List of experiments {{instrument}} for which you have set up reductions.</h2>
 <p>
 {% if experiments %}
 <p>

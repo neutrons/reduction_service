@@ -4,7 +4,7 @@ admin.autodiscover()
 
 # Make a regular expression with instruments with available reduction
 from reduction_service.settings import REDUCTION_AVAILABLE
-valid_instruments = combined = "(" + ")|(".join(REDUCTION_AVAILABLE) + ")"
+valid_instruments = "(" + ")|(".join(REDUCTION_AVAILABLE) + ")"
 
 
 urlpatterns = patterns('',

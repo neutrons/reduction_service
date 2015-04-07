@@ -11,8 +11,15 @@ from django.conf import settings
 import logging
 import sys
 import inspect
+from reduction_service.settings import REDUCTION_AVAILABLE
 
 logger = logging.getLogger('catalog')
+
+def _set_specific_base_template(instrument=None):
+    if instrument in REDUCTION_AVAILABLE:
+        return "%s/base.html"%instrument
+    else:
+        return "base.html"
 
     
 def fill_template_values(request, **template_args):
@@ -25,11 +32,11 @@ def fill_template_values(request, **template_args):
         template_args['new_reduction_url'] = get_new_reduction_url(instrument)
         template_args['reduction_url'] = get_reduction_url(instrument)
         template_args['remote_url'] = get_remote_jobs_url(instrument)
-              
+        template_args['base_template'] = _set_specific_base_template(instrument)
         template_args['reduction_dialog'] = get_reduction_dialog_settings(instrument,
-            ipts = template_args['experiment'] if 'experiment' in template_args.keys() else None) 
-                                                                          
-        
+            ipts = template_args['experiment'] if 'experiment' in template_args.keys() else None)                               
+    else:
+        template_args['base_template'] = _set_specific_base_template()
     return template_args
 
 def _get_function_from_instrument_name(instrument_name,function_name):

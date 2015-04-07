@@ -2,6 +2,7 @@ from django.core.urlresolvers import reverse
 import users.view_util
 import remote.view_util
 from django.conf import settings
+from reduction_service.settings import REDUCTION_AVAILABLE
 
 class Breadcrumbs(object):
     '''
@@ -80,10 +81,8 @@ def fill_template_values(request, **template_args):
     instrument = None
     if 'instrument' in template_args:
         instrument = template_args['instrument']
-        
-#     for instr in ['eqsans']:
-#         if not instrument==instr:
-        reduction_apps.append({'name':instrument,
+        if instrument in REDUCTION_AVAILABLE:
+            reduction_apps.append({'name':instrument,
                            'url': reverse('reduction_home', args=[instrument])})
     template_args['reduction_apps'] = reduction_apps
     return template_args

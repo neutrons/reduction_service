@@ -55,7 +55,9 @@ def reduction_home(request, instrument_name):
                        'breadcrumbs': breadcrumbs,
                        'instrument' : instrument_name, }
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    return render_to_response('%s/reduction_home.html'%instrument_name,
+    
+    logger.debug(pprint.pformat(template_values))
+    return render_to_response('reduction/reduction_home.html',
                               template_values)
 
 

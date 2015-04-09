@@ -4,6 +4,17 @@
 {% block header %}
   <link rel="stylesheet" href="{% static 'css/plotting.css' %}" type="text/css" title="no title" charset="utf-8">
   <link rel="stylesheet" href="{% static 'css/plotting_print.css' %}" type="text/css" media="print" title="no title" charset="utf-8">
+  <script type="text/javascript" src="{% static 'thirdparty/d3.v3/d3.v3.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/plotting.js' %}"></script>
+   
+  <!-- Ref. 1D={{ plot_1d_id }} 2D={{ plot_2d.id }} -->
+  <script type="text/javascript">
+    {% if plot_1d_id %}
+    var data = {{ plot_1d|safe }};
+    {% endif %}
+
+  </script>  
+
 
  <script>
  // File preview
@@ -78,7 +89,32 @@
       </div>
     </div>
 
+	{% if plot_1d_id or plot_2d %}
+    <div class='tiled_area'>
+    <div class='wide_tile tile'>
+    Need to print? Click the 'adjust plot' link and use the print functionality of your browser.
     </div>
+    {% if plot_1d_id %}
+      <div class='wide_tile tile'>
+        <plot_anchor></plot_anchor>
+        <a href="{% url 'plotting_adjust_1d' plot_1d_id %}?back={{ back_url }}">adjust plot</a>
+      </div>
+      <script>
+        var x_label = $('<div />').html("{{ plot_object.layout.x_label|safe }}").text();
+        var y_label = $('<div />').html("{{ plot_object.layout.y_label|safe }}").text();
+        var options = {'color': '{{ plot_object.first_data_layout.color|safe }}',
+                       'marker_size': '{{ plot_object.first_data_layout.size }}',
+                       'width': '370',
+                       'height': '200',
+                       'x_label': x_label,
+                       'y_label': y_label,
+                       'log_scale': {% if plot_object.layout %}{{ plot_object.layout.is_y_log|lower }}{% else %}true{% endif %}};
+        plot_1d(data, "plot_anchor", options); 
+      </script>
+    {% endif %}
+
+    </div>
+    {% endif %}
 
 {% endblock %}
 

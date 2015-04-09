@@ -1,16 +1,21 @@
 #!/usr/bin/env python
 import sys,os,math
-sys.path.append("/opt/Mantid/bin")
-#sys.path.insert(0,"/SNS/software/lib/python2.6/site-packages/matplotlib-1.2.0-py2.6-linux-x86_64.egg")
-#from ARLibrary import * #note that ARLibrary would set mantidpath as well
-
-
-import sys,os
-sys.path.append("/opt/mantidnightly/bin")
 from numpy import *
 from string import *
+from numpy import arange
 
 import mantid
+from mantid.simpleapi import *
+#from matplotlib.pyplot import *
+#from matplotlib import *
+import numpy
+
+
+#use("agg")
+
+logger.notice('API Version: %s' % str(apiVersion()))
+
+# Logs at: /var/log/SNS_applications/autoreduce.log
 
 
 class ExperimentLog(object):
@@ -152,12 +157,6 @@ class ExperimentLog(object):
             
         return angle
 
-
-from numpy import arange
-from mantid import *
-from mantid.simpleapi import *
-
-
 def getEightPackHandle(inst,banknum):
     name=inst.getName()
     banknum=int(banknum)
@@ -265,20 +264,8 @@ def MaskBTP(**kwargs):
     MaskDetectors(Workspace=workspace,DetectorList=detlist)
     return detlist
 
-#MaskBTP(Instrument="SEQUOIA",Pixel="1,2,3,4,5,6,7,8,121,122,123,124,125,126,127,128")
-#MaskBTP(Workspace="temporaryWorkspaceForMasking",Bank=110)
-
-from mantid.simpleapi import *
-from matplotlib import *
-
-use("agg")
-from matplotlib.pyplot import *
-
-
-
 
 # Logs at: /var/log/SNS_applications/autoreduce.log
-import numpy
 
 def preprocessVanadium(Raw,Processed,Parameters):
     
@@ -391,6 +378,27 @@ def preprocessData(filename):
     #FilterByLogValue(InputWorkspace='__IWS',OutputWorkspace='__IWS',LogName='Phase3',MinimumValue=valC3-0.15,MaximumValue=valC3+0.15)
     #FilterBadPulses(InputWorkspace="__IWS",OutputWorkspace = "__IWS",LowerCutoff = 50)
     return [Eguess,Efixed,T0]
+
+
+def ws_output_to_txt(x_arr,y_arr,out_file):
+    """
+            s=SumSpectra("__OWS")
+        x=s.readX(0)
+        y=s.readY(0)
+        plot(x[1:],y)
+        xlabel('Energy transfer (meV)')
+        ylabel('Intensity')
+        yscale('log')
+        show()
+        savefig(outdir+outfile+'nxs.png',bbox_inches='tight')
+    """
+    
+    assert len(x_arr) == len(y_arr) 
+    
+    with open (out_file, 'w') as f:
+        f.write("# X , Y\n")
+        for x,y in zip(x_arr,y_arr):
+            f.write("%f %f\n"%(x,y))
   
     
 def WS_clean():
@@ -435,7 +443,7 @@ if __name__ == "__main__":
     elog.setSimpleLogList("vChTrans, EnergyRequest, s1t, s1r, s1l, s1b, vAttenuator2, vAttenuator1")
     elog.setSERotOptions('CCR13VRot, SEOCRot, CCR16Rot, CCR22Rot')
     elog.setSETempOptions('SampleTemp, sampletemp, SensorA, SensorA340 ')
-    elog.setFilename(outdir+'experiment_log.csv')
+    elog.setFilename(os.path.join(outdir,'experiment_log.csv'))
 
     processed_van_file = ProcessedVanadium
     if not os.path.isabs(processed_van_file):
@@ -475,41 +483,37 @@ if __name__ == "__main__":
         #Do normalization of vanadum to 1
         # This step only runs ONCE if the processed vanadium file is not already present.
         if DGSdict.has_key('SaveProcessedDetVan') and NormalizedVanadiumEqualToOne:
-              filename=DGSdict['SaveProcDetVanFilename']
-              LoadNexus(Filename=filename,OutputWorkspace="__VAN")
-              datay = mtd['__VAN'].extractY()
-              meanval = float(datay[datay>0].mean())
-              CreateSingleValuedWorkspace(OutputWorkspace='__meanval',DataValue=meanval)
-              Divide(LHSWorkspace='__VAN',RHSWorkspace='__meanval',OutputWorkspace='__VAN') #Divide the vanadium by the mean
-              Multiply(LHSWorkspace='__OWS',RHSWorkspace='__meanval',OutputWorkspace='__OWS') #multiple by the mean of vanadium Normalized data = Data / (Van/meanvan) = Data *meanvan/Van
-              SaveNexus(InputWorkspace="__VAN", Filename= filename)        
+            filename=DGSdict['SaveProcDetVanFilename']
+            LoadNexus(Filename=filename,OutputWorkspace="__VAN")
+            datay = mtd['__VAN'].extractY()
+            meanval = float(datay[datay>0].mean())
+            CreateSingleValuedWorkspace(OutputWorkspace='__meanval',DataValue=meanval)
+            Divide(LHSWorkspace='__VAN',RHSWorkspace='__meanval',OutputWorkspace='__VAN') #Divide the vanadium by the mean
+            Multiply(LHSWorkspace='__OWS',RHSWorkspace='__meanval',OutputWorkspace='__OWS') #multiple by the mean of vanadium Normalized data = Data / (Van/meanvan) = Data *meanvan/Van
+            SaveNexus(InputWorkspace="__VAN", Filename= filename)        
         
         
         AddSampleLog(Workspace="__OWS",LogName="psi",LogText=str(angle),LogType="Number")
-        SaveNexus(InputWorkspace="__OWS", Filename= outdir+outfile+".nxs")
+        SaveNexus(InputWorkspace="__OWS", Filename= os.path.join(outdir,outfile+".nxs") )
         RebinToWorkspace(WorkspaceToRebin="__OWS",WorkspaceToMatch="__OWS",OutputWorkspace="__OWS",PreserveEvents='0')
         NormaliseByCurrent(InputWorkspace="__OWS",OutputWorkspace="__OWS")
         ConvertToDistribution(Workspace="__OWS")                                                                         #Divide by bin width
 #generate summed spectra_plot
-#---------------------------------------          
+#---------------------------------------
+          
         s=SumSpectra("__OWS")
         x=s.readX(0)
         y=s.readY(0)
-        plot(x[1:],y)
-        xlabel('Energy transfer (meV)')
-        ylabel('Intensity')
-        yscale('log')
-        show()
-        savefig(outdir+outfile+'nxs.png',bbox_inches='tight')
+        ws_output_to_txt(x[1:],y,os.path.join(outdir,outfile+'nxs_DeltaE.txt') )
         
         if NXSPE_flag:            
-            SaveNXSPE(InputWorkspace="__OWS", Filename= outdir+outfile+".nxspe",Efixed=Ei,Psi=angle,KiOverKfScaling=True) 
+            SaveNXSPE(InputWorkspace="__OWS", Filename= os.path.join(outdir,outfile+".nxspe") ,Efixed=Ei,Psi=angle,KiOverKfScaling=True) 
         if clean:
             WS_clean()
     else:
-       ConvertUnits(InputWorkspace="__IWS",OutputWorkspace="__IWS",Target='dSpacing')
-       Rebin(InputWorkspace="__IWS",OutputWorkspace="__OWS",Params='0.5,0.005,10',PreserveEvents='0')
-       SaveNexus(InputWorkspace="__OWS", Filename= outdir+outfile+".nxs")
+        ConvertUnits(InputWorkspace="__IWS",OutputWorkspace="__IWS",Target='dSpacing')
+        Rebin(InputWorkspace="__IWS",OutputWorkspace="__OWS",Params='0.5,0.005,10',PreserveEvents='0')
+        SaveNexus(InputWorkspace="__OWS", Filename= os.path.join(outdir, outfile+".nxs") )
                                                     
 
             

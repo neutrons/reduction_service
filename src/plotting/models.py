@@ -46,18 +46,19 @@ class DataLayout(models.Model):
         return "%s-%s" % (self.owner, self.id)
     
 class Plot1DManager(models.Manager):
-    def create_plot(self, user, data, filename):
+    def create_plot(self, user, data, filename, **kwargs):
         """
             Create a default plot, with all associated DB entries
             @param user: owner of the plot
             @param data: string representation of the data
             @param filename: name of the file that contained the data
+            @param kwargs: Usefull to change plot layout (e.g. y_label)
         """
         dataset = DataSet(owner=user, data=data)
         dataset.save()
         datalayout = DataLayout(owner=user, dataset=dataset)
         datalayout.save()
-        plotlayout = PlotLayout(owner=user)
+        plotlayout = PlotLayout(owner=user, **kwargs)
         plotlayout.save()
         plot1d = Plot1D(owner=user, filename=filename, layout=plotlayout)
         plot1d.save()

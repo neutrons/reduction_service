@@ -24,7 +24,7 @@
   	$.ajax({
   		url: url,
   		success: function(result){
-        	$("body").append('<div id="dialog-preview"><pre>' + result + '<pre></div>');
+        	$("body").append('<div id="dialog-preview"><pre><code>' + result + '</code></pre></div>');
         	$("#dialog-preview").dialog({
         		title: title,
         		resizable: false,
@@ -33,8 +33,10 @@
 				minWidth : windowWidth -250,
         		close: function( event, ui ) {$("#dialog-preview").remove();}
      		})
-     		.css({overflow:"auto"})
-     		;
+     		.css({overflow:"auto"});
+     		$('pre code').each(function(i, block) {
+     		  hljs.highlightBlock(block);
+            });
     	}
     });
   };
@@ -115,7 +117,6 @@
 
     </div>
     {% endif %}
-
 {% endblock %}
 
 

@@ -17,7 +17,6 @@ import copy
 import importlib
 import inspect
 import logging
-from django.template.defaultfilters import pprint
 import pprint
 
 from reduction_service.view_util import Breadcrumbs
@@ -56,7 +55,7 @@ def reduction_home(request, instrument_name):
                        'instrument' : instrument_name, }
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     
-    logger.debug(pprint.pformat(template_values))
+    #logger.debug(pprint.pformat(template_values))
     return render_to_response('reduction/reduction_home.html',
                               template_values)
 
@@ -482,8 +481,8 @@ def job_details(request, job_id, instrument_name):
     if 'job_files' in template_values and 'trans_id' in template_values:
         view_util = _import_module_from_app(instrument_name_lowercase,'view_util')
         template_values = view_util.set_into_template_values_job_files(template_values, request, remote_job)
-#     import pprint
-    logger.debug(pprint.pformat(template_values))
+
+    #logger.debug(pprint.pformat(template_values))
     return render_to_response('%s/reduction_job_details.html'%instrument_name_lowercase,
                               template_values)
 ###################

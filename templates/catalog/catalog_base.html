@@ -1,32 +1,5 @@
 {% extends base_template %}
 
-
 {% load catalog_tags %}
 
-{% block page_specific_tools %}
-    {% if reduction_url %}
-    <div class="tool_area">
-      <b>Reduction</b><br>
-      <ul>
-        <li><a href="{{ reduction_url }}" title="Go to reduction home for this instrument">reduction home</a></li>
-      </ul>
-    </div>
-    {% endif %}
-    {% if remote_url %}
-    <div class="tool_area">
-      <b>Remote jobs</b><br>
-      <ul>
-        <li><a href="{{ remote_url }}" title="See remote jobs">see all jobs</a></li>
-      </ul>
-    </div>
-    {% endif %}
-    {% if reduction_apps %}
-    <div class="tool_area">
-      <b>Reduction</b><br>
-    {% for app in reduction_apps %}
-      <ul><a href='{{ app.url }}'>{{ app.name }} reduction</a></ul>
-    {% endfor %}
-    </div>
-    {% endif %}
-{% endblock %}
 

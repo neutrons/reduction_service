@@ -105,7 +105,7 @@ def get_new_batch_url(instrument, run=None, ipts=None):
         if func is not None:
             return func(run, ipts)
         else:
-            logger.debug("%s has no function %s."%(instrument, this_function_name))
+            #logger.debug("%s has no function %s."%(instrument, this_function_name))
             return None
     else:
         logger.debug("Reduction not available for %s."%(instrument))

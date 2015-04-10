@@ -86,7 +86,7 @@
     {% if plot_2d %}
       <div class='wide_tile tile'>
         <plot_anchor_2d></plot_anchor_2d>
-        <a href="{% url 'plotting_adjust_2d' plot_2d.id %}/?back={{ back_url }}">adjust plot</a>
+        <a href="{% url 'plotting_adjust_2d' plot_2d.id %}?back={{ back_url }}">adjust plot</a>
       </div>
       <script>
         var x_label2d = $('<div />').html("{{ plot_2d.layout.x_label|safe }}").text();

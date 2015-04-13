@@ -50,6 +50,41 @@
 		});
 	});
 	
+	/*
+	Function to transform a range into a list
+	*/
+	function hyphen_range(str) {
+	    var out = [],
+	        chunks = str.split(',')
+	        l = chunks.length;
+	
+	    for ( i = 0; i < l; i++ ) {
+	        populate(out, chunks[i]);
+	    }
+	
+	    return out.sort(function(a,b){return a - b});
+	
+	    function populate (list, chunk) {
+	        var ends = chunk.split('-');
+	
+	        if ( ends.length == 1 ) return list.push(+chunk);
+	        
+	        if ( ends[0] > ends[1] ) flip(ends);
+	
+	        while ( ends[0] <= ends[1] ) {
+	            list.push(+ends[0]);
+	            ends[0]++;
+	        }
+	    }
+	    
+	    function flip (list) {
+	        var temp = list[0];
+	        list[0] = list[1];
+	        list[1] = temp;
+	    }
+	}
+	
+
     
 </script>
 {% endblock %}
@@ -120,14 +155,15 @@
       <h3>Sample:</h3><br>
       <table cellspacing="0" class="property_table">
         <tbody>
-          <tr><th>{{ options_form.data_file.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.data_file.errors }}{{ options_form.data_file }} <span id='data_file_info'></span></td></tr>          
+          <tr><th>{{ options_form.data_files.label_tag }}</th><td class='long_input' title="{{options_form.data_files.help_text}}">{{ options_form.data_files.errors }}{{ options_form.data_files }} <span id='data_file_info'></span></td></tr>          
           <tr><th>{{ options_form.raw_vanadium.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.raw_vanadium.errors }}{{ options_form.raw_vanadium }} <span id='raw_vanadium_info'></span></td></tr>
-          <tr><th>{{ options_form.processed_vanadium.label_tag }}</th><td class='ui-widget'>{{ options_form.processed_vanadium.errors }}{{ options_form.processed_vanadium }} </td></tr>
         </tbody>
       </table>
-      
-      {{ options_form.beam_radius }} {{ options_form.fit_frames_together }} {{ options_form.theta_dependent_correction }}
-
+      <table cellspacing="0" class="property_table">
+        <tbody>
+          <div id='log'></div>
+        </tbody>
+      </table>
     </div>
   </div>
   <p>
@@ -151,6 +187,34 @@ $(document).ready(function() {
       }
     });
 });
+	
+	/*
+	Form a regular expression put the run numbers in a table with description
+	*/
+	$( "#{{options_form.data_files.id_for_label}}" ).change(function() {
+  		var value = $( this ).val();
+  		var re = new RegExp("^[\\d\\-,]+$");
+  		var OK = re.exec(value);  
+        if (!OK)  
+          	console.log(OK.input + " isn't a valid regex!");  
+        else {
+        	$( "#log" ).empty();
+        	$( "#log" ).append( "<h3> Data files to be submited to the cluster:</h3>" );
+            var value_arr = hyphen_range(value);
+  			$.each(value_arr, function( index, value ) {
+  				//alert( index + ": " + value );
+  				$.ajax({ url: "{{ icat_url }}"+value+"/", 
+	                 success: function(data) {
+	                 	$( "#log" ).append( "<tr><th>"+ value + ":</th><td>" + data.title +"<td></tr>" );
+	                 },
+	                 dataType: "json", timeout: 30000, cache: true
+	            });
+	                 
+  				
+			});
+		}
+	});
+
 </script>
 {% endblock %}
 

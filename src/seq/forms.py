@@ -36,7 +36,14 @@ class ReductionOptions(forms.Form):
     expt_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     experiment = forms.CharField(required=False, initial='uncategorized')
     # 
-    data_file = forms.CharField(required=True)
+    
+    error_message_mask = {'invalid': "Not a valid ranged input. Use for example: 1-8,121-128"}
+    help_text="Use ranged input. E.g.: 1-8,121-128."
+    field_regex=r'^[\d\-,]+$'
+    
+    
+    data_files = forms.RegexField(regex=field_regex, required=False, help_text=help_text, error_messages=error_message_mask)
+    
     raw_vanadium = forms.CharField(required=True)
     
     grouping_file = forms.ChoiceField([("/SNS/SEQ/shared/autoreduce/SEQ_1x1_grouping.xml", "1 x 1"),
@@ -44,14 +51,10 @@ class ReductionOptions(forms.Form):
                                        ("/SNS/SEQ/shared/autoreduce/SEQ_2x2_grouping.xml", "2 x 2"),
                                        ("/SNS/SEQ/shared/autoreduce/SEQ_4x1_grouping.xml", "4 x 1"),
                                        ("/SNS/SEQ/shared/autoreduce/SEQ_4x2_grouping.xml", "4 x 2")])
+
     energy_binning_min = forms.FloatField(required=True, initial=-1.0)
     energy_binning_step = forms.FloatField(required=True, initial=0.005)
     energy_binning_max = forms.FloatField(required=True, initial=0.95)
-    
-    
-    error_message_mask = {'invalid': "Not a valid ranged input. Use for example: 1-8,121-128"}
-    help_text="Use ranged input. E.g.: 1-8,121-128."
-    field_regex=r'^[\d\-,]+$'
     
     masked_bank1 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
                                    error_messages=error_message_mask)

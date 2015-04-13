@@ -298,7 +298,7 @@ def preprocessData(filename):
     ###########################
     #Temporary workaround for IPTS-9145  GEG
     if Eguess<5:
-      Eguess=120.
+        Eguess=120.
     ###################  
     
     if (runnum >= 46951 and runnum <= 46994):
@@ -318,45 +318,45 @@ def preprocessData(filename):
         return [Eguess,Efixed,T0]
     
     try:   
-             sp1=-1
-             sp2=-1
-             nsp=__MonWS.getNumberHistograms()                
-             if nsp < 2:
-                 raise ValueError("There are less than 2 monitors")
-             for sp in range(nsp):
-                 if __MonWS.getSpectrum(sp).getDetectorIDs()[0]==-1:
-                     sp1=sp
-                 if __MonWS.getSpectrum(sp).getDetectorIDs()[0]==-2:
-                     sp2=sp
-             if sp1==-1:
-                 raise RuntimeError("Could not find spectrum for the first monitor")
-             if sp2==-1:
-                 raise RuntimeError("Could not find spectrum for the second monitor")       
-             so=__MonWS.getInstrument().getSource().getPos()
-             m1=__MonWS.getDetector(sp1).getPos()
-             m2=__MonWS.getDetector(sp2).getPos()
-             v=437.4*numpy.sqrt(__MonWS.getRun()['EnergyRequest'].getStatistics().mean)
-             t1=m1.distance(so)*1e6/v
-             t2=m2.distance(so)*1e6/v
-             t1f=int(t1*60e-6) #frame number for monitor 1
-             t2f=int(t2*60e-6) #frame number for monitor 2
-             wtemp=ChangeBinOffset(__MonWS,t1f*16667,sp1,sp1)
-             wtemp=ChangeBinOffset(wtemp,t2f*16667,sp2,sp2)
-             wtemp=Rebin(InputWorkspace=wtemp,Params="1",PreserveEvents=True)
-             
-             #check whether the fermi chopper is in the beam
-             fermi=__MonWS.run().getProperty('vChTrans').value[0]
-
-             if fermi == 2 :
-                 Efixed = nan
-                 T0 = nan
-                 DeleteWorkspace(wtemp)
-
-             if fermi != 2:
-                 alg=GetEi(InputWorkspace=wtemp,Monitor1Spec=sp1+1,Monitor2Spec=sp2+1,EnergyEstimate=Eguess)   #Run GetEi algorithm
-                 Efixed=alg[0]
-                 T0=alg[3]                                        #Extract incident energy and T0
-                 DeleteWorkspace(wtemp)
+         sp1=-1
+         sp2=-1
+         nsp=__MonWS.getNumberHistograms()                
+         if nsp < 2:
+             raise ValueError("There are less than 2 monitors")
+         for sp in range(nsp):
+             if __MonWS.getSpectrum(sp).getDetectorIDs()[0]==-1:
+                 sp1=sp
+             if __MonWS.getSpectrum(sp).getDetectorIDs()[0]==-2:
+                 sp2=sp
+         if sp1==-1:
+             raise RuntimeError("Could not find spectrum for the first monitor")
+         if sp2==-1:
+             raise RuntimeError("Could not find spectrum for the second monitor")       
+         so=__MonWS.getInstrument().getSource().getPos()
+         m1=__MonWS.getDetector(sp1).getPos()
+         m2=__MonWS.getDetector(sp2).getPos()
+         v=437.4*numpy.sqrt(__MonWS.getRun()['EnergyRequest'].getStatistics().mean)
+         t1=m1.distance(so)*1e6/v
+         t2=m2.distance(so)*1e6/v
+         t1f=int(t1*60e-6) #frame number for monitor 1
+         t2f=int(t2*60e-6) #frame number for monitor 2
+         wtemp=ChangeBinOffset(__MonWS,t1f*16667,sp1,sp1)
+         wtemp=ChangeBinOffset(wtemp,t2f*16667,sp2,sp2)
+         wtemp=Rebin(InputWorkspace=wtemp,Params="1",PreserveEvents=True)
+         
+         #check whether the fermi chopper is in the beam
+         fermi=__MonWS.run().getProperty('vChTrans').value[0]
+        
+         if fermi == 2 :
+             Efixed = nan
+             T0 = nan
+             DeleteWorkspace(wtemp)
+        
+         if fermi != 2:
+             alg=GetEi(InputWorkspace=wtemp,Monitor1Spec=sp1+1,Monitor2Spec=sp2+1,EnergyEstimate=Eguess)   #Run GetEi algorithm
+             Efixed=alg[0]
+             T0=alg[3]                                        #Extract incident energy and T0
+             DeleteWorkspace(wtemp)
     except e:    
             [Efixed,T0]=GetEiT0atSNS("__MonWS",Eguess)
 
@@ -417,14 +417,17 @@ if __name__ == "__main__":
     IntegrationRange=[0.3,1.2] #integration range for Vanadium in angstroms
     
     MaskBTPParameters=[]
-    {% if masked_bank %}
-    MaskBTPParameters.append({'Bank':"{{masked_bank}}"})
+    {% if parameter1 %}
+    MaskBTPParameters.append({{parameter1|safe}})
     {% endif %}
-    {% if masked_tube %}
-    MaskBTPParameters.append({'Tube':"{{masked_tube}}"})
+    {% if parameter2 %}
+    MaskBTPParameters.append({{parameter2|safe}})
     {% endif %}
-    {% if masked_pixel %}
-    MaskBTPParameters.append({'Pixel':"{{masked_pixel}}"})
+    {% if parameter3 %}
+    MaskBTPParameters.append({{parameter3|safe}})
+    {% endif %}
+    {% if parameter4 %}
+    MaskBTPParameters.append({{parameter4|safe}})
     {% endif %}
 
  # only for the runs in IPTS-11831

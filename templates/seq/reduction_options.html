@@ -14,7 +14,7 @@
     }
     
     $(function() {
-      $("#tabs").tabs({ active: 1 });
+      $("#tabs").tabs({ active: 2 });
       $("#submit_reduction_button").button();
       $("#execute_job_button").button();
     });
@@ -67,7 +67,8 @@
   <div id="tabs">
     <ul>
       <li><a href="#tabs-1">Basic options</a></li>
-      <li><a href="#tabs-2">Data</a></li>
+      <li><a href="#tabs-2">Mask</a></li>
+      <li><a href="#tabs-3">Data</a></li>
     </ul>
     <div id="tabs-1">
       <table cellspacing="0" class="property_table">
@@ -81,14 +82,41 @@
       		E<sub>max</sub> {{options_form.energy_binning_max }} </td>
       	  </tr>
       	  
-      	  <tr><th>{{ options_form.masked_bank.label_tag }}</th><td class='long_input' title="{{options_form.masked_bank.help_text}}" >{{ options_form.masked_bank.errors }}{{ options_form.masked_bank }}</td></tr>
-      	  <tr><th>{{ options_form.masked_tube.label_tag }}</th><td class='long_input' title="{{options_form.masked_tube.help_text}}" >{{ options_form.masked_tube.errors }}{{ options_form.masked_tube }}</td></tr>
-      	  <tr><th>{{ options_form.masked_pixel.label_tag }}</th><td class='long_input' title="{{options_form.masked_pixel.help_text}}" >{{ options_form.masked_pixel.errors }}{{ options_form.masked_pixel }}</td></tr>
         </tbody>
       </table>
     </div>
-
+    
     <div id="tabs-2">
+      <h3>Mask:</h3>
+      <table cellspacing="0" class="property_table">
+        <tbody>
+      	  <tr><th>Masked Bank</th><th>Masked Tube</th><th>Masked Pixel</th></tr>
+      	  <tr>
+      	  <td class='long_input' title="{{options_form.masked_bank1.help_text}}" >{{ options_form.masked_bank1.errors }}{{ options_form.masked_bank1 }}</td>
+      	  <td class='long_input' title="{{options_form.masked_tube1.help_text}}" >{{ options_form.masked_tube1.errors }}{{ options_form.masked_tube1 }}</td>
+      	  <td class='long_input' title="{{options_form.masked_pixel1.help_text}}" >{{ options_form.masked_pixel1.errors }}{{ options_form.masked_pixel1 }}</td>
+      	  </tr>
+      	  <tr>
+      	  <td class='long_input' title="{{options_form.masked_bank2.help_text}}" >{{ options_form.masked_bank2.errors }}{{ options_form.masked_bank2 }}</td>
+      	  <td class='long_input' title="{{options_form.masked_tube2.help_text}}" >{{ options_form.masked_tube2.errors }}{{ options_form.masked_tube2 }}</td>
+      	  <td class='long_input' title="{{options_form.masked_pixel2.help_text}}" >{{ options_form.masked_pixel2.errors }}{{ options_form.masked_pixel2 }}</td>
+      	  </tr>
+      	  <tr>
+      	  <td class='long_input' title="{{options_form.masked_bank3.help_text}}" >{{ options_form.masked_bank3.errors }}{{ options_form.masked_bank3 }}</td>
+      	  <td class='long_input' title="{{options_form.masked_tube3.help_text}}" >{{ options_form.masked_tube3.errors }}{{ options_form.masked_tube3 }}</td>
+      	  <td class='long_input' title="{{options_form.masked_pixel3.help_text}}" >{{ options_form.masked_pixel3.errors }}{{ options_form.masked_pixel3 }}</td>
+      	  </tr>
+      	  <tr>
+      	  <td class='long_input' title="{{options_form.masked_bank4.help_text}}" >{{ options_form.masked_bank4.errors }}{{ options_form.masked_bank4 }}</td>
+      	  <td class='long_input' title="{{options_form.masked_tube4.help_text}}" >{{ options_form.masked_tube4.errors }}{{ options_form.masked_tube4 }}</td>
+      	  <td class='long_input' title="{{options_form.masked_pixel4.help_text}}" >{{ options_form.masked_pixel4.errors }}{{ options_form.masked_pixel4 }}</td>
+      	  </tr>
+     
+        </tbody>
+      </table>
+    </div>
+    
+    <div id="tabs-3">
       <h3>Sample:</h3><br>
       <table cellspacing="0" class="property_table">
         <tbody>

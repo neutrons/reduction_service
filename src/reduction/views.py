@@ -257,7 +257,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
         template_values['message'] = request.GET['message']
     
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    #logger.debug(pp.pformat(template_values))
+    logger.debug(pprint.pformat(template_values))
     return render_to_response('%s/reduction_options.html' % instrument_name_lowercase,
                               template_values)
 

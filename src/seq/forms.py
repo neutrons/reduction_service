@@ -49,50 +49,117 @@ class ReductionOptions(forms.Form):
     energy_binning_step = forms.FloatField(required=True, initial=0.005)
     energy_binning_max = forms.FloatField(required=True, initial=0.95)
     
+    
     error_message_mask = {'invalid': "Not a valid ranged input. Use for example: 1-8,121-128"}
-    masked_bank = forms.RegexField(regex=r'^[\d\-,]+$', required=False, help_text="Use ranged input. E.g.: 1-8,121-128.",
-                                   error_messages=error_message_mask, initial="38,64,75,76,99-102,114,115")
-    masked_tube = forms.RegexField(regex=r'^[\d\-,]+$', required=False, help_text="Use ranged input. E.g.: 1-8,121-128.",
+    help_text="Use ranged input. E.g.: 1-8,121-128."
+    field_regex=r'^[\d\-,]+$'
+    
+    masked_bank1 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
                                    error_messages=error_message_mask)
-    masked_pixel = forms.RegexField(regex=r'^[\d\-,]+$', required=False, help_text="Use ranged input. E.g.: 1-8,121-128.",
-                                    error_messages=error_message_mask, initial="1-8")#,121-128")
-    
-    
-    # 
-    def clean_masked_bank(self):
-        data = self.cleaned_data['masked_bank']
-        if len(data) > 0:
-            data = self._hyphen_range(data)
-        return data
-    
-    def clean_masked_tube(self):
-        data = self.cleaned_data['masked_tube']
-        if len(data) > 0:
-            data = self._hyphen_range(data)
-        return data
-    
-    def clean_masked_pixel(self):
-        data = self.cleaned_data['masked_pixel']
-        if len(data) > 0:
-            data = self._hyphen_range(data)
-        return data
+    masked_tube1 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
+                                   error_messages=error_message_mask)
+    masked_pixel1 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
+                                    error_messages=error_message_mask, initial="1-8,121-128")
+    parameter1 = forms.CharField(widget=forms.HiddenInput(), required=False)
+     
+    masked_bank2 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
+                                   error_messages=error_message_mask, initial="99-102,114,115,75,76,38,39")
+    masked_tube2 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
+                                   error_messages=error_message_mask)
+    masked_pixel2 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
+                                    error_messages=error_message_mask)
+    parameter2 = forms.CharField(widget=forms.HiddenInput(), required=False)
 
-    
-    def _hyphen_range(self, s):
-        """ Takes a range in form of "a-b" and generate a list of numbers between a and b inclusive.
-        Also accepts comma separated ranges like "a-b,c-d,f" will build a list which will include
-        Numbers from a to b, a to d and f"""
-        s="".join(s.split())#removes white space
-        r=set()
-        for x in s.split(','):
-            t=x.split('-')
-            if len(t) not in [1,2]:
-                logger.error("hash_range is given its arguement as "+s+" which seems not correctly formated.")
-            r.add(int(t[0])) if len(t)==1 else r.update(set(range(int(t[0]),int(t[1])+1)))
-        l=list(r)
-        l.sort()
-        l_in_str = ','.join(str(x) for x in l)
-        return l_in_str
+    masked_bank3 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
+                                   error_messages=error_message_mask, initial="64")
+    masked_tube3 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
+                                   error_messages=error_message_mask)
+    masked_pixel3 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
+                                    error_messages=error_message_mask)
+    parameter3 = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+    masked_bank4 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
+                                   error_messages=error_message_mask)
+    masked_tube4 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
+                                   error_messages=error_message_mask)
+    masked_pixel4 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
+                                    error_messages=error_message_mask)
+    parameter4 = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+    def clean_parameter1(self):
+            data = self.masks_as_python(1)
+            if len(data) > 0:
+                return data
+            return None
+    def clean_parameter2(self):
+            data = self.masks_as_python(2)
+            if len(data) > 0:
+                return data
+            return None
+    def clean_parameter3(self):
+            data = self.masks_as_python(3)
+            if len(data) > 0:
+                return data
+            return None
+    def clean_parameter4(self):
+            data = self.masks_as_python(4)
+            if len(data) > 0:
+                return data
+            return None
+            
+    def masks_as_python(self,number):
+        """
+            Return a string representing the Mantid command to run
+            for this mask item.
+        """
+        bank = "masked_bank%s"%number
+        tube = "masked_tube%s"%number
+        pixel = "masked_pixel%s"%number
+        entry_dict = {}
+        if bank in self.cleaned_data and len(self.cleaned_data[bank].strip())>0:
+            entry_dict["Bank"] = str(self.cleaned_data[bank])
+        if tube in self.cleaned_data and len(self.cleaned_data[tube].strip())>0:
+            entry_dict["Tube"] = str(self.cleaned_data[tube])
+        if pixel in self.cleaned_data and len(self.cleaned_data[pixel].strip())>0:
+            entry_dict["Pixel"] = str(self.cleaned_data[pixel])
+        if len(entry_dict)==0:
+            return ""
+        return "%s" % str(entry_dict)
+#     # 
+#     def clean_masked_bank1(self):
+#         data = self.cleaned_data['masked_bank1']
+#         if len(data) > 0:
+#             data = self._hyphen_range(data)
+#         return data
+#     
+#     def clean_masked_tube1(self):
+#         data = self.cleaned_data['masked_tube1']
+#         if len(data) > 0:
+#             data = self._hyphen_range(data)
+#         return data
+#     
+#     def clean_masked_pixel1(self):
+#         data = self.cleaned_data['masked_pixel1']
+#         if len(data) > 0:
+#             data = self._hyphen_range(data)
+#         return data
+# 
+#     
+#     def _hyphen_range(self, s):
+#         """ Takes a range in form of "a-b" and generate a list of numbers between a and b inclusive.
+#         Also accepts comma separated ranges like "a-b,c-d,f" will build a list which will include
+#         Numbers from a to b, a to d and f"""
+#         s="".join(s.split())#removes white space
+#         r=set()
+#         for x in s.split(','):
+#             t=x.split('-')
+#             if len(t) not in [1,2]:
+#                 logger.error("hash_range is given its arguement as "+s+" which seems not correctly formated.")
+#             r.add(int(t[0])) if len(t)==1 else r.update(set(range(int(t[0]),int(t[1])+1)))
+#         l=list(r)
+#         l.sort()
+#         l_in_str = ','.join(str(x) for x in l)
+#         return l_in_str
 
     
     @classmethod

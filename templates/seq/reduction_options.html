@@ -155,7 +155,7 @@
       <h3>Sample:</h3><br>
       <table cellspacing="0" class="property_table">
         <tbody>
-          <tr><th>{{ options_form.data_files.label_tag }}</th><td class='long_input' title="{{options_form.data_files.help_text}}">{{ options_form.data_files.errors }}{{ options_form.data_files }} <span id='data_file_info'></span></td></tr>          
+          <tr><th>{{ options_form.data_files.label_tag }}</th><td class='long_input' title="{{options_form.data_files.help_text}}">{{ options_form.data_files.errors }}{{ options_form.data_files }}</td></tr>          
           <tr><th>{{ options_form.raw_vanadium.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.raw_vanadium.errors }}{{ options_form.raw_vanadium }} <span id='raw_vanadium_info'></span></td></tr>
         </tbody>
       </table>
@@ -176,7 +176,6 @@
 <script type="text/javascript">
 
 $(document).ready(function() {
-    get_icat_info('{{ options_form.data_file.value }}','data_file_info');
     get_icat_info('{{ options_form.raw_vanadium.value }}','raw_vanadium_info');
 
     // enter submit blocker

@@ -38,7 +38,6 @@ class ReductionOptions(forms.Form):
     # 
     data_file = forms.CharField(required=True)
     raw_vanadium = forms.CharField(required=True)
-    processed_vanadium = forms.CharField(required=True)
     
     grouping_file = forms.ChoiceField([("/SNS/SEQ/shared/autoreduce/SEQ_1x1_grouping.xml", "1 x 1"),
                                        ("/SNS/SEQ/shared/autoreduce/SEQ_2x1_grouping.xml", "2 x 1"),

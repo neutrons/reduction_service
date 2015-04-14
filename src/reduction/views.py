@@ -597,6 +597,8 @@ def configuration_options(request, instrument_name, config_id=None):
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     if 'message' in request.GET:
         template_values['message'] = request.GET['message']
+    
+    logger.debug(pprint.pformat(template_values))
     return render_to_response('%s/reduction_table.html' % instrument_name_lowercase,
                               template_values)
 

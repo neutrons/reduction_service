@@ -10,7 +10,7 @@
 
 from django import forms
 from django.shortcuts import get_object_or_404
-from reduction.models import ReductionProcess
+from reduction.models import ReductionProcess, ReductionConfiguration
 from reduction.models import Instrument
 from reduction.forms import process_experiment
 from reduction_service.forms_util import build_script
@@ -23,30 +23,20 @@ import copy
 import os.path
 import re
 
+from seq import INSTRUMENT_NAME
+
 logger = logging.getLogger('seq.forms')
 scripts_location = os.path.join(os.path.dirname(__file__), "scripts")
 
-class ReductionOptions(forms.Form):
+
+class CommonForm(forms.Form):
     """
-        Reduction parameter form       
+    Abstract Form
     """
-    # Reduction name
-    reduction_name = forms.CharField(required=False, initial=time.strftime("Reduction of %Y-%m-%d %H:%M:%S", time.localtime()) )
-    reduction_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
-    expt_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
-    experiment = forms.CharField(required=False, initial='uncategorized')
-    # 
     
     error_message_mask = {'invalid': "Not a valid ranged input. Use for example: 1-8,121-128"}
     help_text="Use ranged input. E.g.: 1-8,121-128."
     field_regex=r'^[\d\-,]+$'
-    
-    # data_file is mandatory
-    data_file = forms.CharField(widget=forms.HiddenInput(), required=False)
-    
-    data_files = forms.RegexField(regex=field_regex, required=False, help_text=help_text, error_messages=error_message_mask)
-    
-    raw_vanadium = forms.CharField(required=True)
     
     grouping_file = forms.ChoiceField([("/SNS/SEQ/shared/autoreduce/SEQ_1x1_grouping.xml", "1 x 1"),
                                        ("/SNS/SEQ/shared/autoreduce/SEQ_2x1_grouping.xml", "2 x 1"),
@@ -54,9 +44,9 @@ class ReductionOptions(forms.Form):
                                        ("/SNS/SEQ/shared/autoreduce/SEQ_4x1_grouping.xml", "4 x 1"),
                                        ("/SNS/SEQ/shared/autoreduce/SEQ_4x2_grouping.xml", "4 x 2")])
 
-    energy_binning_min = forms.FloatField(required=True, initial=-1.0)
-    energy_binning_step = forms.FloatField(required=True, initial=0.005)
-    energy_binning_max = forms.FloatField(required=True, initial=0.95)
+    energy_binning_min = forms.FloatField(required=False, initial=-1.0)
+    energy_binning_step = forms.FloatField(required=False, initial=0.005)
+    energy_binning_max = forms.FloatField(required=False, initial=0.95)
     
     masked_bank1 = forms.RegexField(regex=field_regex, required=False, help_text=help_text,
                                    error_messages=error_message_mask)
@@ -165,12 +155,95 @@ class ReductionOptions(forms.Form):
         l_in_str = ','.join(str(x) for x in l)
         return l_in_str
 
+
+        
+
+
+
+class ReductionConfigurationForm(CommonForm):
+    """
+        Configuration form for EQSANS reduction
+        URL: /reduction/eqsans/configuration/
+    """
+    # General information
+    reduction_name = forms.CharField(required=False, initial=time.strftime("Batch of %Y-%m-%d %H:%M:%S", time.localtime()))
+    experiment = forms.CharField(required=True, initial='uncategorized')
+    
+    data_files = forms.RegexField(regex=CommonForm.field_regex, required=False, 
+                                  help_text=CommonForm.help_text, error_messages=CommonForm.error_message_mask)
+    
+    raw_vanadium = forms.CharField(required=True)
+    
     def clean_data_files(self):
         data = self.cleaned_data['data_files']
         if len(data) > 0:
             data = self._hyphen_range(data)
             self.data_file = str(data[0])
         return data
+
+    @classmethod
+    def data_from_db(cls, user, reduction_config):
+        """
+            Return a dictionary that we can use to populate the initial
+            contents of a form
+            @param user: User object
+            @param reduction_config: ReductionConfiguration object
+        """
+        data = reduction_config.get_data_dict()
+        # Ensure all the fields are there
+        for f in cls.base_fields:
+            if not f in data:
+                data[f]=cls.base_fields[f].initial
+        expt_list = reduction_config.experiments.all()
+        data['experiment'] = ', '.join([str(e.name) for e in expt_list if len(str(e.name))>0])
+        return data
+
+    def to_db(self, user, config_id=None):
+        """
+            Save a configuration to the database
+            @param user: User object
+            @param config_id: PK of the config object to update (None for creation)
+        """
+        instrument = Instrument.objects.get(name=INSTRUMENT_NAME)
+        # Find or create a reduction process entry and update it
+        if config_id is not None:
+            reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=user)
+            reduction_config.name = self.cleaned_data['reduction_name']
+        else:
+            reduction_config = ReductionConfiguration(owner=user,
+                                                      instrument=instrument,
+                                                      name=self.cleaned_data['reduction_name'])
+            reduction_config.save()
+        
+        # Find experiment
+        process_experiment(reduction_config, self.cleaned_data['experiment'])
+                
+        # Set the parameters associated with the reduction process entry
+        try:
+            property_dict = copy.deepcopy(self.cleaned_data)
+            
+            properties = json.dumps(property_dict)
+            reduction_config.properties = properties
+            reduction_config.save()
+        except:
+            logger.error("Could not process reduction properties: %s" % sys.exc_value)
+        
+        return reduction_config.pk
+    
+class ReductionOptions(CommonForm):
+    """
+        Reduction parameter form       
+    """
+    # Reduction name
+    reduction_name = forms.CharField(required=False, initial=time.strftime("Reduction of %Y-%m-%d %H:%M:%S", time.localtime()) )
+    reduction_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
+    expt_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
+    experiment = forms.CharField(required=False, initial='uncategorized')
+    #
+    
+    data_file = forms.CharField(widget=forms.HiddenInput(), required=False)
+    
+    raw_vanadium = forms.CharField(required=False)
     
     @classmethod
     def as_xml(cls, data):

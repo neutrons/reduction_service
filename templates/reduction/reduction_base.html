@@ -57,6 +57,7 @@
         <b>Reduction</b><br>
         <ul>
           <li><a href="{% url 'reduction_home' instrument %}" title="Go to reduction home for this instrument">reduction home</a></li>
+          <li><a href="{% url 'configuration' instrument_name=instrument %}" title="Start a new configuration to use with multiple reductions">new configuration</a></li>
           {% block reduction_instrument_specific %} {% endblock %}
           <li><a href="{% url 'reduction' instrument %}" title="Start a new single reduction">new reduction</a></li>
           {% if reduction_id %}
@@ -70,7 +71,15 @@
         <b>Remote jobs</b><br>
         <ul>
           <li><a href="{% url 'reduction_jobs' instrument%}" title="See remote jobs">see all jobs</a></li>
-		  {% block jobs_instrument_specific %} {% endblock %}
+		  {% if config_id %}
+	      <li><a href="{% url 'configuration_submit' config_id=config_id instrument_name=instrument%}" title="Submit jobs for this configuration">submit jobs</a></li>
+	      {% if existing_job_sets and existing_job_sets|length > 0 %}
+		      {% for job in existing_job_sets %}
+		      	<li><a href="{% url 'configuration_query' remote_set_id=job.id instrument_name=instrument%}" title="See job details">job set {{ job.id }}</a></li>
+		      {% endfor %}
+	      {% endif %}
+          {% endif %}
+      	  {% block jobs_instrument_specific %} {% endblock %}
           {% if reduction_id %}
           <li><a href="{% url 'reduction_submit_job' instrument reduction_id%}" title="Submit this reduction job">submit this job</a></li>
           {% if existing_jobs and existing_jobs|length > 0 %}

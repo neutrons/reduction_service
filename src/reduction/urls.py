@@ -25,5 +25,13 @@ urlpatterns = patterns('',
     url(r'^(?P<instrument_name>%s)/query/(?P<job_id>[\w\-\.]+)/$' % valid_instruments, 'reduction.views.job_details', name='reduction_job_details'),
     
     # Those are instrument specific. If the regular expression is met above this is never called!
-    url(r'^eqsans/', include('eqsans.urls', namespace='eqsans')),
+    # url(r'^eqsans/', include('eqsans.urls', namespace='eqsans')),
+        
+    url(r'^(?P<instrument_name>%s)/configuration/$'% valid_instruments , 'reduction.views.configuration_options', name='configuration'),
+    url(r'^(?P<instrument_name>%s)/configuration/(?P<config_id>\d+)/$'% valid_instruments , 'reduction.views.configuration_options', name='configuration_options'),
+    url(r'^(?P<instrument_name>%s)/configuration/(?P<config_id>\d+)/delete$'% valid_instruments , 'reduction.views.configuration_delete', name='configuration_delete'),
+    url(r'^(?P<instrument_name>%s)/configuration/(?P<config_id>\d+)/submit$'% valid_instruments , 'reduction.views.configuration_submit', name='configuration_submit'),
+    url(r'^(?P<instrument_name>%s)/configuration/(?P<config_id>\d+)/(?P<reduction_id>\d+)/delete$'% valid_instruments, 'reduction.views.configuration_job_delete', name='configuration_job_delete'),
+    url(r'^(?P<instrument_name>%s)/configuration/iq/(?P<remote_set_id>\d+)/$'% valid_instruments, 'reduction.views.configuration_iq', name='configuration_iq'),
+    url(r'^(?P<instrument_name>%s)/configuration/query/(?P<remote_set_id>\d+)/$'% valid_instruments, 'reduction.views.configuration_query', name='configuration_query'),
 )

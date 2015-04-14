@@ -54,8 +54,8 @@ def get_new_reduction_url(run=None, ipts=None):
 
 def get_new_batch_url(run=None, ipts=None):
     if run is None:
-        return reverse('eqsans:configuration')
-    return reverse('eqsans:configuration')+"?reduction_name=Reduction for %s&experiment=%s&data_file=%s" % (run, ipts, run)
+        return reverse('configuration', kwargs={'instrument_name': INSTRUMENT_NAME } )
+    return reverse('configuration', kwargs={'instrument_name': INSTRUMENT_NAME } )+"?reduction_name=Reduction for %s&experiment=%s&data_file=%s" % (run, ipts, run)
 
 def get_remote_jobs_url(ipts=None, instrument_name=None):
     return reverse('reduction_jobs', args=[instrument_name])

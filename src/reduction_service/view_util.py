@@ -48,8 +48,9 @@ class Breadcrumbs(object):
     
     def append_configuration(self,instrument, configuration_id):
         self.append("configuration %s"%configuration_id, 
-                    reverse('%s:configuration_options'%instrument,
-                               kwargs={'config_id' : configuration_id}) )
+                    reverse('configuration_options',
+                               kwargs={'config_id' : configuration_id,
+                                       'instrument_name': instrument}) )
 
     def append_reduction_jobs(self,instrument):
         self.append("%s jobs"%instrument, 

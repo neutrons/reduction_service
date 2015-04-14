@@ -30,15 +30,15 @@ defined several reduction jobs and submit them all at once.</p>
   <tbody>
   {% for c in configurations %}
     <tr class="{% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
-        <td><a href="{% url 'eqsans:configuration_options' c.id %}" >{{ c.reduction_name }}</a></td>
+        <td><a href="{% url 'configuration_options' config_id=c.id instrument_name=instrument%}" >{{ c.reduction_name }}</a></td>
         <td><div class='subtitle_black'>{{ c.direct_beam_run }}</div></td>
         <td>{% if c.transmission_empty %}<div class='subtitle_black'>T-Empty: {{ c.transmission_empty }}</div>{% endif %}</td>
         <td>{% if c.dark_current_run %}<div class='subtitle_black'>{{ c.dark_current_run }}</div>{% endif %}</td>
         <td>{% if c.sensitivity_file %}<div class='subtitle_black'>{{ c.sensitivity_file }}</div>{% endif %}</td>
         <td>{% if c.sample_aperture_diameter %}<div class='subtitle_black'>{{ c.sample_aperture_diameter }} mm</div>{% endif %}</td>
-        <td><a href="{% url 'eqsans:configuration_delete' c.id %}?back_url={{ back_url }}" title='Click to delete this configuration. ALL ASSOCIATED REDUCTION JOBS WILL BE DELETED'><span style='display:inline-block' class="ui-icon ui-icon-trash"></span></a>
-        {% if c.latest_job %}<a title='Click to see latest results' href="{% url 'eqsans:configuration_query' c.latest_job %}"><span style='display:inline-block' class="ui-icon ui-icon-info"></span></a>
-        <a title="Click to download all I(q) files" href="{% url 'eqsans:configuration_iq' c.latest_job %}" ><span style='display:inline-block' class="ui-icon ui-icon-arrowthickstop-1-s"></span></a>
+        <td><a href="{% url 'configuration_delete' config_id=c.id instrument_name=instrument%}?back_url={{ back_url }}" title='Click to delete this configuration. ALL ASSOCIATED REDUCTION JOBS WILL BE DELETED'><span style='display:inline-block' class="ui-icon ui-icon-trash"></span></a>
+        {% if c.latest_job %}<a title='Click to see latest results' href="{% url 'configuration_query' remote_set_id=c.latest_job instrument_name=instrument%}"><span style='display:inline-block' class="ui-icon ui-icon-info"></span></a>
+        <a title="Click to download all I(q) files" href="{% url 'configuration_iq' remote_set_id=c.latest_job instrument_name=instrument%}" ><span style='display:inline-block' class="ui-icon ui-icon-arrowthickstop-1-s"></span></a>
         {% endif %}
         </td>
     </tr>
@@ -62,7 +62,7 @@ defined several reduction jobs and submit them all at once.</p>
   {% for r in reductions %}
     <tr class="{% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
         <td><a href="{% url 'reduction_options' instrument r.id %}" >{{ r.data_file }}</a> {% spaceless %}
-            {% if r.config %}(<a title='Click to go to the configuration page for this reduction' href='{% url 'eqsans:configuration_options' r.config.id %}'>config</a>){% endif %}
+            {% if r.config %}(<a title='Click to go to the configuration page for this reduction' href='{% url 'configuration_options' r.config.id %}'>config</a>){% endif %}
             {% endspaceless %}<div class='subtitle'>{{ r.reduction_name }}</div></td>
         <td><div class='subtitle_black'>{{ r.direct_beam_run }}</div></td>
         <td>{% if r.transmission_sample %}<div class='subtitle_black'>T-Sample: {{ r.transmission_sample }}</div>{% endif %}

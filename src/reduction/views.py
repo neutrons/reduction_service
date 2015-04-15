@@ -13,7 +13,8 @@ import zipfile
 
 from catalog.icat_server_communication import get_ipts_info
 from eqsans import view_util
-import reduction
+import reduction.forms
+import reduction.view_util
 from reduction.models import Instrument, Experiment, ReductionProcess, \
     ReductionConfiguration, RemoteJobSet, RemoteJob
 import reduction_service
@@ -532,7 +533,7 @@ def configuration_options(request, instrument_name, config_id=None):
             # Save the configuration
             config_id = config_form.to_db(request.user, config_id)
             # Save the individual reductions
-            template_values['message'] = "Configuration and reduction parameters were sucessfully updated."
+            template_values['message'] = "Configuration %d and reduction parameters were sucessfully updated."%(config_id)
             for form in options_form:
                 form.to_db(request.user, None, config_id)
             if config_id is not None:
@@ -544,7 +545,9 @@ def configuration_options(request, instrument_name, config_id=None):
         else:
             # There's a proble with the data, the validated form 
             # will automatically display what the problem is to the user
-            pass
+            template_values['message'] = "Form is not valid. See messages next to fields above!"
+            logger.error("config_form: %s"%config_form.errors)
+            logger.error("options_form: %s"%options_form.errors)
     else:
         # Deal with the case of creating a new configuration
         if config_id is None:
@@ -598,7 +601,7 @@ def configuration_options(request, instrument_name, config_id=None):
     if 'message' in request.GET:
         template_values['message'] = request.GET['message']
     
-    logger.debug(pprint.pformat(template_values))
+    #logger.debug(pprint.pformat(template_values))
     return render_to_response('%s/reduction_table.html' % instrument_name_lowercase,
                               template_values)
 

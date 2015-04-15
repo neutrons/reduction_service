@@ -73,19 +73,19 @@ class ReductionConfigurationForm(forms.Form):
             @param user: User object
             @param config_id: PK of the config object to update (None for creation)
         """
-        eqsans = Instrument.objects.get(name=INSTRUMENT_NAME)
+        instrument = Instrument.objects.get(name=INSTRUMENT_NAME)
         # Find or create a reduction process entry and update it
         if config_id is not None:
             reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=user)
             reduction_config.name = self.cleaned_data['reduction_name']
         else:
             reduction_config = ReductionConfiguration(owner=user,
-                                                      instrument=eqsans,
+                                                      instrument=instrument,
                                                       name=self.cleaned_data['reduction_name'])
             reduction_config.save()
         
         # Find experiment
-        process_experiment(reduction_config, self.cleaned_data['experiment'])
+        process_experiment(reduction_config, self.cleaned_data['experiment'],INSTRUMENT_NAME)
                 
         # Set the parameters associated with the reduction process entry
         try:

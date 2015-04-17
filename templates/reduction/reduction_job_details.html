@@ -1,5 +1,6 @@
-{% extends "eqsans/base.html" %}
+{% extends "reduction/reduction_base.html" %}
 {% load staticfiles %}
+{% load reduction_tags %}
 
 {% block header %}
   <link rel="stylesheet" href="{% static 'css/plotting.css' %}" type="text/css" title="no title" charset="utf-8">
@@ -19,6 +20,42 @@
     var data2d = {{ plot_2d.data|safe }};
     {% endif %}
   </script>  
+
+
+ <script>
+ // File preview
+  function preview_pre(title, url) {
+  	var windowWidth = $(window).width();
+	var windowHeight = $(window).height();
+  	$.ajax({
+  		url: url,
+  		success: function(result){
+        	$("body").append('<div id="dialog-preview"><pre><code>' + result + '</code></pre></div>');
+        	$("#dialog-preview").dialog({
+        		title: title,
+        		resizable: false,
+        		maxHeight : windowHeight - 150,
+				maxWidth : windowWidth -150,
+				minWidth : windowWidth -250,
+        		close: function( event, ui ) {$("#dialog-preview").remove();}
+     		})
+     		.css({overflow:"auto"});
+     		$('pre code').each(function(i, block) {
+     		  hljs.highlightBlock(block);
+            });
+    	}
+    });
+  };
+  $(function() { $("#dialog-preview").hide(); });
+  // closes the dialog when click outside
+  $(document).mouseup(function(e) {
+	  var alert_box = $(".ui-widget-overlay");
+	  if (alert_box.has(e.target).length === 0)
+	     $("#dialog-preview").dialog("close");
+  });
+
+  </script>
+  
 {% endblock %}
 
 {% block content %}
@@ -37,13 +74,9 @@
       <div class='tile'>
         Reduction parameters
         <ul>
-          <li>Sample data: {{ parameters.data_file }}</li>
-          <li>Beam center data: {{ parameters.direct_beam_run }}</li>
-          <li>Sample transmission: {{ parameters.transmission_sample }}</li>
-          <li>Empty transmission: {{ parameters.transmission_empty }}</li>
-          <li>Background: {{ parameters.background_file }}</li>
-          <li>Background transmission: {{ parameters.background_transmission_sample }}</li>
-          <li>Background empty transmission: {{ parameters.background_transmission_empty }}</li>
+          {% for key, value in parameters.items|sortdic %}
+          <li><strong>{{key}}:</strong> {{value}} </li>
+          {% endfor %}
         </ul>
       </div>
       <div class='tile'>
@@ -52,7 +85,7 @@
         {% for file in job_files %}
           {% url 'remote_download' trans_id file as download_url %}
           {% if download_url %}
-          <li><a href="{{ download_url }}">{{ file }}</a></li>
+          <li><a href="{{ download_url }}">{{ file }}</a>&nbsp; <a title="Click to preview this file." onClick="preview_pre('{{ file }}','{{ download_url }}');"><span style='display:inline-block' class="ui-icon ui-icon-zoomin"></span></a></li>
           {% else %}
           <li>{{ file }}</li>
           {% endif %}
@@ -102,3 +135,6 @@
     </div>
     {% endif %}
 {% endblock %}
+
+
+

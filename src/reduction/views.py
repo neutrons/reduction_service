@@ -12,7 +12,6 @@ import pprint
 import zipfile
 
 from catalog.icat_server_communication import get_ipts_info
-from eqsans import view_util
 import reduction.forms
 import reduction.view_util
 from reduction.models import Instrument, Experiment, ReductionProcess, \
@@ -652,14 +651,14 @@ def configuration_query(request, remote_set_id, instrument_name):
         @param request: request object
         @param remote_id: pk of RemoteJobSet object
     """
-    logger.debug("EQSANS: %s remote_set_id=%s"%(inspect.stack()[0][3],remote_set_id))
+    logger.debug("%s remote_set_id=%s"%(inspect.stack()[0][3],remote_set_id))
     
     instrument_name_lowercase = str.lower(str(instrument_name))
-    
+    instrument_name_capitals = str.capitalize(str(instrument_name))
     job_set = get_object_or_404(RemoteJobSet, pk=remote_set_id)
     
     breadcrumbs = Breadcrumbs()
-    breadcrumbs.append('eqsans reduction',reverse('reduction_home',
+    breadcrumbs.append('%s reduction'%instrument_name_lowercase,reverse('reduction_home',
                                                   kwargs={'instrument_name': instrument_name_lowercase }))
     breadcrumbs.append_configuration(instrument_name_lowercase, job_set.configuration.id)
     breadcrumbs.append('jobs',reverse('reduction_jobs', kwargs={'instrument_name': instrument_name_lowercase}))
@@ -669,7 +668,7 @@ def configuration_query(request, remote_set_id, instrument_name):
                        'configuration_title': job_set.configuration.name,
                        'configuration_id': job_set.configuration.id,
                        'breadcrumbs': breadcrumbs,
-                       'title': 'EQSANS job results',
+                       'title': '%s job results'%instrument_name_capitals,
                        'trans_id': job_set.transaction.trans_id,
                        'job_directory': job_set.transaction.directory,
                        'back_url': request.path,
@@ -693,19 +692,11 @@ def configuration_query(request, remote_set_id, instrument_name):
     template_values['job_files'] = remote.view_util.query_files(request, job_set.transaction.trans_id)
 
     # I(q) plots
-    plot_data = []
-    if first_job is not None and template_values['job_files'] is not None:
-        for f in template_values['job_files']:
-            if f.endswith('_Iq.txt'):
-                plot_info = view_util.process_iq_output(request, first_job, 
-                                                        template_values['trans_id'], f)
-                plot_info['name'] = f
-                plot_data.append(plot_info)
-    template_values['plot_data'] = plot_data
- 
+    view_util = _import_module_from_app(instrument_name_lowercase,'view_util')
+    template_values = view_util.set_into_template_values_plots(template_values, request, first_job)
     # Link to download all I(q) files
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    return render_to_response('eqsans/configuration_query.html', template_values)
+    return render_to_response('reduction/configuration_query.html', template_values)
     
 @login_required
 def configuration_iq(request, remote_set_id):

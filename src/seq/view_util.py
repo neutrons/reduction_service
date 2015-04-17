@@ -77,4 +77,14 @@ def set_into_template_values_job_files(template_values, request, remote_job):
             template_values.update(plot_info)
         
     return template_values
+
+def set_into_template_values_plots(template_values, request, first_job):
+    plot_data = []
+    
+    ### TODO!! See eqsans
+    logger.warning("set_into_template_values_plots not implemeented yet!")
+    
+    template_values['plot_data'] = plot_data
+    return template_values
+
         

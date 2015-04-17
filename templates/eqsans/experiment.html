@@ -62,7 +62,7 @@ defined several reduction jobs and submit them all at once.</p>
   {% for r in reductions %}
     <tr class="{% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
         <td><a href="{% url 'reduction_options' instrument r.id %}" >{{ r.data_file }}</a> {% spaceless %}
-            {% if r.config %}(<a title='Click to go to the configuration page for this reduction' href='{% url 'configuration_options' r.config.id %}'>config</a>){% endif %}
+            {% if r.config %}(<a title='Click to go to the configuration page for this reduction' href='{% url 'configuration_options' instrument_name=instrument config_id=r.config.id %}'>config</a>){% endif %}
             {% endspaceless %}<div class='subtitle'>{{ r.reduction_name }}</div></td>
         <td><div class='subtitle_black'>{{ r.direct_beam_run }}</div></td>
         <td>{% if r.transmission_sample %}<div class='subtitle_black'>T-Sample: {{ r.transmission_sample }}</div>{% endif %}

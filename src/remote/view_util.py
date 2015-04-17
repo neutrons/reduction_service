@@ -13,6 +13,7 @@ import json
 import logging
 import sys
 from models import Transaction
+from reduction.models import RemoteJob
 from django.conf import settings
 
 logger = logging.getLogger('remote')
@@ -151,6 +152,10 @@ def stop_transaction(request, trans_id):
         # Here we can delete the existing DB entry for this transaction
         transaction_obj.is_active = False
         transaction_obj.save()
+        
+        # Once I invalidate the transaction I remove the job.
+        # This will remove jobs from Remote jobs right menu
+        RemoteJob.objects.filter(transaction_id=transaction_obj.id).delete()
         
     request.session['fermi_transID'] = None
     # Regardless of whether we have a local transaction with that ID,

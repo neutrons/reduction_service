@@ -6,6 +6,8 @@
 """
 from django import template
 import re
+from django.utils.datastructures import SortedDict
+
 register = template.Library()
 
 @register.filter(name='ipts_suggestion')
@@ -22,3 +24,24 @@ def ipts_suggestion(value):
         return "IPTS-%s" % number
     except:
         return "IPTS-1234"
+
+
+@register.filter(name='sortdic')
+def sortdic(value):
+    """
+    Sort dictionary by key when printing in template for example:
+    {% for key, value in mydic.items|sort %}
+      {{ key }} {{ value }}
+    {% endfor %}
+    """
+    if isinstance(value, dict):
+        new_dict = SortedDict()
+        key_list = sorted(value.keys())
+        for key in key_list:
+            new_dict[key] = value[key]
+        return new_dict
+    elif isinstance(value, list):
+        return sorted(value)
+    else:
+        return value
+    sortdic.is_safe = True

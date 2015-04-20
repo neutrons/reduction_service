@@ -1,0 +1,89 @@
+<Reduction>
+	<instrument_name>EQSANS</instrument_name>
+    <timestamp>{{ timestamp }}</timestamp>
+    <Instrument>
+    	<name>EQSANS</name>
+    	<solid_angle_corr>True</solid_angle_corr>
+    	<dark_current_corr>{{dark_corr}}</dark_current_corr>
+    	<dark_current_data>{{dark_current_run}}</dark_current_data>
+    	<n_q_bins>100</n_q_bins> {# TODO #}
+    	<log_binning>False</log_binning> {# TODO #}
+		<normalization>2</normalization> {# 2 is monitor normalization #}
+    	<UseDataDirectory>False</UseDataDirectory> {# TODO #}
+    	<OutputDirectory></OutputDirectory> {# TODO #}
+   	</Instrument>
+    <AbsScale>
+    	<scaling_factor>{{absolute_scale_factor}}</scaling_factor>
+    	<calculate_scale>False</calculate_scale>
+    </AbsScale>
+    {# TOF cutoff and correction#}
+    <TOFcorr>
+    	<use_config_cutoff>True</use_config_cutoff>
+    	<perform_flight_path_corr>True</perform_flight_path_corr>
+    </TOFcorr>
+    {# Mask #}
+    {% if mask_file %}
+    <UseConfigMask>True</UseConfigMask>
+    <Mask>
+        <DetectorIDs></DetectorIDs>
+        <mask_file>{{mask_file}}</mask_file>
+        <use_mask_file>True</use_mask_file>
+    </Mask>
+    {% endif %}
+    {# Resolution #}
+    <ComputeResolution>False</ComputeResolution> {# TODO #}
+    <SampleApertureDiameter>{{ sample_aperture_diameter }}</SampleApertureDiameter>
+    {# TOF correction #}
+    <PerformTOFCorrection>True</PerformTOFCorrection>
+	<Sensitivity>
+    	<sensitivity_corr>{{perform_sensitivity}}</sensitivity_corr>
+    	<sensitivity_data>{{sensitivity_file}}</sensitivity_data>
+    	<use_sample_dark>True</use_sample_dark>
+    	<sensitivity_min>{{sensitivity_min}}</sensitivity_min>
+    	<sensitivity_max>{{sensitivity_max}}</sensitivity_max>
+    	<use_sample_beam_center>True</use_sample_beam_center>
+    </Sensitivity>
+    {# Beam center#}
+    <BeamFinder>
+    	{% if not fit_direct_beam %}
+    	<position>
+        	<x>{{beam_center_x}}</x>
+        	<y>{{beam_center_y}}</y>
+        </position>
+    	{% endif %}
+    	<use_finder>{{fit_direct_beam}}</use_finder>
+    	<beam_file>{{direct_beam_run}}</beam_file>
+    	<use_direct_beam>True</use_direct_beam>
+    	<beam_radius>{{beam_radius}}</beam_radius> 
+    </BeamFinder>
+    {# Sample transmission #}
+    <Transmission>
+    	<calculate_trans>True</calculate_trans>
+    	<theta_dependent>{{theta_dependent_correction}}</theta_dependent>
+    	<DirectBeam>
+    		<sample_file>{{transmission_sample}}</sample_file>
+    		<direct_beam>{{transmission_empty}}</direct_beam>
+    		<beam_radius>{{beam_radius}}</beam_radius> 
+    	</DirectBeam>
+    	<combine_transmission_frames>{{fit_frames_together}}</combine_transmission_frames>
+    </Transmission>
+    <SampleData>
+    	<separate_jobs>False</separate_jobs>
+    	<sample_thickness>{{sample_thickness}}</sample_thickness>
+    	<data_file>{{data_file}}</data_file>
+    </SampleData>
+    {# Background #}
+    <Background>
+    	<background_corr>{{subtract_background}}</background_corr>
+    	<background_file>{{background_file}}</background_file>
+    	<bck_trans_enabled>True</bck_trans_enabled>
+    	<calculate_trans>True</calculate_trans>
+    	<theta_dependent>{{theta_dependent_correction}}</theta_dependent>
+    	<DirectBeam>
+    		<sample_file>{{background_transmission_sample}}</sample_file>
+    		<direct_beam>{{background_transmission_empty}}</direct_beam>
+    		<beam_radius>{{beam_radius}}</beam_radius>
+    	</DirectBeam>
+    	<combine_transmission_frames>{{fit_frames_together}}</combine_transmission_frames>
+    </Background>
+</Reduction>

@@ -7,6 +7,8 @@ import os.path
 from django.template import Template, Context
 import logging
 import pprint
+import xml.dom.minidom
+import xml.etree.ElementTree
 
 logger = logging.getLogger('main')
 
@@ -40,3 +42,24 @@ def build_script(script_file_path, form, data):
             script = template.render(context)
             script_filtered = "\n".join([ll.rstrip() for ll in script.splitlines() if ll.strip()])
     return script_filtered
+
+def pretty_xml(xml_string):
+    """
+    Return pretty formated XML
+    """
+    try:
+        dom = xml.dom.minidom.parseString(xml_string)
+        pretty_xml_as_string = dom.toprettyxml()
+        return pretty_xml_as_string
+    except Exception,e:
+        logger.exception(e)
+        return None
+
+def is_xml_valid(xml_string):
+    try:
+        _ = xml.etree.ElementTree.fromstring(xml_string)
+        return True
+    except Exception, e:
+        logger.exception(e)
+        return False
+    

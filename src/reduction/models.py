@@ -165,8 +165,8 @@ class RemoteJob(models.Model):
     remote_id = models.CharField(max_length = 30, unique=True)
     transaction = models.ForeignKey(Transaction)
     properties = models.TextField()
-    plots = models.ManyToManyField(Plot1D, null=True, blank=True, related_name='_remote_job_plot+')
-    plots2d = models.ManyToManyField(Plot2D, null=True, blank=True, related_name='_remote_job_plot2d+')
+    plots = models.ManyToManyField(Plot1D, blank=True, related_name='_remote_job_plot+')
+    plots2d = models.ManyToManyField(Plot2D, blank=True, related_name='_remote_job_plot2d+')
     
     def get_data_dict(self):
         """

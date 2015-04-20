@@ -99,14 +99,18 @@ def transaction(request, start=False):
         @param request: request object
         @param start: if True, a new transaction will be started if we didn't already have one
     """
+    
+    
+    
     if start is not True:
         transID = request.session.get('fermi_transID', None)
         if transID is not None:
             transactions = Transaction.objects.filter(trans_id=transID)
             if len(transactions)>0:
+                logger.debug("Transaction ID = %s from the database."%transID)
                 return transactions[0]
     try:
-        logger.debug("Connection to %s to start a transaction."%settings.FERMI_HOST)
+        logger.debug("Connecting to %s to start a transaction."%settings.FERMI_HOST)
         conn = httplib.HTTPSConnection(settings.FERMI_HOST, timeout=0.5)
         conn.request('GET', settings.FERMI_BASE_URL+'transaction?Action=Start',
                             headers={'Cookie':request.session.get('fermi', '')})
@@ -116,7 +120,8 @@ def transaction(request, start=False):
         info = json.loads(r.read())
         if "Err_Msg" in info:
             logger.error("MantidRemote: %s" % info["Err_Msg"])
-
+        
+        logger.debug("Connection to fermi returned TransID = %s."%info["TransID"])
         request.session['fermi_transID'] = info["TransID"]
         transaction_obj = Transaction(trans_id = info["TransID"],
                                   directory = info["Directory"],

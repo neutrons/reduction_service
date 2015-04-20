@@ -48,11 +48,11 @@
   };
   $(function() { $("#dialog-preview").hide(); });
   // closes the dialog when click outside
-  $(document).mouseup(function(e) {
-	  var alert_box = $(".ui-widget-overlay");
-	  if (alert_box.has(e.target).length === 0)
-	     $("#dialog-preview").dialog("close");
-  });
+//  $(document).mouseup(function(e) {
+//	  var alert_box = $(".ui-widget-overlay");
+//	  if (alert_box.has(e.target).length === 0)
+//	     $("#dialog-preview").dialog("close");
+//  });
 
   </script>
   
@@ -85,7 +85,12 @@
         {% for file in job_files %}
           {% url 'remote_download' trans_id file as download_url %}
           {% if download_url %}
-          <li><a href="{{ download_url }}">{{ file }}</a>&nbsp; <a title="Click to preview this file." onClick="preview_pre('{{ file }}','{{ download_url }}');"><span style='display:inline-block' class="ui-icon ui-icon-zoomin"></span></a></li>
+          <li><a href="{{ download_url }}">{{ file }}</a>
+          {% if ".txt" in download_url or ".py" in download_url or ".sh" in download_url or ".ER" in download_url or ".OU" in download_url or ".log" in download_url %}
+          	&nbsp;<a title="Click to preview this file." onClick="preview_pre('{{ file }}','{{ download_url }}');">
+          	    <span style='display:inline-block' class="ui-icon ui-icon-zoomin"></span></a>
+          {% endif %}
+          </li>
           {% else %}
           <li>{{ file }}</li>
           {% endif %}

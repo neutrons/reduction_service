@@ -17,7 +17,7 @@ def process_experiment(reduction_obj, expt_string, instrument_name):
         Process the experiment string of a form and find/create
         the appropriate Experiment object
         
-        This should be common to several <instrument>.forms
+        This is common to several <instrument>.forms
         
         @param reduction_obj: ReductionProcess or ReductionConfiguration object
         @param expt_string: string taken from the reduction form

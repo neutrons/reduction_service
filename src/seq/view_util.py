@@ -8,7 +8,6 @@ import logging
 import remote.view_util
 from plotting.models import Plot1D
 import sys
-from bumps.pmath import sqrt
 from math import sqrt
 
 logger = logging.getLogger('seq')

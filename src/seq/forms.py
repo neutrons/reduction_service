@@ -221,33 +221,21 @@ class ReductionConfigurationForm(CommonForm):
         
         # Find experiment
         process_experiment(reduction_config, self.cleaned_data['experiment'], INSTRUMENT_NAME)
-        
                 
         # Set the parameters associated with the reduction process entry
         try:
-            print 'self.cleaned_data', self.cleaned_data
             property_dict = copy.deepcopy(self.cleaned_data)
-            
+            data_files = copy.deepcopy(self.cleaned_data['data_files'])
+            property_dict["data_files"] = ''
+            reduction_config.properties = json.dumps(property_dict)
+            reduction_config.save()
             ### Store in the database the reduction options for every data file
-            data_files = self.cleaned_data['data_files']
             if len(data_files.strip())>0:
                 for data_file in data_files.split(','):
                     self.store_data_file_as_reduction(user, data_file, reduction_config.pk)
-                property_dict["data_files"] = ''
-            
-            properties = json.dumps(property_dict)
-            
-            
-            print 'properties', properties
-            
-            reduction_config.properties = properties
-            reduction_config.save()
         except Exception, e: 
             logger.error("Could not process reduction properties: %s" % sys.exc_value)
             logger.exception(e)
-        
-        
-        
         
         return reduction_config.pk
     
@@ -286,7 +274,13 @@ class ReductionConfigurationForm(CommonForm):
         reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=user)
         if reduction_proc not in reduction_config.reductions.all():
             reduction_config.reductions.add(reduction_proc)
-        config_property_dict = json.loads(reduction_config.properties)
+        try:
+            config_property_dict = json.loads(reduction_config.properties)
+        except Exception, e: 
+            config_property_dict = {}
+            logger.error("Error loading properties from %s : %s" %(reduction_config, sys.exc_value) )
+            logger.exception(e)
+            
         property_dict.update(config_property_dict)
         reduction_proc.name = reduction_config.name
         reduction_proc.save()

@@ -503,75 +503,35 @@ def configuration_options(request, instrument_name, config_id=None):
     
     logger.debug("configuration_options: %s"%inspect.stack()[0][3])
     
-    instrument_name_capitals = str.capitalize(str(instrument_name))
-    instrument_name_lowercase = str.lower(str(instrument_name))
+    instrument_name_capitals = str(instrument_name).upper()
+    instrument_name_lowercase = str(instrument_name).lower()
     instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
     
-    template_values = {}
+    forms_handler = instrument_forms.ConfigurationFormHandler(request,config_id)
     
-    # Create a form for the page
-    default_extra = 1 if config_id is None and not (request.method == 'GET' and 'data_file' in request.GET) else 0
-    try:
-        extra = int(request.GET.get('extra', default_extra))
-    except:
-        extra = default_extra
-
-    ReductionOptionsSet = formset_factory(instrument_forms.ReductionOptions, extra=extra)
-
+    template_values = {}
     # The list of relevant experiments will be displayed on the page
     expt_list = None
     job_list = None
+
     # Deal with data submission
     if request.method == 'POST':
-        
-        #logger.debug(pprint.pformat(request.POST.items()))
-        options_form = ReductionOptionsSet(request.POST)
-        config_form = instrument_forms.ReductionConfigurationForm(request.POST)
-        # If the form is valid update or create an entry for it
-        if options_form.is_valid() and config_form.is_valid():
-            # Save the configuration
-            config_id = config_form.to_db(request.user, config_id)
-            # Save the individual reductions
-            template_values['message'] = "Configuration %d and reduction parameters were sucessfully updated."%(config_id)
-            for form in options_form:
-                form.to_db(request.user, None, config_id)
+        if forms_handler.are_forms_valid():
+            config_id = forms_handler.save_forms()
             if config_id is not None:
                 return redirect(reverse('configuration_options',
                                         kwargs={'config_id' : config_id,
                                                 'instrument_name' : instrument_name_lowercase} ) +
-                                "?message=%s"%template_values['message']
-                                )
+                                "?message=%s"%forms_handler.message)
         else:
-            # There's a proble with the data, the validated form 
+            # There's a problem with the data, the validated form 
             # will automatically display what the problem is to the user
-            template_values['message'] = "Form is not valid. See messages next to fields above!"
-            logger.error("config_form: %s"%config_form.errors)
-            logger.error("options_form: %s"%options_form.errors)
+            template_values['message'] = forms_handler.message
+
     else:
         # Deal with the case of creating a new configuration
-        if config_id is None:
-            initial_values = []
-            if 'data_file' in request.GET:
-                initial_values = [{'data_file': request.GET.get('data_file', '')}]
-            options_form = ReductionOptionsSet(initial=initial_values)
-            initial_config = {}
-            if 'experiment' in request.GET:
-                initial_config['experiment'] = request.GET.get('experiment', '')
-            if 'reduction_name' in request.GET:
-                initial_config['reduction_name'] = request.GET.get('reduction_name', '')
-            config_form = instrument_forms.ReductionConfigurationForm(initial=initial_config)
-        # Retrieve existing configuration
-        else:
+        if config_id is not None:
             reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
-            initial_config = instrument_forms.ReductionConfigurationForm.data_from_db(request.user, reduction_config)
-            
-            initial_values = []
-            for item in reduction_config.reductions.all():
-                props = instrument_forms.ReductionOptions.data_from_db(request.user, item.pk)
-                initial_values.append(props)
-                
-            options_form = ReductionOptionsSet(initial=initial_values)
-            config_form = instrument_forms.ReductionConfigurationForm(initial=initial_config)
             expt_list = reduction_config.experiments.all()
             job_list = RemoteJobSet.objects.filter(configuration=reduction_config)
 
@@ -587,15 +547,14 @@ def configuration_options(request, instrument_name, config_id=None):
     icat_url = icat_url.replace('/0000', '')
     # TODO: add New an Save-As functionality
     template_values.update({'config_id': config_id,
-                       'options_form': options_form,
-                       'config_form': config_form,
                        'expt_list': expt_list,
                        'existing_job_sets': job_list,
                        'title': '%s Reduction' % instrument_name_capitals,
                        'breadcrumbs': breadcrumbs,
                        'icat_url': icat_url,
                        'instrument' : instrument_name, })
-
+    
+    template_values.update( forms_handler.get_forms())
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     if 'message' in request.GET:
         template_values['message'] = request.GET['message']

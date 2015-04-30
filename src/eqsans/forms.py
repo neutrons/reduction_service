@@ -10,6 +10,7 @@ from reduction.models import ReductionProcess, ReductionConfiguration
 from reduction.models import Instrument
 from reduction.forms import process_experiment
 from reduction_service.forms_util import build_script, is_xml_valid
+from django.forms.formsets import formset_factory
 import time
 import sys
 import json
@@ -238,7 +239,7 @@ class ReductionOptions(forms.Form):
             logger.error("Could not process reduction properties: %s" % sys.exc_value)
         
         # Find experiment
-        process_experiment(reduction_proc, self.cleaned_data['experiment'])
+        process_experiment(reduction_proc, self.cleaned_data['experiment'], instrument_name=INSTRUMENT_NAME)
                 
         return reduction_proc.pk
     
@@ -284,4 +285,110 @@ class ReductionOptions(forms.Form):
     
 
 
+    ########################################
+
+class ConfigurationFormHandler():
+    def __init__(self, request,config_id):
+        self.request = request
+        self.config_id = config_id
+        self.options_form = None
+        self.config_form = None
+        # Message providing info to user about the action performed
+        self.message = ""
+        self._build_forms()
         
+        
+    def _get_reduction_option_forset(self):
+        # Create a form for the page
+        default_extra = 1 if self.config_id is None and not (self.request.method == 'GET' and 'data_file' in self.request.GET) else 0
+        try:
+            extra = int(self.request.GET.get('extra', default_extra))
+        except:
+            extra = default_extra
+        
+        logger.debug("Extra = %s"%extra)
+        ReductionOptionsSet = formset_factory(ReductionOptions, extra=extra)
+        return ReductionOptionsSet
+    
+    def _build_forms(self):
+        if self.request.method == 'POST':
+            self._build_forms_from_post()
+        else:
+            self._build_forms_from_get()
+    
+    def _build_forms_from_post(self):
+        ReductionOptionsSet = self._get_reduction_option_forset()
+        self.config_form = ReductionConfigurationForm(self.request.POST)
+        self.options_form = ReductionOptionsSet(self.request.POST)
+        
+    
+    def _build_forms_from_get(self):
+        # Deal with the case of creating a new configuration
+        ReductionOptionsSet = self._get_reduction_option_forset()
+        if self.config_id is None:
+            initial_values = []
+            if 'data_file' in self.request.GET:
+                initial_values = [{'data_file': self.request.GET.get('data_file', '')}]
+            self.options_form = ReductionOptionsSet(initial=initial_values)
+            
+            initial_config = {}
+            if 'experiment' in self.request.GET:
+                initial_config['experiment'] = self.request.GET.get('experiment', '')
+            if 'reduction_name' in self.request.GET:
+                initial_config['reduction_name'] = self.request.GET.get('reduction_name', '')
+            self.config_form = ReductionConfigurationForm(initial=initial_config)
+        # Retrieve existing configuration
+        else:
+            reduction_config = get_object_or_404(ReductionConfiguration, pk=self.config_id, owner=self.request.user)
+            initial_config = ReductionConfigurationForm.data_from_db(self.request.user, reduction_config)
+            
+            initial_values = []
+            for item in reduction_config.reductions.all():
+                props = ReductionOptions.data_from_db(self.request.user, item.pk)
+                initial_values.append(props)
+                
+            self.options_form = ReductionOptionsSet(initial=initial_values)
+            self.config_form = ReductionConfigurationForm(initial=initial_config)
+    
+    def are_forms_valid(self):
+        if self.options_form.is_valid() and self.config_form.is_valid():
+            return True
+        else:
+            self.message = "Form is not valid. See messages next to fields above!"
+#             self.errors[self.config_form] = self.config_form.errors
+#             self.errors[self.options_form] = self.config_form.options_form
+            logger.error("config_form: %s"%self.config_form.errors)
+            logger.error("options_form: %s"%self.options_form.errors)
+            return False
+            
+    def save_forms(self):
+        """
+        return config_id
+        """
+        config_id = self.config_form.to_db(self.request.user, self.config_id)
+        for form in self.options_form:
+            form.to_db(self.request.user, None, config_id)
+        self.message = "Configuration %d and reduction parameters were sucessfully updated."%(config_id)
+        return config_id
+    
+    def get_forms(self):
+        return {'options_form': self.options_form,
+                'config_form': self.config_form }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+

@@ -658,7 +658,7 @@ def configuration_query(request, remote_set_id, instrument_name):
     return render_to_response('reduction/configuration_query.html', template_values)
     
 @login_required
-def configuration_iq(request, remote_set_id):
+def configuration_iq(request, remote_set_id, instrument_name):
     """
         @param request: request object
         @param remote_id: pk of RemoteJobSet object
@@ -680,7 +680,7 @@ def configuration_iq(request, remote_set_id):
             fd.close()
     output_zip_file.close()
     # Create response with correct MIME-type
-    resp = HttpResponse(str_io.getvalue(), mimetype = "application/x-zip-compressed")
+    resp = HttpResponse(str_io.getvalue(), content_type = "application/x-zip-compressed")
     resp['Content-Disposition'] = 'attachment; filename=%s' % 'iq_transaction_%s.zip' % job_set.transaction.trans_id
     resp["Content-Description"] = "File Transfer";
     resp["Content-type"] = "application/octet-stream";

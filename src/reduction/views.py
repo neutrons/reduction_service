@@ -700,6 +700,8 @@ def configuration_submit(request, config_id, instrument_name):
     instrument_name_lowercase = str.lower(str(instrument_name))
     instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
     
+    forms_handler = instrument_forms.ConfigurationFormHandler(request,config_id)
+    
     reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
     reductions = reduction_config.reductions.all()
     if len(reductions) > 0:
@@ -711,8 +713,9 @@ def configuration_submit(request, config_id, instrument_name):
         # Loop through the reductions and submit them
         JobIDs = []
         for item in reductions:
-            data = instrument_forms.ReductionOptions.data_from_db(request.user, item.id)
-            code = instrument_forms.ReductionOptions.as_mantid_script(data, transaction.directory)
+#             data = instrument_forms.ReductionOptions.data_from_db(request.user, item.id)
+#             code = instrument_forms.ReductionOptions.as_mantid_script(data, transaction.directory)
+            code = forms_handler.get_mantid_script(item.id, transaction.directory)
             jobID = remote.view_util.submit_job(request, transaction, code)
             if jobID is not None:
                 JobIDs.append(jobID)
@@ -723,10 +726,8 @@ def configuration_submit(request, config_id, instrument_name):
                 job.save()
                 job_set.jobs.add(job)
     return redirect(reverse('configuration_options',
-                            kwargs={'config_id' : config_id,
-                                    'instrument_name' : instrument_name_lowercase})+
-                    "?message=Jobs %s sucessfully submitted."%', '.join(JobIDs)
-                    )
+                            kwargs={'config_id' : config_id, 'instrument_name' : instrument_name_lowercase})+
+                    "?message=Jobs %s sucessfully submitted."%', '.join(JobIDs))
 
 
     

@@ -288,6 +288,11 @@ class ReductionOptions(forms.Form):
     ########################################
 
 class ConfigurationFormHandler():
+    '''
+    Class to handle the configuration action.
+    It will create and validate forms. It creates arbirary formsets
+    
+    '''
     def __init__(self, request,config_id):
         self.request = request
         self.config_id = config_id
@@ -355,8 +360,6 @@ class ConfigurationFormHandler():
             return True
         else:
             self.message = "Form is not valid. See messages next to fields above!"
-#             self.errors[self.config_form] = self.config_form.errors
-#             self.errors[self.options_form] = self.config_form.options_form
             logger.error("config_form: %s"%self.config_form.errors)
             logger.error("options_form: %s"%self.options_form.errors)
             return False
@@ -376,6 +379,16 @@ class ConfigurationFormHandler():
                 'config_form': self.config_form }
     
     
+    def get_mantid_script(self, reduction_id, transaction_directory):
+        """
+        @param reductions: all the reductions for this configuration
+        @param transaction: Transaction for this job submission 
+        """
+
+        data = ReductionOptions.data_from_db(self.request.user, reduction_id)
+        code = ReductionOptions.as_mantid_script(data, transaction_directory)
+        
+        return code
     
     
     

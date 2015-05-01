@@ -11,6 +11,7 @@ from reduction.models import Instrument
 from reduction.forms import process_experiment
 from reduction_service.forms_util import build_script, is_xml_valid
 from django.forms.formsets import formset_factory
+from reduction.forms import ConfigurationFormHandlerBase
 import time
 import sys
 import json
@@ -287,7 +288,7 @@ class ReductionOptions(forms.Form):
 
     ########################################
 
-class ConfigurationFormHandler():
+class ConfigurationFormHandler(ConfigurationFormHandlerBase):
     '''
     Class to handle the configuration action.
     It will create and validate forms. It creates arbirary formsets

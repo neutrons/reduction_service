@@ -8,6 +8,7 @@
 from django import forms
 from reduction.models import Experiment
 import sys
+from abc import ABCMeta, abstractmethod
 
 import logging
 logger = logging.getLogger('reduction.forms')
@@ -52,3 +53,47 @@ class ReductionStart(forms.Form):
         Simple form to select run to reduce
     """
     run_number = forms.IntegerField(required=False)
+
+
+
+
+class ConfigurationFormHandlerBase(object):
+    '''
+    Class to handle the configuration action.
+    It will create and validate forms. It creates arbirary formsets
+    
+    '''
+    
+    __metaclass__ = ABCMeta
+    
+    @abstractmethod
+    def __init__(self, request,config_id):
+        pass
+    
+    @abstractmethod
+    def are_forms_valid(self):
+        pass
+    
+    @abstractmethod            
+    def save_forms(self):
+        """
+        return config_id
+        """
+        pass
+    
+    @abstractmethod
+    def get_forms(self):
+        """
+        @return: forms in the form of ditionary
+        """
+        pass
+    
+    def get_mantid_script(self, reduction_id, transaction_directory):
+        """
+        @param reductions: all the reductions for this configuration
+        @param transaction: Transaction for this job submission 
+        @return: script code
+        """
+        pass
+
+        

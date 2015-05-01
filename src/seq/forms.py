@@ -23,11 +23,190 @@ import copy
 import os.path
 import re
 import pprint
+import tempfile
 
 from seq import INSTRUMENT_NAME
 
 logger = logging.getLogger('seq.forms')
 scripts_location = os.path.join(os.path.dirname(__file__), "scripts")
+
+
+
+class ReductionConfigurationForm():
+    
+    # General information
+    reduction_name = forms.CharField(required=False, 
+                                     initial=time.strftime("Batch of %Y-%m-%d %H:%M:%S", time.localtime()))
+    experiment = forms.CharField(required=True, initial='uncategorized')
+    
+    # <!-- DEFAULTS section -->
+    # <defaults instrument="ARCS" filterbadpulses="False" save="summary" />
+    filter_bad_pulses =  forms.BooleanField(required=True, initial=False)
+    
+    save_choices = ['summary', 'phx', 'spe', 'nxspe', 'par', 'jpg', 'nxs', 'mdnxs', 'iofq','iofe',
+     'iofphiecolumn','iofphiearray','iofqecolumn','iofqearray','sqw','vannorm']
+    
+    save_format = forms.MultipleChoiceField(required=True, widget=forms.CheckboxSelectMultiple,
+                                      choices=save_choices)
+    
+#     <!-- CALIBRATION AND MASKING section -->
+#     <calibration processedfilename="van37350_white_uposc.nxs"
+#         units="wavelength" normalizedcalibration="True">
+#         <vanruns>30611</vanruns>
+#         <vanmin>0.35</vanmin>
+#         <vanmax>0.75</vanmax>
+# 
+#         <mask algorithm="MaskBTP" Pixel="1-7" />
+#         <mask algorithm="MaskBTP" Pixel="122-128" />
+#         <mask algorithm="MaskBTP" Bank="71" Pixel="1-14" />
+#         <mask algorithm="MaskBTP" Bank="71" Pixel="114-128" />
+#         <mask algorithm="MaskBTP" Bank="70" Pixel="1-12" />
+#         <mask algorithm="MaskBTP" Bank="70" Pixel="117-128" />
+
+#         <mask algorithm="MaskAngle" MaxAngle="2.5" />
+
+#         <mask algorithm="FindDetectorsOutsideLimits" LowThreshold="0.1" />
+
+#         <mask algorithm="MedianDetectorTest" LevelsUp="1"
+#             CorrectForSolidAngle="1" LowThreshold="0.5" HighThreshold="1.5"
+#             ExcludeZeroesFromMedian="1" />
+#     </calibration>
+
+    processed_vanadium_filename = forms.CharField(widget=forms.HiddenInput(), required=True, 
+                                                  initial= tempfile.NamedTemporaryFile(delete=False).name)
+    
+    units_choices = ['Wavelength', 'DeltaE', 'DeltaE_inWavenumber', 'Energy', 'Energy_inWavenumber',
+                    'Momentum', 'MomentumTransfer', 'QSquared', 'TOF', 'dspacing']
+    units = forms.ChoiceField(choices=units_choices,initial=units_choices[0],required=True)
+    
+    help_text_vanadium_limits = "The vanadium data is integrated between vanadium_min and vanadium_max for the given units." 
+    vanadium_min = forms.FloatField(required=True, help_text = help_text_vanadium_limits)
+    vanadium_max = forms.FloatField(required=True, help_text = help_text_vanadium_limits)
+
+    normalized_calibration  = forms.BooleanField(required=True, initial=True)
+    
+    error_message_ranged_field = {'invalid': "Not a valid ranged input. Use for example: 1-8,121-128"}
+    help_text_ranged_field = "Use ranged input. E.g.: 1-8,121-128."
+    regex_ranged_field=r'^[\d\-,]+$'
+    
+    vanadium_runs = forms.RegexField(regex=regex_ranged_field, required=True, help_text=help_text_ranged_field,
+                                   error_messages=error_message_ranged_field)
+    
+    def clean_vanadium_runs(self):
+        data = self.cleaned_data['data_files']
+        if len(data) > 0:
+            data = self._hyphen_range(data)
+            self.data_file = str(data[0])
+        return data
+
+    def _hyphen_range(self, s):
+        """ Takes a range in form of "a-b" and generate a list of numbers between a and b inclusive.
+        Also accepts comma separated ranges like "a-b,c-d,f" will build a list which will include
+        Numbers from a to b, a to d and f"""
+        s="".join(s.split())#removes white space
+        r=set()
+        for x in s.split(','):
+            t=x.split('-')
+            if len(t) not in [1,2]:
+                logger.error("hash_range is given its arguement as "+s+" which seems not correctly formated.")
+            r.add(int(t[0])) if len(t)==1 else r.update(set(range(int(t[0]),int(t[1])+1)))
+        l=list(r)
+        l.sort()
+        l_in_str = ','.join(str(x) for x in l)
+        return l_in_str
+    
+    # Masks are in form below
+
+
+
+
+class MaskForm(forms.Form):
+    """
+        Simple form for a mask entry.
+        A combination of banks, tubes, pixels can be specified.
+    """
+    bank = forms.CharField(required=False, initial='', validators=[validate_integer_list])
+    tube = forms.CharField(required=False, initial='', validators=[validate_integer_list])
+    pixel = forms.CharField(required=False, initial='', validators=[validate_integer_list])
+    remove = forms.BooleanField(required=False, initial=False)
+    
+    @classmethod
+    def to_tokens(cls, value):
+        """
+            Takes a block of Mantid script and extract the
+            dictionary argument. The template should be like
+            
+            MaskBTPParameters({'Bank':'', 'Tube':'', 'Pixel':''})
+            
+            @param value: string value for the code snippet
+        """
+        mask_list = []
+        try:
+            lines = value.split('\n')
+            for line in lines:
+                if 'MaskBTPParameters' in line:
+                    mask_strings = re.findall("append\((.+)\)", line.strip())
+                    for item in mask_strings:
+                        mask_list.append(eval(item.lower()))
+        except:
+            logging.error("MaskForm count not parse a command line: %s" % sys.exc_value)
+        return mask_list
+    
+    @classmethod
+    def to_python(cls, mask_list, indent='    '):
+        """
+            Take a block of Mantid script from a list of mask forms
+            
+            @param mask_list: list of MaskForm objects
+            @param indent: string indentation to add to each line
+        """
+        command_list = ''
+        for mask in mask_list:
+            if 'remove' in mask.cleaned_data and mask.cleaned_data['remove'] == True:
+                continue
+            command_str = str(mask)
+            if len(command_str) > 0:
+                command_list += "%s%s\n" % (indent, command_str)
+        return command_list
+
+    def __str__(self):
+        """
+            Return a string representing the Mantid command to run
+            for this mask item.
+        """
+        entry_dict = {}
+        if 'bank' in self.cleaned_data and len(self.cleaned_data['bank'].strip()) > 0:
+            entry_dict["Bank"] = str(self.cleaned_data['bank'])
+        if 'tube' in self.cleaned_data and len(self.cleaned_data['tube'].strip()) > 0:
+            entry_dict["Tube"] = str(self.cleaned_data['tube'])
+        if 'pixel' in self.cleaned_data and len(self.cleaned_data['pixel'].strip()) > 0:
+            entry_dict["Pixel"] = str(self.cleaned_data['pixel'])
+        if len(entry_dict) == 0:
+            return ""
+        return "MaskBTPParameters.append(%s)" % str(entry_dict)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class CommonForm(forms.Form):
@@ -465,67 +644,4 @@ def validate_integer_list(value):
             except:
                 raise ValidationError(u'Error parsing %s for a range of integers' % value)
 
-class MaskForm(forms.Form):
-    """
-        Simple form for a mask entry.
-        A combination of banks, tubes, pixels can be specified.
-    """
-    bank = forms.CharField(required=False, initial='', validators=[validate_integer_list])
-    tube = forms.CharField(required=False, initial='', validators=[validate_integer_list])
-    pixel = forms.CharField(required=False, initial='', validators=[validate_integer_list])
-    remove = forms.BooleanField(required=False, initial=False)
-    
-    @classmethod
-    def to_tokens(cls, value):
-        """
-            Takes a block of Mantid script and extract the
-            dictionary argument. The template should be like
-            
-            MaskBTPParameters({'Bank':'', 'Tube':'', 'Pixel':''})
-            
-            @param value: string value for the code snippet
-        """
-        mask_list = []
-        try:
-            lines = value.split('\n')
-            for line in lines:
-                if 'MaskBTPParameters' in line:
-                    mask_strings = re.findall("append\((.+)\)", line.strip())
-                    for item in mask_strings:
-                        mask_list.append(eval(item.lower()))
-        except:
-            logging.error("MaskForm count not parse a command line: %s" % sys.exc_value)
-        return mask_list
-    
-    @classmethod
-    def to_python(cls, mask_list, indent='    '):
-        """
-            Take a block of Mantid script from a list of mask forms
-            
-            @param mask_list: list of MaskForm objects
-            @param indent: string indentation to add to each line
-        """
-        command_list = ''
-        for mask in mask_list:
-            if 'remove' in mask.cleaned_data and mask.cleaned_data['remove'] == True:
-                continue
-            command_str = str(mask)
-            if len(command_str) > 0:
-                command_list += "%s%s\n" % (indent, command_str)
-        return command_list
 
-    def __str__(self):
-        """
-            Return a string representing the Mantid command to run
-            for this mask item.
-        """
-        entry_dict = {}
-        if 'bank' in self.cleaned_data and len(self.cleaned_data['bank'].strip()) > 0:
-            entry_dict["Bank"] = str(self.cleaned_data['bank'])
-        if 'tube' in self.cleaned_data and len(self.cleaned_data['tube'].strip()) > 0:
-            entry_dict["Tube"] = str(self.cleaned_data['tube'])
-        if 'pixel' in self.cleaned_data and len(self.cleaned_data['pixel'].strip()) > 0:
-            entry_dict["Pixel"] = str(self.cleaned_data['pixel'])
-        if len(entry_dict) == 0:
-            return ""
-        return "MaskBTPParameters.append(%s)" % str(entry_dict)

@@ -1,4 +1,4 @@
-{% extends "eqsans/base.html" %}
+{% extends "reduction/reduction_base.html" %}
 {% load staticfiles %}
 
 {% block header %}
@@ -14,7 +14,42 @@
     $(function() {
         $("#download_iq_button").button();
     });
-  </script>  
+  </script>
+   
+  <script>
+ // File preview
+  function preview_pre(title, url) {
+  	var windowWidth = $(window).width();
+	var windowHeight = $(window).height();
+  	$.ajax({
+  		url: url,
+  		success: function(result){
+  			if ( $( "#dialog-preview" ).length ) {$("#dialog-preview").remove();}  			
+        	$("body").append('<div id="dialog-preview"><pre><code>' + result + '</code></pre></div>');
+        	$("#dialog-preview").dialog({
+        		title: title,
+        		resizable: false,
+        		maxHeight : windowHeight - 150,
+				maxWidth : windowWidth -150,
+				minWidth : windowWidth -250,
+        		close: function( event, ui ) {$("#dialog-preview").remove();}
+     		})
+     		.css({overflow:"auto"});
+     		$('pre code').each(function(i, block) {
+     		  hljs.highlightBlock(block);
+            });
+    	}
+    });
+  };
+  $(function() { $("#dialog-preview").hide(); });
+  // closes the dialog when click outside
+//  $(document).mouseup(function(e) {
+//	  var alert_box = $(".ui-widget-overlay");
+//	  if (alert_box.has(e.target).length === 0)
+//	     $("#dialog-preview").dialog("close");
+//  });
+
+  </script>
 {% endblock %}
 
 {% block content %}
@@ -40,11 +75,16 @@
     <ul>
     {% for file in job_files %}
       {% url 'remote_download' trans_id file as download_url %}
-      {% if download_url %}
-      <li><a href="{{ download_url }}">{{ file }}</a></li>
-      {% else %}
-      <li>{{ file }}</li>
-      {% endif %}
+                {% if download_url %}
+          <li><a href="{{ download_url }}">{{ file }}</a>
+          {% if ".txt" in download_url or ".py" in download_url or ".sh" in download_url or ".ER" in download_url or ".OU" in download_url or ".log" in download_url %}
+          	&nbsp;<a title="Click to preview this file." onClick="preview_pre('{{ file }}','{{ download_url }}');">
+          	    <span style='display:inline-block' class="ui-icon ui-icon-zoomin"></span></a>
+          {% endif %}
+          </li>
+          {% else %}
+          <li>{{ file }}</li>
+          {% endif %}
     {% endfor %}
     </ul>
     {% if job_files %}<input title="Click to download all I(q) files" id="download_iq_button" type="button" value="download I(q)" onclick='window.location.href = "{% url 'configuration_iq' remote_set_id=remote_set_id instrument_name=instrument%}"'/>{% endif %}

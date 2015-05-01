@@ -30,6 +30,7 @@
   	$.ajax({
   		url: url,
   		success: function(result){
+  			if ( $( "#dialog-preview" ).length ) {$("#dialog-preview").remove();}
         	$("body").append('<div id="dialog-preview"><pre><code>' + result + '</code></pre></div>');
         	$("#dialog-preview").dialog({
         		title: title,

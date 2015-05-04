@@ -20,17 +20,8 @@ def get_reduction_dialog_settings(ipts):
     """
     dialog_json = [
        {
-          "name":"Single",
-          "desc":"A <b>single</b> reduction, which will create a reduction job only for this run.",
-          "href": get_new_reduction_url(),
-          "parameters" : { "reduction_name" :  "Reduction for ${run}",
-                          "expt_name" : ipts,
-                          "data_file" : "${run}"
-                          }
-       },
-       {
           "name":"Batch",
-          "desc":"A reduction <b>batch</b>, which will create a configuration that you can use with multiple runs.",
+          "desc":"A reduction <b>batch</b>, which will create a calibration and a making configuration that you can use with multiple runs.",
           "href": get_new_batch_url(),
           "parameters" : { "reduction_name" :  "Batch reduction for exp: %s run: ${run}"%ipts,
                           "experiment" : ipts,

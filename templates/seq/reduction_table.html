@@ -17,15 +17,15 @@
     */
     $(function() {
         var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=config_form.experiment.value %}";
-        var selector = '.runcomplete input';
+        var selector = '#id_vanadium_runs';
         if  ($(selector).is('*')) {
-            set_autocomplete(selector,jsonurl);
+            set_autocomplete_ranged(selector,jsonurl);
         }
     });
 	
     $(function() {
         var jsonurl = "{% url 'catalog_experiments_json' instrument=instrument %}";
-        var selector = '.experimentcomplete input';
+        var selector = '#id_experiment';
         if  ($(selector).is('*')) {
             set_autocomplete(selector,jsonurl);
         }
@@ -33,9 +33,9 @@
 	
 	/* if the user change the experiment number, the runs will be different!! */    
 	$(function() {
-	    $(".experimentcomplete input").on( "autocompletechange", function(event,ui) {
+	    $("#id_experiment").on( "autocompletechange", function(event,ui) {
 	   		var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=12345 %}".replace(/12345/, $(this).val() );
-	        var selector = '.runcomplete input';
+	        var selector = '#id_vanadium_runs';
 	        set_autocomplete(selector,jsonurl);
 		});
 	});
@@ -51,106 +51,23 @@
 <form action="" method="POST">{% csrf_token %}
   <div class='tiled_area'>
     <div class='flexible tile'>
-      <div class="modifiable_title">
-        <b>Configuration description</b> {{ config_form.reduction_name.errors }}{{ config_form.reduction_name }}
-      </div>
-      <p>
-      <div>
-        <table cellspacing="0" class="property_table">
-          <tbody>
-			<tr><td title='Enter an experiment identifier or IPTS number'><b>Experiment</b></td><td class='long_input experimentcomplete ui-widget'>{{ config_form.experiment.errors }}{{ config_form.experiment }}</td></tr>
-			
-			<tr><th>{{ config_form.grouping_file.label_tag }}</th><td>{{ config_form.grouping_file.errors }}{{ config_form.grouping_file }}</td></tr>
-            <tr><th> Energy binning <br/>[% of E<sub>guess</sub>] </th> <td> 
-			  		<span {% if config_form.energy_binning_min.errors %}class='highlight_row' title='{{ config_form.energy_binning_min.errors }}'{% endif %}>
-			  		E<sub>min</sub> {{config_form.energy_binning_min }} </span> 
-			  		E<sub>step</sub> {{config_form.energy_binning_step }} 
-			  		E<sub>max</sub> {{config_form.energy_binning_max }} </td>
-            </tr>
-                 
-          
-          </tbody>
-        </table>
-        
-       <h3>Mask:</h3>
-      <table cellspacing="0" class="property_table">
-        <tbody>
-      	  <tr><th>Masked Bank</th><th>Masked Tube</th><th>Masked Pixel</th></tr>
-      	  <tr>
-      	  <td class='long_input' title="{{config_form.masked_bank1.help_text}}" >{{ config_form.masked_bank1.errors }}{{ config_form.masked_bank1 }}</td>
-      	  <td class='long_input' title="{{config_form.masked_tube1.help_text}}" >{{ config_form.masked_tube1.errors }}{{ config_form.masked_tube1 }}</td>
-      	  <td class='long_input' title="{{config_form.masked_pixel1.help_text}}" >{{ config_form.masked_pixel1.errors }}{{ config_form.masked_pixel1 }}</td>
-      	  </tr>
-      	  <tr>
-      	  <td class='long_input' title="{{config_form.masked_bank2.help_text}}" >{{ config_form.masked_bank2.errors }}{{ config_form.masked_bank2 }}</td>
-      	  <td class='long_input' title="{{config_form.masked_tube2.help_text}}" >{{ config_form.masked_tube2.errors }}{{ config_form.masked_tube2 }}</td>
-      	  <td class='long_input' title="{{config_form.masked_pixel2.help_text}}" >{{ config_form.masked_pixel2.errors }}{{ config_form.masked_pixel2 }}</td>
-      	  </tr>
-      	  <tr>
-      	  <td class='long_input' title="{{config_form.masked_bank3.help_text}}" >{{ config_form.masked_bank3.errors }}{{ config_form.masked_bank3 }}</td>
-      	  <td class='long_input' title="{{config_form.masked_tube3.help_text}}" >{{ config_form.masked_tube3.errors }}{{ config_form.masked_tube3 }}</td>
-      	  <td class='long_input' title="{{config_form.masked_pixel3.help_text}}" >{{ config_form.masked_pixel3.errors }}{{ config_form.masked_pixel3 }}</td>
-      	  </tr>
-      	  <tr>
-      	  <td class='long_input' title="{{config_form.masked_bank4.help_text}}" >{{ config_form.masked_bank4.errors }}{{ config_form.masked_bank4 }}</td>
-      	  <td class='long_input' title="{{config_form.masked_tube4.help_text}}" >{{ config_form.masked_tube4.errors }}{{ config_form.masked_tube4 }}</td>
-      	  <td class='long_input' title="{{config_form.masked_pixel4.help_text}}" >{{ config_form.masked_pixel4.errors }}{{ config_form.masked_pixel4 }}</td>
-      	  </tr>
-        </tbody>
-        </table>
-        
-        <h3>Data:</h3>
-      	<table cellspacing="0" class="property_table">
-        <tbody>
-        <tr><th>{{ config_form.raw_vanadium.label_tag }}</th><td class='runcomplete ui-widget'>{{ config_form.raw_vanadium.errors }}{{ config_form.raw_vanadium }} <span id='raw_vanadium_info'></span></td></tr>
-        <tr><th>{{ config_form.data_files.label_tag }}</th><td class='long_input' title="{{config_form.data_files.help_text}}">{{ config_form.data_files.errors }}{{ config_form.data_files }}</td></tr>
-        </tr>
-        </tbody>
-        </table>
-      
-      </div>
-    </div>
-    <div class='flexible tile'>
-      <a style='float:right' href='?extra=1'><span style='display:inline-block' class="ui-icon ui-icon-plusthick"></span> add a job</a>
-      <p>
-      {{ options_form.management_form }}
-      <h3>Either use the Data Files range field above or enter the Sample run numbers below. When done press update.</h3>
-        <table cellspacing="0" class="property_table">
-          <thead>
-            <tr>
-              <td title='Enter sample scattering run number'>Sample run</td>
-              <td title='Enter a nickname for this reduction. The nickname will be prepended to the output file names. [optional]'>Nickname</td>
-            </tr>
-          </thead>
-          <tbody>
-          {% for form in options_form %}
-          
-            <tr class='reduction_job'>
-              {{ form.id }}{{ form.reduction_id }}
-              <td class='runcomplete ui-widget'>{{ form.data_file.errors }}{{ form.data_file }} </td>
-              <td>{{ form.nickname.errors }}{{ form.nickname }}</td>
-              {% spaceless %}
-              {% if form.reduction_id.value %}
-              <td title='Click to remove this reduction job'><a href='{% url 'configuration_job_delete' config_id=config_id reduction_id=form.reduction_id.value instrument_name=instrument%}'><span class="ui-icon ui-icon-trash"></span></a></td>
-              <td title='Click to view this reduction job in a new window'><a href='{% url 'reduction_options' instrument_name=instrument reduction_id=form.reduction_id.value %}' target='_blank'><span class="ui-icon ui-icon-pencil"></span></a></td>
-              {% elif config_id %}
-              <td title='Click to remove this reduction job'><a href='{% url 'configuration_options' config_id=config_id instrument_name=instrument%}'><span class="ui-icon ui-icon-trash"></span></a></td>
-              {% endif %}
-              {% endspaceless %}
-              {% if form.reduction_id.value %}<td title='Submit this job by itself, without submitting all the other jobs'><a href="{% url 'reduction_submit_job' reduction_id=form.reduction_id.value instrument_name=instrument %}"><span class="ui-icon ui-icon-refresh"></span></a></td>{% endif %}
-              <script id="source" language="javascript" type="text/javascript">
-                {% spaceless %}
-                {% if form.data_file.value %}get_icat_info('{{ form.data_file.value }}','{{ form.data_file.id_for_label }}'); {% endif %}
-                {% endspaceless %}
-              </script>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      <input id='submit_button' type="submit" value="update"/>
-      {% if config_id %}<input title="Click to submit this list of reductions for execution" id="execute_jobs_button" type="button" value="submit" onclick='window.location.href = "{% url 'configuration_submit' config_id=config_id instrument_name=instrument%}"'/>{% endif %}
+    {{ config_form.as_p }}
     </div>
   </div>
+  
+  <div class='tiled_area'>
+   <div class='flexible tile'>
+   <a style='float:right' href='?extra=1'><span style='display:inline-block' class="ui-icon ui-icon-plusthick"></span> add a job</a>
+      <p>
+      {{ options_form.management_form }}
+      </p>
+      {% for form in options_form %}
+        {{ form.as_p }}
+      {% endfor %}
+      <input id='submit_button' type="submit" value="update"/>
+      {% if config_id %}<input title="Click to submit this list of reductions for execution" id="execute_jobs_button" type="button" value="submit" onclick='window.location.href = "{% url 'configuration_submit' config_id=config_id instrument_name=instrument%}"'/>{% endif %}
+  </div>
+ </div>
 </form>
 {% if message %}<div class='green'><b>{{ message }} </b></div>{% endif %}
 

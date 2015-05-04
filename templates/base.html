@@ -32,33 +32,85 @@
 
 {% block header %}{% endblock %}
 <script type="text/javascript">
-    $(function() {
-        $( "#login_button" ).button();
-        $( document ).tooltip();
+    $(function () {
+        $("#login_button").button();
+        $(document).tooltip();
     });
+
     function show_alert() {
         $(".user_alert").show("highlight");
-        $(".user_alert").click(function(){$(this).fadeOut("fast");});
+        $(".user_alert").click(function () {
+            $(this).fadeOut("fast");
+        });
     };
+
     function new_alert(msg) {
         document.getElementById('alert_message').innerHTML = msg;
     }
-    /* Function to populate the autocomplete from a remote json. */
-    function set_autocomplete(selector,jsonurl){
-		$.ajax({
+    /* Function to populate the autocomplete from a remote json. 
+       This is used on a field that needs a single run number!
+    */
+    function set_autocomplete(selector, jsonurl) {
+        $.ajax({
             url: jsonurl,
             type: 'get',
             dataType: 'json',
             async: true,
-            success: function(data) {
+            success: function (data) {
                 //console.log(data);
                 $(selector).autocomplete({
                     source: data,
                     minLength: 0,
-                }).bind('focus', function() {       
-      				if(!$(this).val().trim())
-            			$(this).keydown();
-				});
+                }).bind('focus', function () {
+                    if (!$(this).val().trim()) $(this).keydown();
+                });
+            }
+        });
+    }
+
+    /* Function to populate the autocomplete from a remote json.
+      For ranged fields, .e.g,: 4588-4590,465-658 */
+    function split(val) {
+        return val.split(/[,-]\s*/);
+    }
+
+    function extractLast(term) {
+        return split(term).pop();
+    }
+
+    function set_autocomplete_ranged(selector, jsonurl) {
+        $.ajax({
+            url: jsonurl,
+            type: 'get',
+            dataType: 'json',
+            async: true,
+            success: function (data) {                
+                $(selector).autocomplete({
+                    minLength: 0,
+                    source: function (request, response) {
+                        response($.ui.autocomplete.filter(
+                        data, extractLast(request.term) ));
+                    },
+                    focus: function () {
+                        return false;
+                    },
+                    select: function (event, ui) {
+                        //var terms = split(this.value);
+                        // remove the current input
+                        //terms.pop();
+                        // add the selected item
+                        //terms.push(ui.item.value);
+                        // add placeholder to get the comma-and-space at the end
+                        //terms.push("");
+                        //this.value = terms.join(",");
+                        var this_value = ui.item.value
+                        var all_values = this.value
+                        this.value = all_values + this_value
+                        return false;
+                    }
+                }).bind('focus', function () {
+                    if (!$(this).val().trim()) $(this).keydown();
+                });
             }
         });
     }

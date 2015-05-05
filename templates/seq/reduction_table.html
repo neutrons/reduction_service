@@ -19,7 +19,7 @@
     */
     $(function() {
         var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=config_form.experiment.value %}";
-        var selector = '#id_vanadium_runs';
+        var selector = "#id_vanadium_runs,[id$='data_runs']";
         if  ($(selector).is('*')) {
             set_autocomplete_ranged(selector,jsonurl);
         }
@@ -37,7 +37,7 @@
 	$(function() {
 	    $("#id_experiment").on( "autocompletechange", function(event,ui) {
 	   		var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=12345 %}".replace(/12345/, $(this).val() );
-	        var selector = '#id_vanadium_runs';
+	        var selector = "#id_vanadium_runs,[id$='data_runs']";
 	        set_autocomplete(selector,jsonurl);
 		});
 	});
@@ -121,13 +121,13 @@
       {{ masks_form.management_form }}
       <table cellspacing="5" class="property_table">
         <tbody>
+          {% for form in masks_form %}
           <tr>
-            {% for form in masks_form %}
             <th title='{{ form.bank.help_text }}'>{{ form.bank.label_tag }}</th><td>{{ form.bank.errors }}{{ form.bank }}</td>
             <th title='{{ form.tube.help_text }}'>{{ form.tube.label_tag }}</th><td>{{ form.tube.errors }}{{ form.tube }}</td>
             <th title='{{ form.pixel.help_text }}'>{{ form.pixel.label_tag }}</th><td>{{ form.pixel.errors }}{{ form.pixel }}</td>
-            {% endfor %}
-          </tr>     
+          </tr>
+          {% endfor %}
         </tbody>
       </table>
     </div>

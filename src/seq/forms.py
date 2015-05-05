@@ -198,7 +198,7 @@ class ScanForm(forms.Form):
         
     """
     # Reduction name
-    reduction_name = forms.CharField(required=False, initial=time.strftime("Reduction of %Y-%m-%d %H:%M:%S", time.localtime()) )
+    reduction_name = forms.CharField(required=False, widget=forms.HiddenInput )
     reduction_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     expt_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     experiment = forms.CharField(required=False, initial='uncategorized',widget=forms.HiddenInput)

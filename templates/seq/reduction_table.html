@@ -1,4 +1,5 @@
 {% extends "eqsans/base.html" %}
+{% load staticfiles %}
 {% block header %}
 <script>
     function get_icat_info(run_number, element_id) {
@@ -41,9 +42,23 @@
 	        set_autocomplete(selector,jsonurl);
 		});
 	});
-	
 </script>
 
+<style type="text/css">
+    .add-row {
+        padding-left:18px;
+        background:url({% static 'add.png' %}) no-repeat left center;
+    }
+    .delete-row {
+        float:right;
+        display:block;
+        margin:5px 0 0 5px;
+        text-indent:-6000px;
+        background:url({% static 'delete.png' %}) no-repeat left center;
+        width:16px;
+        height:16px;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -117,9 +132,9 @@
           </tr>     
         </tbody>
       </table>
-      <h3>BTP Mask:</h3>
+      <h3>Banks, Tube or Pixels Mask:</h3>
       {{ masks_form.management_form }}
-      <table cellspacing="5" class="property_table">
+      <table cellspacing="5" class="property_table" id='mask_form_table'>
         <tbody>
           {% for form in masks_form %}
           <tr>
@@ -136,7 +151,7 @@
       {{ scans_form.management_form }}
       {% for form in scans_form %}
       <h3>Sample set {{forloop.counter}}:</h3><br>
-      <table cellspacing="5" class="property_table">
+      <table cellspacing="5" class="property_table" id='scan_form_entry'>
         <tbody>
           {{ form.as_table }}
         </tbody>
@@ -157,9 +172,7 @@
 
 <script id="source" language="javascript" type="text/javascript">
  $(document).ready(function() {
-    {% spaceless %}
-    {% if config_form.raw_vanadium.value %} get_icat_info('{{ config_form.raw_vanadium.value }}', '{{ config_form.raw_vanadium.id_for_label }}'); {% endif %}
-    {% endspaceless %}
+
     $(window).keydown(function(event){
         if(event.keyCode == 13) {
           event.preventDefault();
@@ -168,6 +181,14 @@
       });
     });
 
-   
+	/* Dynamic django formsets */
+   	$(function() {
+        $('#mask_form_table tbody tr').formset({
+            prefix: '{{ mask_form.prefix }}',
+        });
+        $('#scan_form_entry').formset({
+            prefix: '{{ scan_form.prefix }}',
+        });
+    })
 </script>
 {% endblock %}

@@ -417,8 +417,8 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         ScanFormSet = formset_factory(ScanForm)
         MaskFormSet = formset_factory(MaskForm)
         self.config_form = ConfigurationForm(self.request.POST)
-        self.scans_form = ScanFormSet(self.request.POST)
-        self.masks_form = MaskFormSet(self.request.POST)
+        self.scans_form = ScanFormSet(self.request.POST, prefix="sf")
+        self.masks_form = MaskFormSet(self.request.POST, prefix="mf")
         
     
     def _build_forms_from_get(self):
@@ -429,7 +429,7 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             initial_values = []
             if 'data_file' in self.request.GET:
                 initial_values = [{'data_file': self.request.GET.get('data_file', '')}]
-            self.scans_form = ScanFormSet(initial=initial_values)
+            self.scans_form = ScanFormSet(initial=initial_values, prefix="sf")
             
             initial_config = {}
             if 'experiment' in self.request.GET:
@@ -437,7 +437,7 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             if 'reduction_name' in self.request.GET:
                 initial_config['reduction_name'] = self.request.GET.get('reduction_name', '')
             self.config_form = ConfigurationForm(initial=initial_config)
-            self.masks_form = MaskFormSet()
+            self.masks_form = MaskFormSet(prefix="mf")
         # Retrieve existing configuration
         else:
             reduction_config = get_object_or_404(ReductionConfiguration, pk=self.config_id, owner=self.request.user)
@@ -448,9 +448,9 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
                 props = ScanForm.data_from_db(self.request.user, item.pk)
                 initial_values.append(props)
                 
-            self.scans_form = ScanFormSet(initial=initial_values)
+            self.scans_form = ScanFormSet(initial=initial_values, prefix="sf")
             self.config_form = ConfigurationForm(initial=initial_config)
-            self.masks_form = MaskFormSet()
+            self.masks_form = MaskFormSet(prefix="mf")
     def are_forms_valid(self):
         if self.scans_form.is_valid() and self.config_form.is_valid() and self.masks_form.is_valid():
             return True

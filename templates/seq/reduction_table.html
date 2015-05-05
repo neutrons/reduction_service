@@ -6,11 +6,13 @@
                  success: function(data) { $('#'+element_id).attr('title', data.title); },
                  dataType: "json", timeout: 10000, cache: true });
     }
-    $(function() {
-      $("#submit_button").button();
-      $("#execute_jobs_button").button();
+    	
+	$(function() {
+      $("#tabs").tabs({ active: 0 });
+      $("#submit_reduction_button").button();
+      $("#execute_job_button").button();
     });
-	
+    
     /*
     Function called only once! It populates the autocomplete from a remote json.
     The filtering is made locally as the source is a local variable :)
@@ -46,29 +48,111 @@
 
 {% block content %}
 
-<h2>Configuration and reduction parameters</h2>
-		
-<form action="" method="POST">{% csrf_token %}
+<h2>Batch Reduction for {{instrument|upper}}</h2>
+
+<form action="" method="POST">
+  {% csrf_token %}
+  
   <div class='tiled_area'>
     <div class='flexible tile'>
-    {{ config_form.as_p }}
+      <table class='property_table'>
+        <tr><th title='This batch description'>Batch description</th><td class='long_input'>{{ config_form.reduction_name }}{{ config_form.reduction_name.errors }}</td></tr>
+        <tr><th title='Enter an experiment identifier or IPTS number'>{{ config_form.experiment.label_tag }}</th><td class='long_input ui-widget'>{{ config_form.experiment }}{{ config_form.experiment.errors }}</td></tr>
+      </table>
     </div>
   </div>
   
-  <div class='tiled_area'>
-   <div class='flexible tile'>
-   <a style='float:right' href='?extra=1'><span style='display:inline-block' class="ui-icon ui-icon-plusthick"></span> add a job</a>
-      <p>
-      {{ options_form.management_form }}
-      </p>
-      {% for form in options_form %}
-        {{ form.as_p }}
+  <div id="tabs">
+    <ul>
+      <li><a href="#tabs-0">Defaults</a></li>
+      <li><a href="#tabs-1">Calibration</a></li>
+      <li><a href="#tabs-2">Masking</a></li>
+      <li><a href="#tabs-3">Data</a></li>
+    </ul>
+    
+    <div id="tabs-0">
+      <table cellspacing="0" class="property_table">
+        <tbody>
+          <tr><th title='{{ config_form.filter_bad_pulses.help_text }}'>{{ config_form.filter_bad_pulses.label_tag }}</th><td>{{ config_form.filter_bad_pulses.errors }}{{ config_form.filter_bad_pulses }}</td></tr>
+          <tr><th title='{{ config_form.save_format.help_text }}'>{{ config_form.save_format.label_tag }}</th><td>{{ config_form.save_format.errors }}{{ config_form.save_format }}</td></tr>
+      	  
+        </tbody>
+      </table>
+    </div>
+    
+    <div id="tabs-1">
+      <table cellspacing="0" class="property_table">
+        <tbody>
+          <tr><th title='{{ config_form.units.help_text }}'>{{ config_form.units.label_tag }}</th><td>{{ config_form.units.errors }}{{ config_form.units }}</td></tr>
+          <tr>
+            <th title='{{ config_form.vanadium_min.help_text }}'>{{ config_form.vanadium_min.label_tag }}</th><td>{{ config_form.vanadium_min.errors }}{{ config_form.vanadium_min }}</td>
+            <th title='{{ config_form.vanadium_max.help_text }}'>{{ config_form.vanadium_max.label_tag }}</th><td>{{ config_form.vanadium_max.errors }}{{ config_form.vanadium_max }}</td>
+          </tr>
+          <tr><th title='{{ config_form.normalized_calibration.help_text }}'>{{ config_form.normalized_calibration.label_tag }}</th><td>{{ config_form.normalized_calibration.errors }}{{ config_form.normalized_calibration }}</td></tr>
+          <tr><th title='{{ config_form.vanadium_runs.help_text }}'>{{ config_form.vanadium_runs.label_tag }}</th><td class='long_input'>{{ config_form.vanadium_runs.errors }}{{ config_form.vanadium_runs }}</td></tr>
+          <tr><th title='{{ config_form.find_detectors_outside_limits_low_threshold.help_text }}'>{{ config_form.find_detectors_outside_limits_low_threshold.label_tag }}</th><td>{{ config_form.find_detectors_outside_limits_low_threshold.errors }}{{ config_form.find_detectors_outside_limits_low_threshold }}</td></tr>
+        </tbody>
+      </table>
+      <h3>Median Detector Test:</h3>
+      <table cellspacing="0" class="property_table">
+        <tbody>
+          <tr><th title='{{ config_form.median_detector_test_levels_up.help_text }}'>{{ config_form.median_detector_test_levels_up.label_tag }}</th><td>{{ config_form.median_detector_test_levels_up.errors }}{{ config_form.median_detector_test_levels_up }}</td></tr>
+          <tr><th title='{{ config_form.median_detector_test_correct_for_solid_angle.help_text }}'>{{ config_form.median_detector_test_correct_for_solid_angle.label_tag }}</th><td>{{ config_form.median_detector_test_correct_for_solid_angle.errors }}{{ config_form.median_detector_test_correct_for_solid_angle }}</td></tr>
+          <tr>
+            <th title='{{ config_form.median_detector_test_low_threshold.help_text }}'>{{ config_form.median_detector_test_low_threshold.label_tag }}</th><td>{{ config_form.median_detector_test_low_threshold.errors }}{{ config_form.median_detector_test_low_threshold }}</td>
+            <th title='{{ config_form.median_detector_test_high_threshold.help_text }}'>{{ config_form.median_detector_test_high_threshold.label_tag }}</th><td>{{ config_form.median_detector_test_high_threshold.errors }}{{ config_form.median_detector_test_high_threshold }}</td>
+          </tr>     
+          <tr><th title='{{ config_form.median_detector_test_exclude_zeroes_from_median.help_text }}'>{{ config_form.median_detector_test_exclude_zeroes_from_median.label_tag }}</th><td>{{ config_form.median_detector_test_exclude_zeroes_from_median.errors }}{{ config_form.median_detector_test_exclude_zeroes_from_median }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div id="tabs-2">
+      <h3>Angle Mask:</h3>
+      <table cellspacing="5" class="property_table">
+        <tbody>
+          <tr>
+            <th title='{{ config_form.mask_angle_min.help_text }}'>{{ config_form.mask_angle_min.label_tag }}</th><td>{{ config_form.mask_angle_min.errors }}{{ config_form.mask_angle_min }}</td>
+            <th title='{{ config_form.mask_angle_max.help_text }}'>{{ config_form.mask_angle_max.label_tag }}</th><td>{{ config_form.mask_angle_max.errors }}{{ config_form.mask_angle_max }}</td>
+          </tr>     
+        </tbody>
+      </table>
+      <h3>BTP Mask:</h3>
+      {{ masks_form.management_form }}
+      <table cellspacing="5" class="property_table">
+        <tbody>
+          <tr>
+            {% for form in masks_form %}
+            <th title='{{ form.bank.help_text }}'>{{ form.bank.label_tag }}</th><td>{{ form.bank.errors }}{{ form.bank }}</td>
+            <th title='{{ form.tube.help_text }}'>{{ form.tube.label_tag }}</th><td>{{ form.tube.errors }}{{ form.tube }}</td>
+            <th title='{{ form.pixel.help_text }}'>{{ form.pixel.label_tag }}</th><td>{{ form.pixel.errors }}{{ form.pixel }}</td>
+            {% endfor %}
+          </tr>     
+        </tbody>
+      </table>
+    </div>
+    
+    <div id="tabs-3">
+      {{ scans_form.management_form }}
+      {% for form in scans_form %}
+      <h3>Sample set {{forloop.counter}}:</h3><br>
+      <table cellspacing="5" class="property_table">
+        <tbody>
+          {{ form.as_table }}
+        </tbody>
+      </table>
       {% endfor %}
-      <input id='submit_button' type="submit" value="update"/>
-      {% if config_id %}<input title="Click to submit this list of reductions for execution" id="execute_jobs_button" type="button" value="submit" onclick='window.location.href = "{% url 'configuration_submit' config_id=config_id instrument_name=instrument%}"'/>{% endif %}
+    </div>
+    
   </div>
- </div>
+  <p>
+    <input id='submit_button' type="submit" value="update"/>
+    {% if config_id %}
+    <input title="Click to submit this list of reductions for execution" id="execute_jobs_button" type="button" value="submit" onclick='window.location.href = "{% url 'configuration_submit' config_id=config_id instrument_name=instrument%}"'/>
+    {% endif %}
+  </p>
 </form>
+
 {% if message %}<div class='green'><b>{{ message }} </b></div>{% endif %}
 
 <script id="source" language="javascript" type="text/javascript">

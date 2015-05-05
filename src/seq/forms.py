@@ -39,7 +39,7 @@ ranged_field_help_text = "Use ranged input. E.g.: 1-8,12,21,44,121-128."
 ranged_field_regex = r'^[\d\-,]+$'
     
 
-class ReductionConfigurationForm(forms.Form):
+class ConfigurationForm(forms.Form):
     
     # General information
     reduction_name = forms.CharField(required=False, 
@@ -53,8 +53,8 @@ class ReductionConfigurationForm(forms.Form):
     save_choices = [i for i in enumerate(['summary', 'phx', 'spe', 'nxspe', 'par', 'jpg', 'nxs', 'mdnxs', 'iofq','iofe',
                                           'iofphiecolumn','iofphiearray','iofqecolumn','iofqearray','sqw','vannorm'])]
     
-    save_format = forms.MultipleChoiceField(required=True, widget=forms.CheckboxSelectMultiple,
-                                      choices=save_choices)
+    save_format = forms.MultipleChoiceField(required=True, widget=forms.SelectMultiple,
+                                      choices=save_choices, help_text="Hit 'Ctrl' for multiple selection." )
     
 #     <!-- CALIBRATION AND MASKING section -->
 #     <calibration processedfilename="van37350_white_uposc.nxs"
@@ -186,7 +186,7 @@ class MaskForm(forms.Form):
 
 
 
-class ReductionOptions(forms.Form):
+class ScanForm(forms.Form):
     """
         Reduction parameters form
         
@@ -209,8 +209,8 @@ class ReductionOptions(forms.Form):
     # this will include all the runs in comma format
     data_file = forms.CharField(required=False,widget=forms.HiddenInput)
     
-    save_format = forms.MultipleChoiceField(required=True, widget=forms.CheckboxSelectMultiple,
-                                      choices= ReductionConfigurationForm.save_choices)
+    save_format = forms.MultipleChoiceField(required=True, widget=forms.SelectMultiple,
+                                      choices= ConfigurationForm.save_choices)
     
     friendly_name = forms.CharField(required=False, initial='')
     
@@ -234,6 +234,17 @@ class ReductionOptions(forms.Form):
     scan_type = forms.ChoiceField(choices=scan_choices,initial=scan_choices[0],required=True, 
                                   help_text=r"The scantype keywords determines how runs are combined in a given call of the <scan> reduction line. scantype can be, single, step, or sweep. single will combine all of the data together for a single reduction. step will individually reduce all of the given runs listed. sweep will combine all of the data together, and then bin them according to the log parameter chosen by the keywords logvalue, logvaluemin, logvaluemax, and logvaluestep. Note that currently there must be more than one value in the logvalue for sweep mode to work correctly (see Appendix 4). Example: scantype='step'.")
     
+    
+    def as_table(self):
+        """Returns this form rendered as HTML <tr>s -- excluding the <table></table>.
+        """
+        return self._html_output(
+            normal_row = u'<tr%(html_class_attr)s><th title="%(help_text)s">%(label)s</th><td>%(errors)s%(field)s</td></tr>',
+            error_row = u'<tr><td colspan="2">%s</td></tr>',
+            row_ender = u'</td></tr>',
+            help_text_html = u'%s',
+            errors_on_separate_row = False)
+        
     def _hyphen_range(self, s):
         """ Takes a range in form of "a-b" and generate a list of numbers between a and b inclusive.
         Also accepts comma separated ranges like "a-b,c-d,f" will build a list which will include
@@ -257,7 +268,8 @@ class ReductionOptions(forms.Form):
         """
         data = self.cleaned_data['data_runs']
         if len(data) > 0:
-            self.cleaned_data['data_files'] = self._hyphen_range(data)
+            hyphen_data = self._hyphen_range(data)
+            self.cleaned_data['data_file'] = hyphen_data
         return data
     
     
@@ -386,9 +398,10 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
     def __init__(self, request,config_id):
         self.request = request
         self.config_id = config_id
-        self.options_form = None
+        #forms
+        self.scans_form = None
         self.config_form = None
-        self.mask_form = None
+        self.masks_form = None
         # Message providing info to user about the action performed
         self.message = ""
         self._build_forms()
@@ -401,49 +414,51 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             self._build_forms_from_get()
     
     def _build_forms_from_post(self):
-        ReductionOptionsSet = formset_factory(ReductionOptions)
-        MaskSet = formset_factory(MaskForm)
-        self.config_form = ReductionConfigurationForm(self.request.POST)
-        self.options_form = ReductionOptionsSet(self.request.POST)
-        self.mask_form = MaskSet(self.request.POST)
+        ScanFormSet = formset_factory(ScanForm)
+        MaskFormSet = formset_factory(MaskForm)
+        self.config_form = ConfigurationForm(self.request.POST)
+        self.scans_form = ScanFormSet(self.request.POST)
+        self.masks_form = MaskFormSet(self.request.POST)
         
     
     def _build_forms_from_get(self):
         # Deal with the case of creating a new configuration
-        ReductionOptionsSet = formset_factory(ReductionOptions)
-        MaskSet = formset_factory(MaskForm)
+        ScanFormSet = formset_factory(ScanForm)
+        MaskFormSet = formset_factory(MaskForm)
         if self.config_id is None:
             initial_values = []
             if 'data_file' in self.request.GET:
                 initial_values = [{'data_file': self.request.GET.get('data_file', '')}]
-            self.options_form = ReductionOptionsSet(initial=initial_values)
+            self.scans_form = ScanFormSet(initial=initial_values)
             
             initial_config = {}
             if 'experiment' in self.request.GET:
                 initial_config['experiment'] = self.request.GET.get('experiment', '')
             if 'reduction_name' in self.request.GET:
                 initial_config['reduction_name'] = self.request.GET.get('reduction_name', '')
-            self.config_form = ReductionConfigurationForm(initial=initial_config)
+            self.config_form = ConfigurationForm(initial=initial_config)
+            self.masks_form = MaskFormSet()
         # Retrieve existing configuration
         else:
             reduction_config = get_object_or_404(ReductionConfiguration, pk=self.config_id, owner=self.request.user)
-            initial_config = ReductionConfigurationForm.data_from_db(self.request.user, reduction_config)
+            initial_config = ConfigurationForm.data_from_db(self.request.user, reduction_config)
             
             initial_values = []
             for item in reduction_config.reductions.all():
-                props = ReductionOptions.data_from_db(self.request.user, item.pk)
+                props = ScanForm.data_from_db(self.request.user, item.pk)
                 initial_values.append(props)
                 
-            self.options_form = ReductionOptionsSet(initial=initial_values)
-            self.config_form = ReductionConfigurationForm(initial=initial_config)
-    
+            self.scans_form = ScanFormSet(initial=initial_values)
+            self.config_form = ConfigurationForm(initial=initial_config)
+            self.masks_form = MaskFormSet()
     def are_forms_valid(self):
-        if self.options_form.is_valid() and self.config_form.is_valid():
+        if self.scans_form.is_valid() and self.config_form.is_valid() and self.masks_form.is_valid():
             return True
         else:
             self.message = "Form is not valid. See messages next to fields above!"
             logger.error("config_form: %s"%self.config_form.errors)
-            logger.error("options_form: %s"%self.options_form.errors)
+            logger.error("scans_form: %s"%self.scans_form.errors)
+            logger.error("masks_form: %s"%self.masks_form.errors)
             return False
             
     def save_forms(self):
@@ -451,14 +466,15 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         return config_id
         """
         config_id = self.config_form.to_db(self.request.user, self.config_id)
-        for form in self.options_form:
+        for form in self.scans_form:
             form.to_db(self.request.user, None, config_id)
         self.message = "Configuration %d and reduction parameters were sucessfully updated."%(config_id)
         return config_id
     
     def get_forms(self):
-        return {'options_form': self.options_form,
-                'config_form': self.config_form }
+        return {'scans_form': self.scans_form,
+                'config_form': self.config_form,
+                'masks_form': self.masks_form,}
     
     
     def get_mantid_script(self, reduction_id, transaction_directory):
@@ -467,8 +483,8 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         @param transaction: Transaction for this job submission 
         """
 
-        data = ReductionOptions.data_from_db(self.request.user, reduction_id)
-        code = ReductionOptions.as_mantid_script(data, transaction_directory)
+        data = ScanForm.data_from_db(self.request.user, reduction_id)
+        code = ScanForm.as_mantid_script(data, transaction_directory)
         
         return code
     

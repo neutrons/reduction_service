@@ -39,7 +39,7 @@
 	    $("#id_experiment").on( "autocompletechange", function(event,ui) {
 	   		var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=12345 %}".replace(/12345/, $(this).val() );
 	        var selector = "#id_vanadium_runs,[id$='data_runs']";
-	        set_autocomplete(selector,jsonurl);
+	        set_autocomplete_ranged(selector,jsonurl);
 		});
 	});
 </script>
@@ -136,7 +136,7 @@
       {{ masks_form.management_form }}
       <table cellspacing="5" class="property_table" id='mask_form_table'>
         <tbody>
-          {% for form in masks_form %}
+          {% for form in masks_form.forms %}
           <tr>
             <th title='{{ form.bank.help_text }}'>{{ form.bank.label_tag }}</th><td>{{ form.bank.errors }}{{ form.bank }}</td>
             <th title='{{ form.tube.help_text }}'>{{ form.tube.label_tag }}</th><td>{{ form.tube.errors }}{{ form.tube }}</td>
@@ -148,9 +148,9 @@
     </div>
     
     <div id="tabs-3">
+      <h3>Sample sets </h3><br>
       {{ scans_form.management_form }}
-      {% for form in scans_form %}
-      <h3>Sample set {{forloop.counter}}:</h3><br>
+      {% for form in scans_form.forms %}
       <table cellspacing="5" class="property_table" id='scan_form_entry'>
         <tbody>
           {{ form.as_table }}
@@ -186,7 +186,7 @@
         $('#mask_form_table tbody tr').formset({
             prefix: '{{ mask_form.prefix }}',
         });
-        $('#scan_form_entry').formset({
+        $('#scan_form_entry tbody').formset({
             prefix: '{{ scan_form.prefix }}',
         });
     })

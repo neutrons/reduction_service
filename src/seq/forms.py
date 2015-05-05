@@ -50,10 +50,10 @@ class ConfigurationForm(forms.Form):
     # <defaults instrument="ARCS" filterbadpulses="False" save="summary" />
     filter_bad_pulses =  forms.BooleanField(required=True, initial=False)
     
-    save_choices = [i for i in enumerate(['summary', 'phx', 'spe', 'nxspe', 'par', 'jpg', 'nxs', 'mdnxs', 'iofq','iofe',
-                                          'iofphiecolumn','iofphiearray','iofqecolumn','iofqearray','sqw','vannorm'])]
+    save_choices = [(i,i) for i in ['summary', 'phx', 'spe', 'nxspe', 'par', 'jpg', 'nxs', 'mdnxs', 'iofq','iofe',
+                                          'iofphiecolumn','iofphiearray','iofqecolumn','iofqearray','sqw','vannorm']]
     
-    save_format = forms.MultipleChoiceField(required=True, widget=forms.SelectMultiple,
+    save_format = forms.MultipleChoiceField(required=True, widget=forms.SelectMultiple, initial=save_choices[0],
                                       choices=save_choices, help_text="Hit 'Ctrl' for multiple selection." )
     
 #     <!-- CALIBRATION AND MASKING section -->
@@ -79,16 +79,16 @@ class ConfigurationForm(forms.Form):
 #             ExcludeZeroesFromMedian="1" />
 #     </calibration>
 
-    processed_vanadium_filename = forms.CharField(widget=forms.HiddenInput(), required=True, 
+    processed_vanadium_filename = forms.CharField(widget=forms.HiddenInput(), required=False, 
                                                   initial= tempfile.NamedTemporaryFile(delete=False).name)
     
-    units_choices = [i for i in enumerate(['Wavelength', 'DeltaE', 'DeltaE_inWavenumber', 'Energy', 'Energy_inWavenumber',
-                    'Momentum', 'MomentumTransfer', 'QSquared', 'TOF', 'dspacing'])]
+    units_choices = [(i,i) for i in ['Wavelength', 'DeltaE', 'DeltaE_inWavenumber', 'Energy', 'Energy_inWavenumber',
+                    'Momentum', 'MomentumTransfer', 'QSquared', 'TOF', 'dspacing']]
     units = forms.ChoiceField(choices=units_choices,initial=units_choices[0],required=True)
     
     help_text_vanadium_limits = "The vanadium data is integrated between vanadium_min and vanadium_max for the given units." 
-    vanadium_min = forms.FloatField(required=True, help_text = help_text_vanadium_limits)
-    vanadium_max = forms.FloatField(required=True, help_text = help_text_vanadium_limits)
+    vanadium_min = forms.FloatField(required=True, help_text = help_text_vanadium_limits, initial=0.35)
+    vanadium_max = forms.FloatField(required=True, help_text = help_text_vanadium_limits, initial=0.75)
 
     normalized_calibration  = forms.BooleanField(required=True, initial=True)
     
@@ -212,7 +212,7 @@ class ScanForm(forms.Form):
     save_format = forms.MultipleChoiceField(required=True, widget=forms.SelectMultiple,
                                       choices= ConfigurationForm.save_choices)
     
-    friendly_name = forms.CharField(required=False, initial='')
+    friendly_name = forms.CharField(required=False, initial='Scan xpto..')
     
     calce = forms.BooleanField(required=False, initial=False, help_text=r"Set to true to fit the beam monitors for the incident energy. If the efixed keyvalue is set, then calce will use that value as the starting point for the fitting. If efixed is not set, then calce will use the value that was saved to the data file during the measurement as the starting point for the fitting. Set typically line by line in the data section, in the defaults section, or in the instrument defaults file. If calce is set to false, one must set the efixed value.")
     
@@ -226,11 +226,11 @@ class ScanForm(forms.Form):
     ebin = forms.DecimalField(required=False, help_text=r"Bin size in energy transfer in meV units for energy binning. Default value in the code is set to choose ebin based upon 100 steps between emin and emax. Set typically line by line in the data section or in the defaults section. Example, ebin='0.5'.") 
 
     
-    grouping_choices = [i for i in enumerate(["%dx%d"%(v,h) for v in [1,2,4,8,16,32,64,128] for h in [1,2,4,8]] + ['powder'])]
+    grouping_choices = [(i,i) for i in ["%dx%d"%(v,h) for v in [1,2,4,8,16,32,64,128] for h in [1,2,4,8]] + ['powder']]
     grouping = forms.ChoiceField(choices=grouping_choices,initial=grouping_choices[0],required=True, 
                                  help_text=r"This is the name of the grouping file to be used in the data reduction. Pre-generated grouping files can be placed in the current directory within which one is running the reduction code. If no grouping value is given, then the default value is 1X1. The VXH grouping corresponds to V pixels grouped vertically and H pixels grouped horizontally. For instruments with “8pack” detectors V can have the values of (1,2,4,8,16,32,64,128), and H can have the values (1,2,4,8). These '8pack' style grouping files are generated automatically by the reduction routines. It is not recommended to bin the data with V>4 or H>1. The grouping can also be set to grouping='powder'. In this case, a powder grouping of the detectors based upon the anglestep value will be used. This keyword is set typically line by line in the data section or in the defaults section. Example: grouping='2X1'.")
 
-    scan_choices = [i for i in enumerate(['single','step','sweep'])]
+    scan_choices = [(i,i) for i in ['single','step','sweep']]
     scan_type = forms.ChoiceField(choices=scan_choices,initial=scan_choices[0],required=True, 
                                   help_text=r"The scantype keywords determines how runs are combined in a given call of the <scan> reduction line. scantype can be, single, step, or sweep. single will combine all of the data together for a single reduction. step will individually reduce all of the given runs listed. sweep will combine all of the data together, and then bin them according to the log parameter chosen by the keywords logvalue, logvaluemin, logvaluemax, and logvaluestep. Note that currently there must be more than one value in the logvalue for sweep mode to work correctly (see Appendix 4). Example: scantype='step'.")
     
@@ -423,9 +423,9 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
     
     def _build_forms_from_get(self):
         # Deal with the case of creating a new configuration
-        ScanFormSet = formset_factory(ScanForm)
         MaskFormSet = formset_factory(MaskForm)
         if self.config_id is None:
+            ScanFormSet = formset_factory(ScanForm,extra=0)
             initial_values = []
             if 'data_file' in self.request.GET:
                 initial_values = [{'data_file': self.request.GET.get('data_file', '')}]
@@ -440,6 +440,7 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             self.masks_form = MaskFormSet(prefix="mf")
         # Retrieve existing configuration
         else:
+            ScanFormSet = formset_factory(ScanForm,extra=1)
             reduction_config = get_object_or_404(ReductionConfiguration, pk=self.config_id, owner=self.request.user)
             initial_config = ConfigurationForm.data_from_db(self.request.user, reduction_config)
             
@@ -465,6 +466,7 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         """
         return config_id
         """
+        logger.debug(pprint.pformat(self.request.POST.items()))
         config_id = self.config_form.to_db(self.request.user, self.config_id)
         for form in self.scans_form:
             form.to_db(self.request.user, None, config_id)

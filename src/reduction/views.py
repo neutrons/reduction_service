@@ -488,6 +488,16 @@ def job_details(request, job_id, instrument_name):
 ###################
 
 
+def handle_messages(request, template_values={}):
+    request.GET = request.GET.copy()
+    if 'message' in request.GET:
+        template_values['message'] = request.GET['message']
+        del request.GET['message']
+    if 'error_message' in request.GET:
+        template_values['error_message'] = request.GET['error_message']
+        del request.GET['error_message']
+    return template_values
+    
 
 
 @login_required
@@ -502,14 +512,24 @@ def configuration_options(request, instrument_name, config_id=None):
     """
     
     logger.debug("configuration_options: %s"%inspect.stack()[0][3])
-    
+    logger.debug("************************** POST")
+    l = request.POST.items()
+    l.sort()
+    logger.debug(pprint.pformat(l))
+    logger.debug("************************** GET")
+    l = request.GET.items()
+    l.sort()
+    logger.debug(pprint.pformat(l))
+            
     instrument_name_capitals = str(instrument_name).upper()
     instrument_name_lowercase = str(instrument_name).lower()
     instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
     
+    template_values = handle_messages(request)
+    
     forms_handler = instrument_forms.ConfigurationFormHandler(request,config_id)
     
-    template_values = {}
+    
     # The list of relevant experiments will be displayed on the page
     expt_list = None
     job_list = None
@@ -522,11 +542,14 @@ def configuration_options(request, instrument_name, config_id=None):
                 return redirect(reverse('configuration_options',
                                         kwargs={'config_id' : config_id,
                                                 'instrument_name' : instrument_name_lowercase} ) +
-                                "?message=%s"%forms_handler.message)
+                                "?message=%s"%forms_handler.message +  
+                                "&error_message=%s"%forms_handler.error_message
+                                )
         else:
             # There's a problem with the data, the validated form 
             # will automatically display what the problem is to the user
             template_values['message'] = forms_handler.message
+            template_values['error_message'] = forms_handler.error_message
 
     else:
         # Deal with the case of creating a new configuration
@@ -558,7 +581,6 @@ def configuration_options(request, instrument_name, config_id=None):
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     if 'message' in request.GET:
         template_values['message'] = request.GET['message']
-    
     #logger.debug(pprint.pformat(template_values))
     return render_to_response('%s/reduction_table.html' % instrument_name_lowercase,
                               template_values)

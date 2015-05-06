@@ -42,23 +42,67 @@
 	        set_autocomplete_ranged(selector,jsonurl);
 		});
 	});
+	
+	
+
+    <!--
+    function updateElementIndex(el, prefix, ndx) {
+		var id_regex = new RegExp('(' + prefix + '-\\d+)');
+		var replacement = prefix + '-' + ndx;
+		if ($(el).attr("for")) $(el).attr("for", $(el).attr("for").replace(id_regex, replacement));
+		if (el.id) el.id = el.id.replace(id_regex, replacement);
+		if (el.name) el.name = el.name.replace(id_regex, replacement);
+	}
+ 
+    function addForm(btn, prefix) {
+        var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
+        var row = $('.dynamic-form:first').clone(true).get(0);
+        $(row).removeAttr('id').insertAfter($('.dynamic-form:last')).children('.hidden').removeClass('hidden');
+        $(row).children().not(':last').children().each(function() {
+    	    updateElementIndex(this, prefix, formCount);
+    	    $(this).val('');
+        });
+        $(row).find('.delete-row').click(function() {
+    	    deleteForm(this, prefix);
+        });
+        $('#id_' + prefix + '-TOTAL_FORMS').val(formCount + 1);
+        return false;
+    }
+ 
+    function deleteForm(btn, prefix) {
+        $(btn).parents('.dynamic-form').remove();
+        var forms = $('.dynamic-form');
+        $('#id_' + prefix + '-TOTAL_FORMS').val(forms.length);
+        for (var i=0, formCount=forms.length; i<formCount; i++) {
+    	    $(forms.get(i)).children().not(':last').children().each(function() {
+    	        updateElementIndex(this, prefix, i);
+    	    });
+        }
+        return false;
+    }
+    
+    
+    
+    $(function () {
+        $('.add-row-mf').click(function() {
+    	    return addForm(this, 'mf');
+        });
+        $('.delete-row-mf').click(function() {
+    	    return deleteForm(this, 'mf');
+        })
+        $('.add-row-sf').click(function() {
+    	    return addForm(this, 'sf');
+        });
+        $('.delete-row-sf').click(function() {
+    	    return deleteForm(this, 'sf');
+        })
+    })
+    //-->
+
+    
 </script>
 
-<style type="text/css">
-    .add-row {
-        padding-left:18px;
-        background:url({% static 'add.png' %}) no-repeat left center;
-    }
-    .delete-row {
-        float:right;
-        display:block;
-        margin:5px 0 0 5px;
-        text-indent:-6000px;
-        background:url({% static 'delete.png' %}) no-repeat left center;
-        width:16px;
-        height:16px;
-    }
-</style>
+
 {% endblock %}
 
 {% block content %}
@@ -99,25 +143,32 @@
       <table cellspacing="0" class="property_table">
         <tbody>
           <tr><th title='{{ config_form.units.help_text }}'>{{ config_form.units.label_tag }}</th><td>{{ config_form.units.errors }}{{ config_form.units }}</td></tr>
+          <tr><th title='{{ config_form.normalized_calibration.help_text }}'>{{ config_form.normalized_calibration.label_tag }}</th><td>{{ config_form.normalized_calibration.errors }}{{ config_form.normalized_calibration }}</td></tr>
+          <tr><th title='{{ config_form.vanadium_runs.help_text }}'>{{ config_form.vanadium_runs.label_tag }}</th><td class='long_input'>{{ config_form.vanadium_runs.errors }}{{ config_form.vanadium_runs }}</td></tr>
           <tr>
             <th title='{{ config_form.vanadium_min.help_text }}'>{{ config_form.vanadium_min.label_tag }}</th><td>{{ config_form.vanadium_min.errors }}{{ config_form.vanadium_min }}</td>
             <th title='{{ config_form.vanadium_max.help_text }}'>{{ config_form.vanadium_max.label_tag }}</th><td>{{ config_form.vanadium_max.errors }}{{ config_form.vanadium_max }}</td>
           </tr>
-          <tr><th title='{{ config_form.normalized_calibration.help_text }}'>{{ config_form.normalized_calibration.label_tag }}</th><td>{{ config_form.normalized_calibration.errors }}{{ config_form.normalized_calibration }}</td></tr>
-          <tr><th title='{{ config_form.vanadium_runs.help_text }}'>{{ config_form.vanadium_runs.label_tag }}</th><td class='long_input'>{{ config_form.vanadium_runs.errors }}{{ config_form.vanadium_runs }}</td></tr>
-          <tr><th title='{{ config_form.find_detectors_outside_limits_low_threshold.help_text }}'>{{ config_form.find_detectors_outside_limits_low_threshold.label_tag }}</th><td>{{ config_form.find_detectors_outside_limits_low_threshold.errors }}{{ config_form.find_detectors_outside_limits_low_threshold }}</td></tr>
         </tbody>
       </table>
       <h3>Median Detector Test:</h3>
-      <table cellspacing="0" class="property_table">
+      <table cellspacing="5" class="property_table">
         <tbody>
-          <tr><th title='{{ config_form.median_detector_test_levels_up.help_text }}'>{{ config_form.median_detector_test_levels_up.label_tag }}</th><td>{{ config_form.median_detector_test_levels_up.errors }}{{ config_form.median_detector_test_levels_up }}</td></tr>
-          <tr><th title='{{ config_form.median_detector_test_correct_for_solid_angle.help_text }}'>{{ config_form.median_detector_test_correct_for_solid_angle.label_tag }}</th><td>{{ config_form.median_detector_test_correct_for_solid_angle.errors }}{{ config_form.median_detector_test_correct_for_solid_angle }}</td></tr>
           <tr>
-            <th title='{{ config_form.median_detector_test_low_threshold.help_text }}'>{{ config_form.median_detector_test_low_threshold.label_tag }}</th><td>{{ config_form.median_detector_test_low_threshold.errors }}{{ config_form.median_detector_test_low_threshold }}</td>
-            <th title='{{ config_form.median_detector_test_high_threshold.help_text }}'>{{ config_form.median_detector_test_high_threshold.label_tag }}</th><td>{{ config_form.median_detector_test_high_threshold.errors }}{{ config_form.median_detector_test_high_threshold }}</td>
-          </tr>     
-          <tr><th title='{{ config_form.median_detector_test_exclude_zeroes_from_median.help_text }}'>{{ config_form.median_detector_test_exclude_zeroes_from_median.label_tag }}</th><td>{{ config_form.median_detector_test_exclude_zeroes_from_median.errors }}{{ config_form.median_detector_test_exclude_zeroes_from_median }}</td></tr>
+            <th title='{{ config_form.low_counts.help_text }}'>{{ config_form.low_counts.label_tag }}</th><td>{{ config_form.low_counts.errors }}{{ config_form.low_counts }}</td>          
+            <th title='{{ config_form.high_counts.help_text }}'>{{ config_form.high_counts.label_tag }}</th><td>{{ config_form.high_counts.errors }}{{ config_form.high_counts }}</td>
+          </tr>
+          <tr>
+            <th title='{{ config_form.low_outlier.help_text }}'>{{ config_form.low_outlier.label_tag }}</th><td>{{ config_form.low_outlier.errors }}{{ config_form.low_outlier }}</td>
+            <th title='{{ config_form.high_outlier.help_text }}'>{{ config_form.high_outlier.label_tag }}</th><td>{{ config_form.high_outlier.errors }}{{ config_form.high_outlier }}</td>
+          </tr>
+          <tr>
+            <th title='{{ config_form.median_test_correct_for_solid_angle.help_text }}'>{{ config_form.median_test_correct_for_solid_angle.label_tag }}</th><td>{{ config_form.median_test_correct_for_solid_angle.errors }}{{ config_form.median_test_correct_for_solid_angle }}</td>
+            <th title='{{ config_form.median_test_low.help_text }}'>{{ config_form.median_test_low.label_tag }}</th><td>{{ config_form.median_test_low.errors }}{{ config_form.median_test_low }}</td>
+            <th title='{{ config_form.median_test_high.help_text }}'>{{ config_form.median_test_high.label_tag }}</th><td>{{ config_form.median_test_high.errors }}{{ config_form.median_test_high }}</td>
+          </tr>        
+          <tr><th title='{{ config_form.error_bar_criterion.help_text }}'>{{ config_form.error_bar_criterion.label_tag }}</th><td>{{ config_form.error_bar_criterion.errors }}{{ config_form.error_bar_criterion }}</td></tr>
+          <tr><th title='{{ config_form.median_test_levels_up.help_text }}'>{{ config_form.median_test_levels_up.label_tag }}</th><td>{{ config_form.median_test_levels_up.errors }}{{ config_form.median_test_levels_up }}</td></tr>
         </tbody>
       </table>
     </div>
@@ -133,25 +184,32 @@
         </tbody>
       </table>
       <h3>Banks, Tube or Pixels Mask:</h3>
-      {{ masks_form.management_form }}
-      <table cellspacing="5" class="property_table" id='mask_form_table'>
+      <table cellspacing="5" class="property_formset_table" id='mask_form_table'>
         <tbody>
           {% for form in masks_form.forms %}
-          <tr>
+          <tr id="{{ form.prefix }}-row" class="dynamic-form">
+            <td{% if forloop.first %} class="hidden"{% endif %}>{{ form.operand }}</td>
             <th title='{{ form.bank.help_text }}'>{{ form.bank.label_tag }}</th><td>{{ form.bank.errors }}{{ form.bank }}</td>
             <th title='{{ form.tube.help_text }}'>{{ form.tube.label_tag }}</th><td>{{ form.tube.errors }}{{ form.tube }}</td>
             <th title='{{ form.pixel.help_text }}'>{{ form.pixel.label_tag }}</th><td>{{ form.pixel.errors }}{{ form.pixel }}</td>
+            <td{% if forloop.first %} class="hidden"{% endif %}>
+    	          <a id="remove-{{ form.prefix }}-row" href="javascript:void(0)" class="delete-row-mf"><span style='display:inline-block' class="ui-icon ui-icon-minusthick"></span></a>
+    	    </td>
           </tr>
           {% endfor %}
+          <tr>
+    	     <td colspan="4"><a href="javascript:void(0)" class="add-row-mf"><span style='display:inline-block' class="ui-icon ui-icon-plusthick"></span></a></td>
+    	  </tr>
         </tbody>
       </table>
+      {{ masks_form.management_form }}
     </div>
     
     <div id="tabs-3">
       <h3>Sample sets </h3><br>
       {{ scans_form.management_form }}
       {% for form in scans_form.forms %}
-      <table cellspacing="5" class="property_table" id='scan_form_entry'>
+      <table cellspacing="5" class="property_formset_table" id='scan_form_entry'>
         <tbody>
           {{ form.as_table }}
         </tbody>
@@ -169,6 +227,7 @@
 </form>
 
 {% if message %}<div class='green'><b>{{ message }} </b></div>{% endif %}
+{% if error_message %}<div class='red'><b>{{ error_message }} </b></div>{% endif %}
 
 <script id="source" language="javascript" type="text/javascript">
  $(document).ready(function() {
@@ -182,13 +241,13 @@
     });
 
 	/* Dynamic django formsets */
-   	$(function() {
-        $('#mask_form_table tbody tr').formset({
-            prefix: '{{ mask_form.prefix }}',
-        });
-        $('#scan_form_entry tbody').formset({
-            prefix: '{{ scan_form.prefix }}',
-        });
-    })
+//   	$(function() {
+ ///       $('#mask_form_table tbody tr').formset({
+       //     prefix: '{{ mask_form.prefix }}',
+    ///    });
+   //     $('#scan_form_entry tbody').formset({
+   //         prefix: '{{ scan_form.prefix }}',
+   //     });
+  //  })
 </script>
 {% endblock %}

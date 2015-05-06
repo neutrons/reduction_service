@@ -47,8 +47,8 @@ class ConfigurationForm(forms.Form):
     experiment = forms.CharField(required=True, initial='uncategorized')
     
     # <!-- DEFAULTS section -->
-    # <defaults instrument="ARCS" filterbadpulses="False" save="summary" />
-    filter_bad_pulses =  forms.BooleanField(required=True, initial=False)
+    # <defaults Instrument="ARCS" FilterBadPulses="False" Save="summary" />
+    filter_bad_pulses =  forms.BooleanField(required=False, initial=False)
     
     save_choices = [(i,i) for i in ['summary', 'phx', 'spe', 'nxspe', 'par', 'jpg', 'nxs', 'mdnxs', 'iofq','iofe',
                                           'iofphiecolumn','iofphiearray','iofqecolumn','iofqearray','sqw','vannorm']]
@@ -56,56 +56,61 @@ class ConfigurationForm(forms.Form):
     save_format = forms.MultipleChoiceField(required=True, widget=forms.SelectMultiple, initial=save_choices[0],
                                       choices=save_choices, help_text="Hit 'Ctrl' for multiple selection." )
     
-#     <!-- CALIBRATION AND MASKING section -->
-#     <calibration processedfilename="van37350_white_uposc.nxs"
-#         units="wavelength" normalizedcalibration="True">
-#         <vanruns>30611</vanruns>
-#         <vanmin>0.35</vanmin>
-#         <vanmax>0.75</vanmax>
+#     <!-- CALIBRATION AND MaskING section -->
+#     <calibration SaveProcDetVanFilename="van37350_white_uposcB.nxs"
+#         DetVanIntRangeUnits="wavelength" NormalizedCalibration="True">
 # 
-#         <mask algorithm="MaskBTP" Pixel="1-7" />
-#         <mask algorithm="MaskBTP" Pixel="122-128" />
-#         <mask algorithm="MaskBTP" Bank="71" Pixel="1-14" />
-#         <mask algorithm="MaskBTP" Bank="71" Pixel="114-128" />
-#         <mask algorithm="MaskBTP" Bank="70" Pixel="1-12" />
-#         <mask algorithm="MaskBTP" Bank="70" Pixel="117-128" />
-
-#         <mask algorithm="MaskAngle" MaxAngle="2.5" />
-
-#         <mask algorithm="FindDetectorsOutsideLimits" LowThreshold="0.1" />
-
-#         <mask algorithm="MedianDetectorTest" LevelsUp="1"
-#             CorrectForSolidAngle="1" LowThreshold="0.5" HighThreshold="1.5"
-#             ExcludeZeroesFromMedian="1" />
+#         <VanRuns>37350</VanRuns>
+#         <DetVanIntRangeLow>0.35</DetVanIntRangeLow>
+#         <DetVanIntRangeHigh>0.75</DetVanIntRangeHigh>
+# 
+#         <Mask algorithm="MaskBTP" Pixel="1-7" />
+#         <Mask algorithm="MaskBTP" Pixel="122-128" />
+#         <Mask algorithm="MaskBTP" Bank="71" Pixel="1-14" />
+#         <Mask algorithm="MaskBTP" Bank="71" Pixel="114-128" />
+#         <Mask algorithm="MaskBTP" Bank="70" Pixel="1-12" />
+#         <Mask algorithm="MaskBTP" Bank="70" Pixel="117-128" />
+#         <Mask algorithm="MaskAngle" MaxAngle="2.5" />
+# 
+#         <Mask HighCounts='1E12' LowCounts='0.1' HighOutlier='100'
+#             LowOutlier='0.01' MedianTestHigh='1.75' MedianTestLow='0.25'
+#             MedianTestCorrectForSolidAngle='1' ErrorBarCriterion='3.3'
+#             MedianTestLevelsUp='1' />
+# 
+# 
 #     </calibration>
 
     processed_vanadium_filename = forms.CharField(widget=forms.HiddenInput(), required=False, 
-                                                  initial= tempfile.NamedTemporaryFile(delete=False).name)
+                                                  initial= tempfile.NamedTemporaryFile(delete=True).name)
     
     units_choices = [(i,i) for i in ['Wavelength', 'DeltaE', 'DeltaE_inWavenumber', 'Energy', 'Energy_inWavenumber',
                     'Momentum', 'MomentumTransfer', 'QSquared', 'TOF', 'dspacing']]
     units = forms.ChoiceField(choices=units_choices,initial=units_choices[0],required=True)
     
+    normalized_calibration  = forms.BooleanField(required=True, initial=True)
+    
+    vanadium_runs = forms.RegexField(regex=ranged_field_regex, required=True, help_text=ranged_field_help_text,
+                                   widget=forms.TextInput(attrs={'size':'60'}), error_messages=ranged_field_error_message)
+    
     help_text_vanadium_limits = "The vanadium data is integrated between vanadium_min and vanadium_max for the given units." 
     vanadium_min = forms.FloatField(required=True, help_text = help_text_vanadium_limits, initial=0.35)
     vanadium_max = forms.FloatField(required=True, help_text = help_text_vanadium_limits, initial=0.75)
 
-    normalized_calibration  = forms.BooleanField(required=True, initial=True)
-    
-    #TODO: Validate runs
-    vanadium_runs = forms.RegexField(regex=ranged_field_regex, required=True, help_text=ranged_field_help_text,
-                                   error_messages=ranged_field_error_message)
-    
+        
     mask_angle_min = forms.FloatField(required=False,initial=0)
     mask_angle_max = forms.FloatField(required=False,initial=2.5)
     
-    find_detectors_outside_limits_low_threshold = forms.FloatField(required=False,initial=0.1)
     
-    median_detector_test_levels_up = forms.FloatField(required=False,initial=1)
-    median_detector_test_correct_for_solid_angle = forms.BooleanField(required=False, initial=True)
-    median_detector_test_low_threshold=forms.FloatField(required=False,initial=0.5)
-    median_detector_test_high_threshold=forms.FloatField(required=False,initial=1.5)
-    median_detector_test_exclude_zeroes_from_median = forms.BooleanField(required=False, initial=True)
+    high_counts = forms.FloatField(required=True,initial=1e12)
+    low_counts = forms.FloatField(required=True,initial=0.1) 
+    high_outlier  = forms.FloatField(required=True,initial=100)
+    low_outlier = forms.FloatField(required=True,initial=0.01) 
+    median_test_high = forms.FloatField(required=True,initial=1.75) 
+    median_test_low = forms.FloatField(required=True,initial=0.25)
+    median_test_correct_for_solid_angle = forms.BooleanField(required=False, initial=True)
+    error_bar_criterion = forms.FloatField(required=True,initial=3.3)
+    median_test_levels_up = forms.BooleanField(required=False, initial=True)
+    
 
     @classmethod
     def data_from_db(cls, user, reduction_config):
@@ -205,25 +210,25 @@ class ScanForm(forms.Form):
     # Scans:
     
     data_runs = forms.RegexField(regex=ranged_field_regex, required=True, help_text=ranged_field_help_text,
-                                   error_messages=ranged_field_error_message)
+                                   error_messages=ranged_field_error_message, widget=forms.TextInput(attrs={'size':'60'}))
     # this will include all the runs in comma format
     data_file = forms.CharField(required=False,widget=forms.HiddenInput)
     
-    save_format = forms.MultipleChoiceField(required=True, widget=forms.SelectMultiple,
-                                      choices= ConfigurationForm.save_choices)
+    save_format = forms.MultipleChoiceField(required=True, widget=forms.SelectMultiple, initial=ConfigurationForm.save_choices[0],
+                                      choices= ConfigurationForm.save_choices, help_text="Hit 'Ctrl' for multiple selection." )
     
-    friendly_name = forms.CharField(required=False, initial='Scan xpto..')
+    friendly_name = forms.CharField(required=False, initial='Scan for ', widget=forms.TextInput(attrs={'size':'60'}))
     
-    calce = forms.BooleanField(required=False, initial=False, help_text=r"Set to true to fit the beam monitors for the incident energy. If the efixed keyvalue is set, then calce will use that value as the starting point for the fitting. If efixed is not set, then calce will use the value that was saved to the data file during the measurement as the starting point for the fitting. Set typically line by line in the data section, in the defaults section, or in the instrument defaults file. If calce is set to false, one must set the efixed value.")
+    calc_e = forms.BooleanField(required=False, initial=False, help_text=r"Set to true to fit the beam monitors for the incident energy. If the efixed keyvalue is set, then calce will use that value as the starting point for the fitting. If efixed is not set, then calce will use the value that was saved to the data file during the measurement as the starting point for the fitting. Set typically line by line in the data section, in the defaults section, or in the instrument defaults file. If calce is set to false, one must set the efixed value.")
     
-    t0 = forms.FloatField(required=False, help_text=r"This is the time in microseconds that the peak in the neutron pulse takes to leave the moderator. If the incident energy is fitted, than the value of t0 from this fit is used, regardless if t0 is set or not. The t0 value is typically set line by line in the data section or in the defaults section. Example: t0='12.75'.")
+    t_0 = forms.FloatField(required=False, help_text=r"This is the time in microseconds that the peak in the neutron pulse takes to leave the moderator. If the incident energy is fitted, than the value of t0 from this fit is used, regardless if t0 is set or not. The t0 value is typically set line by line in the data section or in the defaults section. Example: t0='12.75'.")
     
-    efixed = forms.FloatField(required=False, help_text=r"The incident energy in meV to be used for the data reduction. If calce is set to false, then efixed must be set and will be used without fitting the beam monitors for the incident energy. Set typically line by line in the data section or in the defaults section. Example: efixed='12.7'.")
+    energy_fixed = forms.FloatField(required=False, help_text=r"The incident energy in meV to be used for the data reduction. If calce is set to false, then efixed must be set and will be used without fitting the beam monitors for the incident energy. Set typically line by line in the data section or in the defaults section. Example: efixed='12.7'.")
     
-    emin = forms.DecimalField(required=False, help_text=r"The minimum energy transfer in meV for the energy binning. The default value in the code is set to choose emin as -0.5 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emin='-10'.")
-    emax = forms.DecimalField(required=False, help_text=r"The maximum energy transfer in meV for the energy binning. The default value in the code is set to choose emax as 1.0 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emax='10'.")
+    energy_min = forms.DecimalField(required=False, help_text=r"The minimum energy transfer in meV for the energy binning. The default value in the code is set to choose emin as -0.5 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emin='-10'.")
+    energy_max = forms.DecimalField(required=False, help_text=r"The maximum energy transfer in meV for the energy binning. The default value in the code is set to choose emax as 1.0 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emax='10'.")
 
-    ebin = forms.DecimalField(required=False, help_text=r"Bin size in energy transfer in meV units for energy binning. Default value in the code is set to choose ebin based upon 100 steps between emin and emax. Set typically line by line in the data section or in the defaults section. Example, ebin='0.5'.") 
+    energy_bin = forms.DecimalField(required=False, initial=100, help_text=r"Bin size in energy transfer in meV units for energy binning. Default value in the code is set to choose ebin based upon 100 steps between emin and emax. Set typically line by line in the data section or in the defaults section. Example, ebin='0.5'.") 
 
     
     grouping_choices = [(i,i) for i in ["%dx%d"%(v,h) for v in [1,2,4,8,16,32,64,128] for h in [1,2,4,8]] + ['powder']]
@@ -261,15 +266,17 @@ class ScanForm(forms.Form):
         l_in_str = ','.join(str(x) for x in l)
         return l_in_str
     
-    def clean_data_runs(self):
+    def clean_data_file(self):
         """
         This will split the ranges and data_runs and will put the data in data_file
         data_file is part of the reduction_process table
         """
-        data = self.cleaned_data['data_runs']
+        try:
+            data = self.cleaned_data['data_runs']
+        except:
+            data = ""
         if len(data) > 0:
-            hyphen_data = self._hyphen_range(data)
-            self.cleaned_data['data_file'] = hyphen_data
+            data = self._hyphen_range(data)
         return data
     
     
@@ -404,6 +411,7 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         self.masks_form = None
         # Message providing info to user about the action performed
         self.message = ""
+        self.error_message = ""
         self._build_forms()
         
     
@@ -414,8 +422,8 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             self._build_forms_from_get()
     
     def _build_forms_from_post(self):
-        ScanFormSet = formset_factory(ScanForm)
-        MaskFormSet = formset_factory(MaskForm)
+        ScanFormSet = formset_factory(ScanForm,extra=0, can_delete=True)
+        MaskFormSet = formset_factory(MaskForm,extra=0, can_delete=True)
         self.config_form = ConfigurationForm(self.request.POST)
         self.scans_form = ScanFormSet(self.request.POST, prefix="sf")
         self.masks_form = MaskFormSet(self.request.POST, prefix="mf")
@@ -425,7 +433,7 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         # Deal with the case of creating a new configuration
         MaskFormSet = formset_factory(MaskForm)
         if self.config_id is None:
-            ScanFormSet = formset_factory(ScanForm,extra=0)
+            ScanFormSet = formset_factory(ScanForm)
             initial_values = []
             if 'data_file' in self.request.GET:
                 initial_values = [{'data_file': self.request.GET.get('data_file', '')}]
@@ -440,7 +448,7 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             self.masks_form = MaskFormSet(prefix="mf")
         # Retrieve existing configuration
         else:
-            ScanFormSet = formset_factory(ScanForm,extra=1)
+            ScanFormSet = formset_factory(ScanForm)
             reduction_config = get_object_or_404(ReductionConfiguration, pk=self.config_id, owner=self.request.user)
             initial_config = ConfigurationForm.data_from_db(self.request.user, reduction_config)
             
@@ -453,21 +461,29 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             self.config_form = ConfigurationForm(initial=initial_config)
             self.masks_form = MaskFormSet(prefix="mf")
     def are_forms_valid(self):
+         
+        logger.debug(self.masks_form.total_form_count())
+        logger.debug(self.masks_form.initial_form_count())
+
+        
         if self.scans_form.is_valid() and self.config_form.is_valid() and self.masks_form.is_valid():
             return True
         else:
-            self.message = "Form is not valid. See messages next to fields above!"
-            logger.error("config_form: %s"%self.config_form.errors)
-            logger.error("scans_form: %s"%self.scans_form.errors)
-            logger.error("masks_form: %s"%self.masks_form.errors)
+            self.error_message = "The form is not valid. Please see messages next to the fields above."
+            if self.config_form.errors:
+                logger.error("config_form: %s"%self.config_form.errors)
+            if self.scans_form.errors:
+                logger.error("scans_form: %s"%self.scans_form.errors)
+            if self.masks_form.errors:
+                logger.error("masks_form: %s"%self.masks_form.errors)
             return False
             
     def save_forms(self):
         """
         return config_id
         """
-        logger.debug(pprint.pformat(self.request.POST.items()))
         config_id = self.config_form.to_db(self.request.user, self.config_id)
+       
         for form in self.scans_form:
             form.to_db(self.request.user, None, config_id)
         self.message = "Configuration %d and reduction parameters were sucessfully updated."%(config_id)

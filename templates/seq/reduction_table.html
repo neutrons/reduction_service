@@ -56,8 +56,8 @@
  
     function addForm(btn, prefix) {
         var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
-        var row = $('.dynamic-form:first').clone(true).get(0);
-        $(row).removeAttr('id').insertAfter($('.dynamic-form:last')).children('.hidden').removeClass('hidden');
+        var row = $('.dynamic-form-'+prefix+':first').clone(true).get(0);
+        $(row).removeAttr('id').insertAfter($('.dynamic-form-'+prefix+':last')).children('.hidden').removeClass('hidden');
         $(row).children().not(':last').children().each(function() {
     	    updateElementIndex(this, prefix, formCount);
     	    $(this).val('');
@@ -70,8 +70,8 @@
     }
  
     function deleteForm(btn, prefix) {
-        $(btn).parents('.dynamic-form').remove();
-        var forms = $('.dynamic-form');
+        $(btn).parents('.dynamic-form-'+prefix).remove();
+        var forms = $('.dynamic-form-'+prefix);
         $('#id_' + prefix + '-TOTAL_FORMS').val(forms.length);
         for (var i=0, formCount=forms.length; i<formCount; i++) {
     	    $(forms.get(i)).children().not(':last').children().each(function() {
@@ -187,7 +187,7 @@
       <table cellspacing="5" class="property_formset_table" id='mask_form_table'>
         <tbody>
           {% for form in masks_form.forms %}
-          <tr id="{{ form.prefix }}-row" class="dynamic-form">
+          <tr id="{{ form.prefix }}-row" class="dynamic-form-mf">
             <td{% if forloop.first %} class="hidden"{% endif %}>{{ form.operand }}</td>
             <th title='{{ form.bank.help_text }}'>{{ form.bank.label_tag }}</th><td>{{ form.bank.errors }}{{ form.bank }}</td>
             <th title='{{ form.tube.help_text }}'>{{ form.tube.label_tag }}</th><td>{{ form.tube.errors }}{{ form.tube }}</td>
@@ -209,12 +209,23 @@
       <h3>Sample sets </h3><br>
       {{ scans_form.management_form }}
       {% for form in scans_form.forms %}
+      <div id="{{ form.prefix }}-row" class="dynamic-form-sf">
       <table cellspacing="5" class="property_formset_table" id='scan_form_entry'>
         <tbody>
+          <tr></tr>
+          <tr><td{% if forloop.first %} class="hidden"{% endif %}>{{ form.operand }}</td><tr>
           {{ form.as_table }}
         </tbody>
       </table>
+      <p>
+      {% if not forloop.first %}
+      <a id="remove-{{ form.prefix }}-row" href="javascript:void(0)" class="delete-row-sf"><span style='display:inline-block' class="ui-icon ui-icon-minusthick"></span>Delete this scan...</a>
+      {% endif %}
+      </p>
+      </div>
       {% endfor %}
+      <p><a href="javascript:void(0)" class="add-row-sf"><span style='display:inline-block' class="ui-icon ui-icon-plusthick"></span>Add another scan..</a></p>
+      
     </div>
     
   </div>

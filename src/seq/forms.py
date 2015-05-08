@@ -41,6 +41,8 @@ ranged_field_regex = r'^[\d\-,]+$'
 
 class ConfigurationForm(forms.Form):
     
+    required_css_class = 'required'
+    
     # General information
     reduction_name = forms.CharField(required=False, 
                                      initial=time.strftime("Batch of %Y-%m-%d %H:%M:%S", time.localtime()))
@@ -202,6 +204,9 @@ class ScanForm(forms.Form):
             emin="-100" emax="685" ebin="1" grouping='powder' scantype='single' />
         
     """
+    
+    required_css_class = 'required'
+    
     # Reduction name
     reduction_name = forms.CharField(required=False, widget=forms.HiddenInput )
     reduction_id = forms.IntegerField(required=False, widget=forms.HiddenInput)

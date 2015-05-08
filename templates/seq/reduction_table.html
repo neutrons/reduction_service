@@ -207,7 +207,6 @@
     
     <div id="tabs-3">
       <h3>Sample sets </h3><br>
-      {{ scans_form.management_form }}
       {% for form in scans_form.forms %}
       <div id="{{ form.prefix }}-row" class="dynamic-form-sf">
       <table cellspacing="5" class="property_formset_table" id='scan_form_entry'>
@@ -225,7 +224,7 @@
       </div>
       {% endfor %}
       <p><a href="javascript:void(0)" class="add-row-sf"><span style='display:inline-block' class="ui-icon ui-icon-plusthick"></span>Add another scan..</a></p>
-      
+      {{ scans_form.management_form }}
     </div>
     
   </div>
@@ -250,7 +249,12 @@
         }
       });
     });
-
+    
+    $('#tabs-0,#tabs-1,#tabs-2,.required').find("label").parent().parent().append("<span style='display:inline-block' class='ui-icon ui-icon-star'></span>")
+    
+//	$('.required').find("label").parent().parent().append("<span style='display:inline-block' class='ui-icon ui-icon-star'></span>")
+//	$('.required').append("<span style='display:inline-block' class='ui-icon ui-icon-star'></span>")
+	
 	/* Dynamic django formsets */
 //   	$(function() {
  ///       $('#mask_form_table tbody tr').formset({

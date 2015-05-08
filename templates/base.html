@@ -62,10 +62,18 @@
                 $(selector).autocomplete({
                     source: data,
                     minLength: 0,
+                    // fires the change event on selection!
+                    select: function(event,ui) { 
+					    this.value=ui.item.value; 
+					    $(this).trigger('change'); 
+					    return false; 
+					},
                 }).bind('focus', function () {
-                    if (!$(this).val().trim()) $(this).keydown();
+                    if (!$(this).val().trim()){ 
+                    	$(this).keydown();
+                    }
                 });
-            }
+            },
         });
     }
 
@@ -107,6 +115,7 @@
                         var this_value = ui.item.value
                         var all_values = this.value
                         this.value = all_values + this_value
+                        $(this).trigger('change');
                         return false;
                     }
                 }).bind('focus', function () {

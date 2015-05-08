@@ -109,7 +109,7 @@
 
 <h2>Batch Reduction for {{instrument|upper}}</h2>
 
-<form action="" method="POST">
+<form id="global_form" action="" method="POST">
   {% csrf_token %}
   
   <div class='tiled_area'>
@@ -232,8 +232,13 @@
     <input id='submit_button' type="submit" value="update"/>
     {% if config_id %}
     <input title="Click to submit this list of reductions for execution" id="execute_jobs_button" type="button" value="submit" onclick='window.location.href = "{% url 'configuration_submit' config_id=config_id instrument_name=instrument%}"'/>
+    <input title="Click to cancel your edits" id="cancel_button" type="button" value="cancel" onclick='window.location.href = "{% url 'configuration_options' config_id=config_id instrument_name=instrument%}"'/>
+    {% else %}
+    <input title="Click to cancel your edits" id="cancel_button" type="button" value="cancel" onclick='window.location.href = "{% url 'configuration' instrument_name=instrument%}"'/>
     {% endif %}
+    
   </p>
+  
 </form>
 
 {% if message %}<div class='green'><b>{{ message }} </b></div>{% endif %}
@@ -264,5 +269,11 @@
    //         prefix: '{{ scan_form.prefix }}',
    //     });
   //  })
+  $('#cancel_button').hide();
+  $("#global_form :input").change(function() {
+  	console.log($(this).attr('name'));      
+  		$('#execute_jobs_button').hide();
+  		$('#cancel_button').show();
+  });
 </script>
 {% endblock %}

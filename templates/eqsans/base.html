@@ -1,5 +1,8 @@
 {% extends "reduction/reduction_base.html" %}
 
-{% block reduction_instrument_specific %}{% endblock %}
+{% block reduction_instrument_specific %}
+          <li><a href="{% url 'configuration' instrument_name=instrument %}" title="Start a new configuration to use with multiple reductions">new configuration</a></li>
+          <li><a href="{% url 'reduction' instrument %}" title="Start a new single reduction">new reduction</a></li>
+{% endblock %}
   
 {% block jobs_instrument_specific %}{% endblock %}

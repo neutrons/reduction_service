@@ -57,9 +57,10 @@
         <b>Reduction</b><br>
         <ul>
           <li><a href="{% url 'reduction_home' instrument %}" title="Go to reduction home for this instrument">reduction home</a></li>
+          {% block reduction_instrument_specific %}
           <li><a href="{% url 'configuration' instrument_name=instrument %}" title="Start a new configuration to use with multiple reductions">new configuration</a></li>
-          {% block reduction_instrument_specific %} {% endblock %}
           <li><a href="{% url 'reduction' instrument %}" title="Start a new single reduction">new reduction</a></li>
+           {% endblock %}
           {% if reduction_id %}
           <li><a href="{% url 'reduction_script' instrument reduction_id%}" title="See reduction script">see script</a></li>
           <li><a href="{% url 'reduction_py_reduction_script' instrument reduction_id%}" title="Download python script">download python</a></li>
@@ -79,7 +80,9 @@
 		      {% endfor %}
 	      {% endif %}
           {% endif %}
-      	  {% block jobs_instrument_specific %} {% endblock %}
+      	  {% block jobs_instrument_specific %} 
+      	  
+      	  {% endblock %}
           {% if reduction_id %}
           <li><a href="{% url 'reduction_submit_job' instrument reduction_id%}" title="Submit this reduction job">submit this job</a></li>
           {% if existing_jobs and existing_jobs|length > 0 %}

@@ -1,5 +1,7 @@
 {% extends "reduction/reduction_base.html" %}
 
-{% block reduction_instrument_specific %}{% endblock %}
+{% block reduction_instrument_specific %}
+          <li><a href="{% url 'configuration' instrument_name=instrument %}" title="Start a new batch reduction.">new batch reduction</a></li>
+{% endblock %}
   
 {% block jobs_instrument_specific %}{% endblock %}

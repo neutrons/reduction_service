@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.forms.formsets import formset_factory
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response, redirect
+from django.template import RequestContext
 import importlib
 import inspect
 import logging
@@ -485,20 +486,6 @@ def job_details(request, job_id, instrument_name):
     #logger.debug(pprint.pformat(template_values))
     return render_to_response('reduction/reduction_job_details.html',
                               template_values)
-###################
-
-
-def handle_messages(request, template_values={}):
-    request.GET = request.GET.copy()
-    if 'message' in request.GET:
-        template_values['message'] = request.GET['message']
-        del request.GET['message']
-    if 'error_message' in request.GET:
-        template_values['error_message'] = request.GET['error_message']
-        del request.GET['error_message']
-    return template_values
-    
-
 
 @login_required
 def configuration_options(request, instrument_name, config_id=None):
@@ -525,10 +512,8 @@ def configuration_options(request, instrument_name, config_id=None):
     instrument_name_lowercase = str(instrument_name).lower()
     instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
     
-    template_values = handle_messages(request)
-    
+    template_values = {}
     forms_handler = instrument_forms.ConfigurationFormHandler(request,config_id)
-    
     
     # The list of relevant experiments will be displayed on the page
     expt_list = None
@@ -541,16 +526,7 @@ def configuration_options(request, instrument_name, config_id=None):
             if config_id is not None:
                 return redirect(reverse('configuration_options',
                                         kwargs={'config_id' : config_id,
-                                                'instrument_name' : instrument_name_lowercase} ) +
-                                "?message=%s"%forms_handler.message +  
-                                "&error_message=%s"%forms_handler.error_message
-                                )
-        else:
-            # There's a problem with the data, the validated form 
-            # will automatically display what the problem is to the user
-            template_values['message'] = forms_handler.message
-            template_values['error_message'] = forms_handler.error_message
-
+                                                'instrument_name' : instrument_name_lowercase}))
     else:
         # Deal with the case of creating a new configuration
         if config_id is not None:
@@ -579,11 +555,9 @@ def configuration_options(request, instrument_name, config_id=None):
     
     template_values.update( forms_handler.get_forms())
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    if 'message' in request.GET:
-        template_values['message'] = request.GET['message']
     #logger.debug(pprint.pformat(template_values))
     return render_to_response('%s/reduction_table.html' % instrument_name_lowercase,
-                              template_values)
+                              template_values, context_instance=RequestContext(request))
 
 @login_required
 def configuration_job_delete(request, config_id, reduction_id, instrument_name):

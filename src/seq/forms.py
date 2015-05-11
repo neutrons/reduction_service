@@ -18,6 +18,7 @@ from django.core.exceptions import ValidationError
 from reduction_service.forms_util import build_script, is_xml_valid
 from reduction.forms import ConfigurationFormHandlerBase
 from django.forms.formsets import formset_factory
+from django.contrib import messages
 import time
 import sys
 import json
@@ -131,7 +132,7 @@ class ConfigurationForm(forms.Form):
         data['experiment'] = ', '.join([str(e.name) for e in expt_list if len(str(e.name))>0])
         return data
     
-    def to_db(self, user, config_id=None):
+    def to_db(self, user, config_id=None, properties={}):
         """
             Save a configuration to the database
             @param user: User object
@@ -154,6 +155,7 @@ class ConfigurationForm(forms.Form):
         # Set the parameters associated with the reduction process entry
         try:
             property_dict = copy.deepcopy(self.cleaned_data)
+            property_dict.update(properties)
             properties = json.dumps(property_dict)
             reduction_config.properties = properties
             reduction_config.save()
@@ -178,6 +180,8 @@ class MaskForm(forms.Form):
         #     </calibration>
 
     """
+    required_css_class = 'required'
+    
     bank = forms.RegexField(regex=ranged_field_regex, required=True, help_text=ranged_field_help_text,
                                    error_messages=ranged_field_error_message)
     tube = forms.RegexField(regex=ranged_field_regex, required=True, help_text=ranged_field_help_text,
@@ -185,12 +189,6 @@ class MaskForm(forms.Form):
     pixel = forms.RegexField(regex=ranged_field_regex, required=True, help_text=ranged_field_help_text,
                                    error_messages=ranged_field_error_message)
     
-
-
-
-
-
-
 
 
 class ScanForm(forms.Form):
@@ -212,8 +210,7 @@ class ScanForm(forms.Form):
     reduction_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     expt_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     experiment = forms.CharField(required=False, initial='uncategorized',widget=forms.HiddenInput)
-    # Scans:
-    
+    # Scans:    
     data_runs = forms.RegexField(regex=ranged_field_regex, required=True, help_text=ranged_field_help_text,
                                    error_messages=ranged_field_error_message, widget=forms.TextInput(attrs={'size':'60'}))
     # this will include all the runs in comma format
@@ -230,10 +227,10 @@ class ScanForm(forms.Form):
     
     energy_fixed = forms.FloatField(required=False, help_text=r"The incident energy in meV to be used for the data reduction. If calce is set to false, then efixed must be set and will be used without fitting the beam monitors for the incident energy. Set typically line by line in the data section or in the defaults section. Example: efixed='12.7'.")
     
-    energy_min = forms.DecimalField(required=False, help_text=r"The minimum energy transfer in meV for the energy binning. The default value in the code is set to choose emin as -0.5 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emin='-10'.")
-    energy_max = forms.DecimalField(required=False, help_text=r"The maximum energy transfer in meV for the energy binning. The default value in the code is set to choose emax as 1.0 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emax='10'.")
+    energy_min = forms.FloatField(required=False, help_text=r"The minimum energy transfer in meV for the energy binning. The default value in the code is set to choose emin as -0.5 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emin='-10'.")
+    energy_max = forms.FloatField(required=False, help_text=r"The maximum energy transfer in meV for the energy binning. The default value in the code is set to choose emax as 1.0 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emax='10'.")
 
-    energy_bin = forms.DecimalField(required=False, initial=100, help_text=r"Bin size in energy transfer in meV units for energy binning. Default value in the code is set to choose ebin based upon 100 steps between emin and emax. Set typically line by line in the data section or in the defaults section. Example, ebin='0.5'.") 
+    energy_bin = forms.FloatField(required=False, initial=100, help_text=r"Bin size in energy transfer in meV units for energy binning. Default value in the code is set to choose ebin based upon 100 steps between emin and emax. Set typically line by line in the data section or in the defaults section. Example, ebin='0.5'.") 
 
     
     grouping_choices = [(i,i) for i in ["%dx%d"%(v,h) for v in [1,2,4,8,16,32,64,128] for h in [1,2,4,8]] + ['powder']]
@@ -316,8 +313,6 @@ class ScanForm(forms.Form):
             @param reduction_id: pk of the ReductionProcess entry
             @param config_id: pk of the ReductionConfiguration entry
         """
-        if not self.is_valid():
-            raise RuntimeError, "Reduction options form invalid"
         
         if reduction_id is None:
             reduction_id = self.cleaned_data['reduction_id']
@@ -345,6 +340,7 @@ class ScanForm(forms.Form):
         config_property_dict = {}
         property_dict = copy.deepcopy(self.cleaned_data)
         property_dict['reduction_id'] = reduction_proc.id
+        
         if config_id is not None:
             reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=user)
             if reduction_proc not in reduction_config.reductions.all():
@@ -414,9 +410,6 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         self.scans_form = None
         self.config_form = None
         self.masks_form = None
-        # Message providing info to user about the action performed
-        self.message = ""
-        self.error_message = ""
         self._build_forms()
         
     
@@ -427,18 +420,22 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             self._build_forms_from_get()
     
     def _build_forms_from_post(self):
-        ScanFormSet = formset_factory(ScanForm,extra=0, can_delete=True)
-        MaskFormSet = formset_factory(MaskForm,extra=0, can_delete=True)
+        ScanFormSet = formset_factory(ScanForm,extra=0, can_delete=False)
+        MaskFormSet = formset_factory(MaskForm,extra=0, can_delete=False)
         self.config_form = ConfigurationForm(self.request.POST)
         self.scans_form = ScanFormSet(self.request.POST, prefix="sf")
         self.masks_form = MaskFormSet(self.request.POST, prefix="mf")
         
     
     def _build_forms_from_get(self):
-        # Deal with the case of creating a new configuration
-        MaskFormSet = formset_factory(MaskForm)
+        """
+        if self.config_id exists we have to get the forms content from the DB and fill in the forms we are creating
+        Otherwise, just create empty forms!
+        """
+        
         if self.config_id is None:
-            ScanFormSet = formset_factory(ScanForm)
+            # New form
+            ScanFormSet = formset_factory(ScanForm,extra=1)
             initial_values = []
             if 'data_file' in self.request.GET:
                 initial_values = [{'data_file': self.request.GET.get('data_file', '')}]
@@ -450,48 +447,56 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             if 'reduction_name' in self.request.GET:
                 initial_config['reduction_name'] = self.request.GET.get('reduction_name', '')
             self.config_form = ConfigurationForm(initial=initial_config)
+            MaskFormSet = formset_factory(MaskForm,extra=1)
             self.masks_form = MaskFormSet(prefix="mf")
-        # Retrieve existing configuration
+        
         else:
-            ScanFormSet = formset_factory(ScanForm)
+            # Retrieve existing configuration
             reduction_config = get_object_or_404(ReductionConfiguration, pk=self.config_id, owner=self.request.user)
             initial_config = ConfigurationForm.data_from_db(self.request.user, reduction_config)
             
+            logger.error("initial_config: %s" % initial_config)
+            ScanFormSet = formset_factory(ScanForm,extra=0)
             initial_values = []
             for item in reduction_config.reductions.all():
                 props = ScanForm.data_from_db(self.request.user, item.pk)
                 initial_values.append(props)
-                
+            
+            
             self.scans_form = ScanFormSet(initial=initial_values, prefix="sf")
             self.config_form = ConfigurationForm(initial=initial_config)
-            self.masks_form = MaskFormSet(prefix="mf")
+            MaskFormSet = formset_factory(MaskForm,extra=0)
+            self.masks_form = MaskFormSet(initial=initial_config['mask'],prefix="mf")
+    
     def are_forms_valid(self):
-         
-        logger.debug(self.masks_form.total_form_count())
-        logger.debug(self.masks_form.initial_form_count())
-
         
         if self.scans_form.is_valid() and self.config_form.is_valid() and self.masks_form.is_valid():
             return True
         else:
-            self.error_message = "The form is not valid. Please see messages next to the fields above."
+            messages.add_message(self.request, messages.ERROR, 'The form is not valid. Please see messages next to the fields above.')
             if self.config_form.errors:
-                logger.error("config_form: %s"%self.config_form.errors)
+                logger.error("config_form: %s" % self.config_form.errors)
             if self.scans_form.errors:
-                logger.error("scans_form: %s"%self.scans_form.errors)
+                logger.error("scans_form: %s" % self.scans_form.errors)
             if self.masks_form.errors:
-                logger.error("masks_form: %s"%self.masks_form.errors)
+                logger.error("masks_form: %s" % self.masks_form.errors)
             return False
             
     def save_forms(self):
         """
         return config_id
         """
-        config_id = self.config_form.to_db(self.request.user, self.config_id)
-       
+        logger.debug("Scans Form:\n%s"%self.scans_form.cleaned_data)
+        logger.debug("Masks Form:\n%s"%self.masks_form.cleaned_data)
+            
+        config_id = self.config_form.to_db(self.request.user, self.config_id,
+                                           properties = {'mask' : self.masks_form.cleaned_data})
+        
         for form in self.scans_form:
-            form.to_db(self.request.user, None, config_id)
-        self.message = "Configuration %d and reduction parameters were sucessfully updated."%(config_id)
+            form.to_db(self.request.user, None, config_id )
+            
+        messages.add_message(self.request, messages.SUCCESS,
+                             "Configuration %d and reduction parameters were sucessfully updated."%(config_id))
         return config_id
     
     def get_forms(self):

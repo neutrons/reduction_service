@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="{% static 'reporting_layout.css' %}" type="text/css" title="no title" charset="utf-8">
 <link rel="stylesheet" href="{% static 'reporting_layout_print.css' %}" type="text/css" media="print" title="no title" charset="utf-8">
 <link rel="stylesheet" href="{% static 'reduction.css' %}" type="text/css" title="no title" charset="utf-8">
+<link rel="stylesheet" href="{% static 'messages.css' %}" type="text/css" title="no title" charset="utf-8">
 {% if is_mobile %}
 <link rel="stylesheet" href="{% static 'mobile.css' %}" type="text/css" title="no title" charset="utf-8">
 {% endif %}
@@ -174,8 +175,22 @@
     {% endif %}
     {% endspaceless %}
     {% block content %}{% endblock %}
+    
+    <!-- Messages usually comming from the form validation -->
+    <div class="messages">
+	{% if messages %}
+	    {% for message in messages %}
+	    	{% if message.tags %} 
+	    	<div class="message message-{{ message.tags }}">{{ message }}</div>
+	    	{% else %}
+	    	<div class="message">{{ message }}</div>
+	    	{% endif %}
+	    {% endfor %}
+	{% endif %}
+	</div>
   </div>
 </div>
+
 
 <footer>
   <div class="ornlFooter">

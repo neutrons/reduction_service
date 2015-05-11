@@ -1,0 +1,59 @@
+/*
+message boxes based on Bootstrap
+Usage:
+
+<div class="message">Example of an message box.</div>
+
+<div class="message message-success">Example of the successful message box</div>
+
+<div class="message message-error">Example of the error message box</div>
+
+<div class="message message-info">Example of the information message box</div>
+
+*/
+
+.message,
+.message-debug {
+padding: 8px 35px 8px 14px;
+margin-bottom: 18px;
+color: #c09853;
+text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+background-color: #fcf8e3;
+border: 1px solid #fbeed5;
+-webkit-border-radius: 4px;
+-moz-border-radius: 4px;
+border-radius: 4px;
+}
+
+.message-heading {
+color: inherit;
+}
+
+.message .close {
+position: relative;
+top: -2px;
+right: -21px;
+line-height: 18px;
+}
+
+.message-success {
+color: #468847;
+background-color: #dff0d8;
+border-color: #d6e9c6;
+}
+
+.message-warning,
+.message-error {
+color: #b94a48;
+background-color: #f2dede;
+border-color: #eed3d7;
+}
+
+.message-info {
+color: #3a87ad;
+background-color: #d9edf7;
+border-color: #bce8f1;
+}
+
+
+

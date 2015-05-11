@@ -435,10 +435,13 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         
         if self.config_id is None:
             # New form
-            ScanFormSet = formset_factory(ScanForm,extra=1)
+            
             initial_values = []
             if 'data_file' in self.request.GET:
-                initial_values = [{'data_file': self.request.GET.get('data_file', '')}]
+                initial_values = [{'data_runs': self.request.GET.get('data_file', '')}]
+                ScanFormSet = formset_factory(ScanForm,extra=0)
+            else:
+                ScanFormSet = formset_factory(ScanForm,extra=1)
             self.scans_form = ScanFormSet(initial=initial_values, prefix="sf")
             
             initial_config = {}
@@ -455,7 +458,7 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             reduction_config = get_object_or_404(ReductionConfiguration, pk=self.config_id, owner=self.request.user)
             initial_config = ConfigurationForm.data_from_db(self.request.user, reduction_config)
             
-            logger.error("initial_config: %s" % initial_config)
+            logger.debug("initial_config: %s" % initial_config)
             ScanFormSet = formset_factory(ScanForm,extra=0)
             initial_values = []
             for item in reduction_config.reductions.all():
@@ -466,7 +469,10 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             self.scans_form = ScanFormSet(initial=initial_values, prefix="sf")
             self.config_form = ConfigurationForm(initial=initial_config)
             MaskFormSet = formset_factory(MaskForm,extra=0)
-            self.masks_form = MaskFormSet(initial=initial_config['mask'],prefix="mf")
+            if initial_config.get('mask'):
+                self.masks_form = MaskFormSet(initial=initial_config['mask'],prefix="mf")
+            else:
+                self.masks_form = MaskFormSet(prefix="mf")
     
     def are_forms_valid(self):
         

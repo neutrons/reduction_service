@@ -9,7 +9,7 @@
     }
     	
 	$(function() {
-      $("#tabs").tabs({ active: 0 });
+      $("#tabs").tabs({ active: 3 });
       $("#submit_reduction_button").button();
       $("#execute_job_button").button();
     });
@@ -44,13 +44,20 @@
 	});
 	
 	
-
-    <!--
+    /*
+    Dynamic formset generation
+    */
     function updateElementIndex(el, prefix, ndx) {
 		var id_regex = new RegExp('(' + prefix + '-\\d+)');
 		var replacement = prefix + '-' + ndx;
-		if ($(el).attr("for")) $(el).attr("for", $(el).attr("for").replace(id_regex, replacement));
-		if (el.id) el.id = el.id.replace(id_regex, replacement);
+		if ($(el).attr("for")) {
+			$(el).attr("for", $(el).attr("for").replace(id_regex, replacement));
+		}
+		if (el.id) {
+			//console.log(el.id);
+		 	el.id = el.id.replace(id_regex, replacement);
+		 	//console.log(el.id);
+		}
 		if (el.name) el.name = el.name.replace(id_regex, replacement);
 	}
  
@@ -58,7 +65,11 @@
         var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
         var row = $('.dynamic-form-'+prefix+':first').clone(true).get(0);
         $(row).removeAttr('id').insertAfter($('.dynamic-form-'+prefix+':last')).children('.hidden').removeClass('hidden');
-        $(row).children().not(':last').children().each(function() {
+        // For the last row
+        //$(row).children().not(':last').children().each(function() {
+        $(row).find(":input,label,a,:selected").each(function() {
+        	// iterates every field in the form
+        	// i.e. the children of th and td: label, input, a
     	    updateElementIndex(this, prefix, formCount);
     	    $(this).val('');
         });
@@ -68,7 +79,7 @@
         $('#id_' + prefix + '-TOTAL_FORMS').val(formCount + 1);
         return false;
     }
- 
+  
     function deleteForm(btn, prefix) {
         $(btn).parents('.dynamic-form-'+prefix).remove();
         var forms = $('.dynamic-form-'+prefix);
@@ -97,7 +108,6 @@
     	    return deleteForm(this, 'sf');
         })
     })
-    //-->
 
     
 </script>
@@ -208,18 +218,15 @@
     <div id="tabs-3">
       <h3>Sample sets </h3><br>
       {% for form in scans_form.forms %}
-      <div id="{{ form.prefix }}-row" class="dynamic-form-sf">
+      <div id="{{ form.prefix }}-row"  class="dynamic-form-sf" >
       <table cellspacing="5" class="property_formset_table" id='scan_form_entry'>
         <tbody>
-          <tr></tr>
           <tr><td{% if forloop.first %} class="hidden"{% endif %}>{{ form.operand }}</td><tr>
           {{ form.as_table }}
         </tbody>
       </table>
-      <p>
-      {% if not forloop.first %}
-      <a id="remove-{{ form.prefix }}-row" href="javascript:void(0)" class="delete-row-sf"><span style='display:inline-block' class="ui-icon ui-icon-minusthick"></span>Delete this scan...</a>
-      {% endif %}
+      <p{% if forloop.first %} class="hidden"{% endif %}>
+         <a id="remove-{{ form.prefix }}-row" href="javascript:void(0)" class="delete-row-sf"><span style='display:inline-block' class="ui-icon ui-icon-minusthick"></span>Delete this scan...</a>
       </p>
       </div>
       {% endfor %}
@@ -255,23 +262,12 @@
       });
     });
     
+    // Add a start next to the mandatory fields
     $('#tabs-0,#tabs-1,#tabs-2,.required').find("label").parent().parent().append("<span style='display:inline-block' class='ui-icon ui-icon-star'></span>")
-    
-//	$('.required').find("label").parent().parent().append("<span style='display:inline-block' class='ui-icon ui-icon-star'></span>")
-//	$('.required').append("<span style='display:inline-block' class='ui-icon ui-icon-star'></span>")
-	
-	/* Dynamic django formsets */
-//   	$(function() {
- ///       $('#mask_form_table tbody tr').formset({
-       //     prefix: '{{ mask_form.prefix }}',
-    ///    });
-   //     $('#scan_form_entry tbody').formset({
-   //         prefix: '{{ scan_form.prefix }}',
-   //     });
-  //  })
+
+	// hide submit button when the form is changed    
   $('#cancel_button').hide();
   $("#global_form :input").change(function() {
-  	console.log($(this).attr('name'));      
   		$('#execute_jobs_button').hide();
   		$('#cancel_button').show();
   });

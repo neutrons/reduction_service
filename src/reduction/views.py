@@ -2,7 +2,6 @@ import StringIO
 import copy
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
-from django.forms.formsets import formset_factory
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response, redirect
 from django.template import RequestContext
@@ -11,7 +10,7 @@ import inspect
 import logging
 import pprint
 import zipfile
-
+from django.contrib import messages
 from catalog.icat_server_communication import get_ipts_info
 import reduction.forms
 import reduction.view_util
@@ -212,11 +211,12 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
         # If the form is valid update or create an entry for it (if the data_file is different, a new entry is created!)
         if options_form.is_valid():
             reduction_id = options_form.to_db(request.user, reduction_id)
-            template_values['message'] = "Reduction parameters for reduction %s were sucessfully updated."%reduction_id
+            messages.add_message(request, messages.SUCCESS, "Reduction parameters for reduction %s were sucessfully updated."%reduction_id)
             if reduction_id is not None:
                 return redirect(reverse('reduction_options',
-                                        kwargs={'reduction_id' : reduction_id, 'instrument_name' : instrument_name})+
-                                        "?message=%s"%template_values['message'])
+                                        kwargs={'reduction_id' : reduction_id, 'instrument_name' : instrument_name}))
+        else:
+            messages.add_message(request, messages.ERROR, "The form is not valid. See errors above.")
     else:
         if reduction_id is not None:
             initial_values = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id)
@@ -252,15 +252,11 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
         if len(existing_jobs) > 0:
             template_values['existing_jobs'] = existing_jobs.order_by('id')
         template_values['expt_list'] = reduction_proc.experiments.all()
-        
-    
-    if 'message' in request.GET:
-        template_values['message'] = request.GET['message']
-    
+
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     logger.debug(pprint.pformat(template_values))
     return render_to_response('%s/reduction_options.html' % instrument_name_lowercase,
-                              template_values)
+                              template_values,context_instance=RequestContext(request))
 
 @login_required
 def reduction_jobs(request, instrument_name):
@@ -419,12 +415,13 @@ def submit_job(request, reduction_id, instrument_name):
         breadcrumbs.append_reduction(instrument_name_lowercase)
         breadcrumbs.append_reduction_options(instrument_name_lowercase, reduction_id)
         
-        template_values = {'message':"Could not connect to Fermi and establish transaction",
-                           'back_url': reverse('reduction_options',
+        messages.add_message(request, messages.ERROR, "Could not connect to Fermi and establish transaction.")
+        template_values = {'back_url': reverse('reduction_options',
                                   kwargs={'reduction_id' : reduction_id, 'instrument_name': instrument_name_lowercase}),
                            'breadcrumbs': breadcrumbs, }
         template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-        return render_to_response('remote/failed_connection.html', template_values)
+        return render_to_response('remote/failed_connection.html', template_values,
+                                  context_instance=RequestContext(request))
 
     data = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id)
     code = instrument_forms.ReductionOptions.as_mantid_script(data, transaction.directory)
@@ -436,11 +433,11 @@ def submit_job(request, reduction_id, instrument_name):
                         transaction=transaction)
         job.save()
         logger.debug("Created a RemoteJob: %s",job)
+    
+    messages.add_message(request, messages.SUCCESS, message="Job %s sucessfully submitted."%jobID)
     return redirect(reverse('reduction_options',
                                   kwargs={'reduction_id' : reduction_id, 
-                                          'instrument_name': instrument_name_lowercase})+(
-                    "?message=Job %s sucessfully submitted."%jobID)
-                    )
+                                          'instrument_name': instrument_name_lowercase}))
 
 
 
@@ -721,9 +718,10 @@ def configuration_submit(request, config_id, instrument_name):
                                 transaction=transaction)
                 job.save()
                 job_set.jobs.add(job)
+                
+    messages.add_message(request, messages.SUCCESS, message="Jobs %s sucessfully submitted."%', '.join(JobIDs) )
     return redirect(reverse('configuration_options',
-                            kwargs={'config_id' : config_id, 'instrument_name' : instrument_name_lowercase})+
-                    "?message=Jobs %s sucessfully submitted."%', '.join(JobIDs))
+                            kwargs={'config_id' : config_id, 'instrument_name' : instrument_name_lowercase}))
 
 
     

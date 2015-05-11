@@ -12,6 +12,7 @@ from reduction.forms import process_experiment
 from reduction_service.forms_util import build_script, is_xml_valid
 from django.forms.formsets import formset_factory
 from reduction.forms import ConfigurationFormHandlerBase
+from django.contrib import messages
 import time
 import sys
 import json
@@ -299,8 +300,6 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         self.config_id = config_id
         self.options_form = None
         self.config_form = None
-        # Message providing info to user about the action performed
-        self.message = ""
         self._build_forms()
         
         
@@ -360,7 +359,8 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         if self.options_form.is_valid() and self.config_form.is_valid():
             return True
         else:
-            self.message = "Form is not valid. See messages next to fields above!"
+            messages.add_message(self.request, messages.ERROR,
+                                 'The form is not valid. Please see messages next to the fields above.')
             logger.error("config_form: %s"%self.config_form.errors)
             logger.error("options_form: %s"%self.options_form.errors)
             return False
@@ -372,7 +372,8 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         config_id = self.config_form.to_db(self.request.user, self.config_id)
         for form in self.options_form:
             form.to_db(self.request.user, None, config_id)
-        self.message = "Configuration %d and reduction parameters were sucessfully updated."%(config_id)
+        
+        messages.add_message(self.request, messages.SUCCESS, "Configuration %d and reduction parameters were sucessfully updated."%(config_id))
         return config_id
     
     def get_forms(self):

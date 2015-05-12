@@ -547,7 +547,8 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
     
 
 
-
+# alias:
+ReductionOptions = ScanForm
 
 
 

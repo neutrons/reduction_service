@@ -156,8 +156,8 @@ def experiment(request, ipts, instrument_name):
     if 'icat_error' in icat_ipts:
         template_values['user_alert'] = [icat_ipts['icat_error']]
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    #logger.debug(pprint.pformat(reductions))
-    
+    logger.debug(pprint.pformat(configurations))
+    logger.debug(pprint.pformat(reductions))
     return render_to_response('%s/experiment.html' % instrument_name_lowercase,
                               template_values)
     

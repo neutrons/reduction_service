@@ -182,11 +182,11 @@ class MaskForm(forms.Form):
     """
     required_css_class = 'required'
     
-    bank = forms.RegexField(regex=ranged_field_regex, required=True, help_text=ranged_field_help_text,
+    bank = forms.RegexField(regex=ranged_field_regex, required=False, help_text=ranged_field_help_text,
                                    error_messages=ranged_field_error_message)
-    tube = forms.RegexField(regex=ranged_field_regex, required=True, help_text=ranged_field_help_text,
+    tube = forms.RegexField(regex=ranged_field_regex, required=False, help_text=ranged_field_help_text,
                                    error_messages=ranged_field_error_message)
-    pixel = forms.RegexField(regex=ranged_field_regex, required=True, help_text=ranged_field_help_text,
+    pixel = forms.RegexField(regex=ranged_field_regex, required=False, help_text=ranged_field_help_text,
                                    error_messages=ranged_field_error_message)
     
 
@@ -241,6 +241,15 @@ class ScanForm(forms.Form):
     scan_type = forms.ChoiceField(choices=scan_choices,initial=scan_choices[0],required=True, 
                                   help_text=r"The scantype keywords determines how runs are combined in a given call of the <scan> reduction line. scantype can be, single, step, or sweep. single will combine all of the data together for a single reduction. step will individually reduce all of the given runs listed. sweep will combine all of the data together, and then bin them according to the log parameter chosen by the keywords logvalue, logvaluemin, logvaluemax, and logvaluestep. Note that currently there must be more than one value in the logvalue for sweep mode to work correctly (see Appendix 4). Example: scantype='step'.")
     
+    
+    def clean(self):
+        cleaned_data = super(ScanForm, self).clean()
+        energy_min = cleaned_data.get("energy_min")
+        energy_max = cleaned_data.get("energy_max")
+        if energy_max < energy_min:
+            raise forms.ValidationError("Energy min is higher than Energy max!")
+        return cleaned_data
+
     
     def as_table(self):
         """Returns this form rendered as HTML <tr>s -- excluding the <table></table>.
@@ -461,7 +470,7 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
             logger.debug("initial_config: %s" % initial_config)
             ScanFormSet = formset_factory(ScanForm,extra=0)
             initial_values = []
-            for item in reduction_config.reductions.all():
+            for item in reduction_config.reductions.all().order_by('timestamp'):
                 props = ScanForm.data_from_db(self.request.user, item.pk)
                 initial_values.append(props)
             
@@ -498,11 +507,24 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         config_id = self.config_form.to_db(self.request.user, self.config_id,
                                            properties = {'mask' : self.masks_form.cleaned_data})
         
-        for form in self.scans_form:
-            form.to_db(self.request.user, None, config_id )
             
+        
+        reduction_procedure_ids = []
+        for form in self.scans_form:
+            reduction_procedure_id = form.to_db(self.request.user, None, config_id )
+            reduction_procedure_ids.append(reduction_procedure_id)
+        
+        # Let's delete the all the reductions associated with this config that are not present in the form
+        # i.e., not in reduction_procedure_ids
+        reduction_config = ReductionConfiguration.objects.filter(pk=config_id,owner=self.request.user)
+        reduction_config = reduction_config[0]
+        for item in reduction_config.reductions.exclude(pk__in = reduction_procedure_ids):
+            reduction_config.reductions.remove(item)
+            item.delete()
+         
         messages.add_message(self.request, messages.SUCCESS,
-                             "Configuration %d and reduction parameters were sucessfully updated."%(config_id))
+                             "Configuration %d and reduction scans %s were sucessfully updated."%(config_id,
+                                                                                                  ', '.join(str(x) for x in reduction_procedure_ids) ))
         return config_id
     
     def get_forms(self):

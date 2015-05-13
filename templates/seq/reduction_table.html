@@ -10,8 +10,9 @@
     	
 	$(function() {
       $("#tabs").tabs({ active: 3 });
-      $("#submit_reduction_button").button();
-      $("#execute_job_button").button();
+      $("#submit_button").button();
+      $("#execute_jobs_button").button();
+      $("#cancel_button").button();
     });
     
     /*
@@ -121,6 +122,9 @@
 
 <form id="global_form" action="" method="POST">
   {% csrf_token %}
+  
+  {# Hidden fields! #}
+  {{ config_form.processed_vanadium_filename }}
   
   <div class='tiled_area'>
     <div class='flexible tile'>
@@ -262,7 +266,7 @@
       });
     });
     
-    // Add a start next to the mandatory fields
+    // Add a star next to the mandatory fields
     $('#tabs-0,#tabs-1,#tabs-2,.required').find("label").parent().parent().append("<span style='display:inline-block' class='ui-icon ui-icon-star'></span>")
 
 	// hide submit button when the form is changed    

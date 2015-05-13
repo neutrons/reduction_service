@@ -30,6 +30,7 @@ import pprint
 import tempfile
 
 from seq import INSTRUMENT_NAME
+from simplejson.tests import additional_tests
 
 logger = logging.getLogger('seq.forms')
 scripts_location = os.path.join(os.path.dirname(__file__), "scripts")
@@ -309,7 +310,7 @@ class ScanForm(forms.Form):
             logger.error("XML is not valid!")
             return None
     
-    def to_db(self, user, reduction_id=None, config_id=None):
+    def to_db(self, user, reduction_id=None, config_id=None, properties={}):
         """
             Save reduction properties to DB.
             If we supply a config_id, the properties from that
@@ -349,6 +350,10 @@ class ScanForm(forms.Form):
         config_property_dict = {}
         property_dict = copy.deepcopy(self.cleaned_data)
         property_dict['reduction_id'] = reduction_proc.id
+        # Put additonal properties
+        property_dict.update(properties)
+        
+        
         
         if config_id is not None:
             reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=user)
@@ -369,7 +374,7 @@ class ScanForm(forms.Form):
             logger.error("Could not process reduction properties: %s" % sys.exc_value)
         
         # Find experiment
-        process_experiment(reduction_proc, self.cleaned_data['experiment'], instrument_name=INSTRUMENT_NAME)
+        process_experiment(reduction_proc, property_dict['experiment'], instrument_name=INSTRUMENT_NAME)
                 
         return reduction_proc.pk
     
@@ -503,15 +508,16 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         """
         logger.debug("Scans Form:\n%s"%self.scans_form.cleaned_data)
         logger.debug("Masks Form:\n%s"%self.masks_form.cleaned_data)
-            
+        
+        additional_properties =  {'mask' : self.masks_form.cleaned_data}
         config_id = self.config_form.to_db(self.request.user, self.config_id,
-                                           properties = {'mask' : self.masks_form.cleaned_data})
+                                           properties = additional_properties)
         
             
-        
+        additional_properties.update(self.config_form.cleaned_data)
         reduction_procedure_ids = []
         for form in self.scans_form:
-            reduction_procedure_id = form.to_db(self.request.user, None, config_id )
+            reduction_procedure_id = form.to_db(self.request.user, None, config_id,properties = additional_properties)
             reduction_procedure_ids.append(reduction_procedure_id)
         
         # Let's delete the all the reductions associated with this config that are not present in the form

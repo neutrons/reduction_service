@@ -24,6 +24,9 @@ def process_experiment(reduction_obj, expt_string, instrument_name):
         @param expt_string: string taken from the reduction form
     """
     # Find experiment
+    
+    logger.debug("Processing experiment: reduction_obj=%s and expt_string=%s."%(reduction_obj, expt_string))
+    
     uncategorized_expt = Experiment.objects.get_uncategorized(instrument_name)
     expts = expt_string.split(',')
     for item in expts:
@@ -42,10 +45,12 @@ def process_experiment(reduction_obj, expt_string, instrument_name):
     if len(expts)>0:
         if uncategorized_expt in reduction_obj.experiments.all():
             try:
+                logger.debug("Processing experiment: Removing %s from reduction_obj=%s and expt_string=%s."%(uncategorized_expt, reduction_obj, expt_string))
                 reduction_obj.experiments.remove(uncategorized_expt)
             except:
                 logger.error("Could not remote uncategorized expt: %s" % sys.exc_value)
     else:
+        logger.debug("Processing experiment: reduction_obj=%s and expt_string=%s added with %s."%(reduction_obj, expt_string, uncategorized_expt))
         reduction_obj.experiments.add(uncategorized_expt)
 
 class ReductionStart(forms.Form):

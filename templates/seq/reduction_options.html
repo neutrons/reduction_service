@@ -1,183 +1,158 @@
 {% extends "seq/base.html" %}
 {% block header %}
+{% load reduction_tags %}
+
 <script>
 
-    function get_icat_info(run_number, element_id) {
-  		// run_number sometimes is None, adding this to avoid unecessary HTTP calls
-    	if (run_number && run_number != "None" ) {
-	        $.ajax({ url: "{{ icat_url }}"+run_number+"/", 
-	                 success: function(data) {
-	                        $('#'+element_id).replaceWith("<span class='subtitle' id='"+element_id+"'>"+data.title+"</span>");
-	                      }
-	                 , dataType: "json", timeout: 30000, cache: true});
-        }
-    }
-    
-    $(function() {
-      $("#tabs").tabs({ active: 2 });
+	$(function() {
+      $("#tabs").tabs({ active: 1 });
       $("#submit_reduction_button").button();
       $("#execute_job_button").button();
+      $("#cancel_button").button();
     });
-    
-        /*
+
+    /*
     Function called only once! It populates the autocomplete from a remote json.
     The filtering is made locally as the source is a local variable :)
     */
-
     $(function() {
-        var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=options_form.experiment.value %}";
-        var selector = '.runcomplete input';
+        var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=properties.experiment %}";
+        var selector = "[id$='data_runs']";
         if  ($(selector).is('*')) {
-            set_autocomplete(selector,jsonurl);
+            set_autocomplete_ranged(selector,jsonurl);
         }
     });
-    
-    $(function() {
-        var jsonurl = "{% url 'catalog_experiments_json' instrument=instrument %}";
-        var selector = '.experimentcomplete input';
-        if  ($(selector).is('*')) {
-            set_autocomplete(selector,jsonurl);
-        }
-    });
-    
-	/* if the user change the experiment number, the runs will be different!! */    
-	$(function() {
-	    $(".experimentcomplete input").on( "autocompletechange", function(event,ui) {
-	   		var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=12345 %}".replace(/12345/, $(this).val() );
-	   		console.log(jsonurl)
-	        var selector = '.runcomplete input';
-	        set_autocomplete(selector,jsonurl);
-		});
-	});
 	
-	/*
-	Function to transform a range into a list
-	*/
-	function hyphen_range(str) {
-	    var out = [],
-	        chunks = str.split(',')
-	        l = chunks.length;
-	
-	    for ( i = 0; i < l; i++ ) {
-	        populate(out, chunks[i]);
-	    }
-	
-	    return out.sort(function(a,b){return a - b});
-	
-	    function populate (list, chunk) {
-	        var ends = chunk.split('-');
-	
-	        if ( ends.length == 1 ) return list.push(+chunk);
-	        
-	        if ( ends[0] > ends[1] ) flip(ends);
-	
-	        while ( ends[0] <= ends[1] ) {
-	            list.push(+ends[0]);
-	            ends[0]++;
-	        }
-	    }
-	    
-	    function flip (list) {
-	        var temp = list[0];
-	        list[0] = list[1];
-	        list[1] = temp;
-	    }
-	}
-	
-
-    
 </script>
 {% endblock %}
 
 {% block content %}
-<h2>Reduction parameters for SEQ</h2>
-<form action="" method="POST">{% csrf_token %}
-  <div class='tiled_area'><div class='flexible tile'>
-    <table class='property_table'>
-      <tr><th>{{ options_form.reduction_name.label_tag }}</th><td class='long_input'>{{ options_form.reduction_name }}</td></tr>
-      <tr><th title='Enter an experiment identifier or IPTS number'>{{ options_form.experiment.label_tag }}</th><td class='long_input experimentcomplete ui-widget'>{{ options_form.experiment }}</td></tr>
-    </table>
-  </div></div>
-  <p>
-  <div id="tabs">
-    <ul>
-      <li><a href="#tabs-1">Basic options</a></li>
-      <li><a href="#tabs-2">Mask</a></li>
-      <li><a href="#tabs-3">Data</a></li>
-    </ul>
-    <div id="tabs-1">
-      <table cellspacing="0" class="property_table">
+
+
+<h2>Single Reduction Scan parameters for SEQ</h2>
+
+<div id="tabs">
+	<ul>
+	  <li><a href="#tabs-0">Configuration properties</a></li>
+	  <li><a href="#tabs-1">Scan</a></li>
+	</ul>
+ 
+<div id="tabs-0">
+	<div class='tiled_area'>
+	  <div class='flexible tile'>
+		<h3>Reduction and Configuration properties:</h3>
+		<table class='property_table'>
+		  {% for key, value in properties.items|sortdic %}
+		  	<tr id="id_{{key}}"><th>{{key}}</th><td>{{value}}</td></tr>
+		  {% endfor %}
+		</table>
+	  </div>
+	  <p>
+	  	<a href="{% url 'configuration_options' config_id=properties.configuration_id instrument_name=instrument%}" >Click to edit this configuration.</a>
+	  </p>
+	</div>
+	
+</div>
+
+<div id="tabs-1">
+<p>
+</p>
+
+<form action="" method="POST" id="form">{% csrf_token %}
+  <div class='tiled_area'>
+    <div class='flexible tile'>
+      <table class='property_table'>
         <tbody>
-          <tr><th>{{ options_form.grouping_file.label_tag }}</th><td>{{ options_form.grouping_file.errors }}{{ options_form.grouping_file }}</td></tr>
-          
-          <tr><th> Energy binning <br/>[% of E<sub>guess</sub>] </th> <td> 
-      		<span {% if options_form.energy_binning_min.errors %}class='highlight_row' title='{{ options_form.energy_binning_min.errors }}'{% endif %}>
-      		E<sub>min</sub> {{options_form.energy_binning_min }} </span> 
-      		E<sub>step</sub> {{options_form.energy_binning_step }} 
-      		E<sub>max</sub> {{options_form.energy_binning_max }} </td>
-      	  </tr>
-      	  
-        </tbody>
-      </table>
-    </div>
-    
-    <div id="tabs-2">
-      <h3>Mask:</h3>
-      <table cellspacing="0" class="property_table">
-        <tbody>
-      	  <tr><th>Masked Bank</th><th>Masked Tube</th><th>Masked Pixel</th></tr>
-      	  <tr>
-      	  <td class='long_input' title="{{options_form.masked_bank1.help_text}}" >{{ options_form.masked_bank1.errors }}{{ options_form.masked_bank1 }}</td>
-      	  <td class='long_input' title="{{options_form.masked_tube1.help_text}}" >{{ options_form.masked_tube1.errors }}{{ options_form.masked_tube1 }}</td>
-      	  <td class='long_input' title="{{options_form.masked_pixel1.help_text}}" >{{ options_form.masked_pixel1.errors }}{{ options_form.masked_pixel1 }}</td>
-      	  </tr>
-      	  <tr>
-      	  <td class='long_input' title="{{options_form.masked_bank2.help_text}}" >{{ options_form.masked_bank2.errors }}{{ options_form.masked_bank2 }}</td>
-      	  <td class='long_input' title="{{options_form.masked_tube2.help_text}}" >{{ options_form.masked_tube2.errors }}{{ options_form.masked_tube2 }}</td>
-      	  <td class='long_input' title="{{options_form.masked_pixel2.help_text}}" >{{ options_form.masked_pixel2.errors }}{{ options_form.masked_pixel2 }}</td>
-      	  </tr>
-      	  <tr>
-      	  <td class='long_input' title="{{options_form.masked_bank3.help_text}}" >{{ options_form.masked_bank3.errors }}{{ options_form.masked_bank3 }}</td>
-      	  <td class='long_input' title="{{options_form.masked_tube3.help_text}}" >{{ options_form.masked_tube3.errors }}{{ options_form.masked_tube3 }}</td>
-      	  <td class='long_input' title="{{options_form.masked_pixel3.help_text}}" >{{ options_form.masked_pixel3.errors }}{{ options_form.masked_pixel3 }}</td>
-      	  </tr>
-      	  <tr>
-      	  <td class='long_input' title="{{options_form.masked_bank4.help_text}}" >{{ options_form.masked_bank4.errors }}{{ options_form.masked_bank4 }}</td>
-      	  <td class='long_input' title="{{options_form.masked_tube4.help_text}}" >{{ options_form.masked_tube4.errors }}{{ options_form.masked_tube4 }}</td>
-      	  <td class='long_input' title="{{options_form.masked_pixel4.help_text}}" >{{ options_form.masked_pixel4.errors }}{{ options_form.masked_pixel4 }}</td>
-      	  </tr>
-     
-        </tbody>
-      </table>
-    </div>
-    
-    <div id="tabs-3">
-      <h3>Sample:</h3><br>
-      <table cellspacing="0" class="property_table">
-        <tbody>
-          <tr><th>{{ options_form.data_file.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.data_file.errors }}{{ options_form.data_file }} <span id='data_file_info'></span></td></tr>          
-          <tr><th>{{ options_form.raw_vanadium.label_tag }}</th><td class='runcomplete ui-widget'>{{ options_form.raw_vanadium.errors }}{{ options_form.raw_vanadium }} <span id='raw_vanadium_info'></span></td></tr>
-        </tbody>
-      </table>
-      <table cellspacing="0" class="property_table">
-        <tbody>
-          <div id='log'></div>
+          {{ options_form.as_table }}
         </tbody>
       </table>
     </div>
   </div>
   <p>
     <input title="Click to apply your changes to this reduction" id="submit_reduction_button" type="submit" value="update"/>
-    {% if reduction_id %}<input title="Click to submit this reduction for execution" id="execute_job_button" type="button" value="submit" onclick='window.location.href = "{% url 'reduction_submit_job' instrument reduction_id %}"'/>{% endif %}
+    {% if reduction_id %}
+    <input title="Click to submit this reduction for execution" id="execute_job_button" type="button" value="submit" onclick='window.location.href = "{% url 'reduction_submit_job' instrument reduction_id %}"'/>
+    <input title="Click to cancel your edits" id="cancel_button" type="button" value="cancel" onclick='window.location.href = "{% url 'reduction_options' reduction_id=reduction_id instrument_name=instrument%}"'/>
+    {% else %}
+    <input title="Click to cancel your edits" id="cancel_button" type="button" value="cancel" onclick='window.location.href = "{% url 'reduction' instrument_name=instrument%}"'/>
+    {% endif %}
   </p>
 </form>
-{% if message %}<div class='green'><b>{{ message }} </b></div>{% endif %}
+</div>
+</div>
+
+
 
 <script type="text/javascript">
 
+	function getNumbers(stringNumbers) {
+	
+	    //personal preference, but I got this handy tip from the internet that
+	
+	    //if you had assignments, better if they are individually var'ed
+	    var nums = [];
+	    var entries = stringNumbers.split(',');
+	    var length = entries.length;
+	
+	    //for variabes that don't, comma separated
+	    var i, entry, low, high, range;
+	
+	    for (i = 0; i < length; i++) {
+	        entry = entries[i];
+	
+	        //shortcut for testing a -1
+	        if (!~entry.indexOf('-')) {
+	            //absence of dash, must be a number
+	            //force to a number using +
+	            nums.push(+entry);
+	        } else {
+	            //presence of dash, must be range
+	            range = entry.split('-');
+	
+	            //force to numbers
+	            low = +range[0];
+	            high = +range[1];
+	
+	            //XOR swap, no need for an additional variable. still 3 steps though
+	            //http://en.wikipedia.org/wiki/XOR_swap_algorithm
+	            if(high < low){
+	              low = low ^ high;
+	              high = low ^ high;
+	              low = low ^ high;
+	            }
+	
+	            //push for every number starting from low
+	            while (low <= high) {
+	                nums.push(low++);
+	            }
+	        }
+	    }
+	
+	    //edit to sort list at the end
+	    return nums.sort(function (a, b) {
+	        return a - b;
+	    });
+	}
+
+    function get_icat_info(selector, values) {
+		var runs_int = getNumbers(values);		
+		for (i = 0; i < runs_int.length; i++) {
+			var run_number = runs_int[i];
+	        $.ajax({ url: "{{ icat_url }}"+run_number+"/", 
+	                 success: function(data) {
+	                 	var text = $('<div />', { text: ' ' + data.title });
+	                 	console.log(run_number + ": " +data.title);
+	                    selector.parent().append("<tr>").append("<th>").prepend("<td>").append(text);
+	        }, dataType: "json", timeout: 30000, cache: true});
+
+	    }
+    }
+    
+	
 $(document).ready(function() {
-    get_icat_info('{{ options_form.data_file.value }}','data_file_info');
-    get_icat_info('{{ options_form.raw_vanadium.value }}','raw_vanadium_info');
+
+	get_icat_info($("#id_vanadium_runs"), $("#id_vanadium_runs td").text());
+	get_icat_info($("#id_data_runs"), $("#id_data_runs").val() );
 
     // enter submit blocker
     $(window).keydown(function(event){
@@ -188,32 +163,12 @@ $(document).ready(function() {
     });
 });
 	
-	/*
-	Form a regular expression put the run numbers in a table with description
-	*/
-	$( "#{{options_form.data_files.id_for_label}}" ).change(function() {
-  		var value = $( this ).val();
-  		var re = new RegExp("^[\\d\\-,]+$");
-  		var OK = re.exec(value);  
-        if (!OK)  
-          	console.log(OK.input + " isn't a valid regex!");  
-        else {
-        	$( "#log" ).empty();
-        	$( "#log" ).append( "<h3> Data files to be submited to the cluster:</h3>" );
-            var value_arr = hyphen_range(value);
-  			$.each(value_arr, function( index, value ) {
-  				//alert( index + ": " + value );
-  				$.ajax({ url: "{{ icat_url }}"+value+"/", 
-	                 success: function(data) {
-	                 	$( "#log" ).append( "<tr><th>"+ value + ":</th><td>" + data.title +"<td></tr>" );
-	                 },
-	                 dataType: "json", timeout: 30000, cache: true
-	            });
-	                 
-  				
-			});
-		}
-	});
+	// hide submit button when the form is changed    
+  $('#cancel_button').hide();
+  $("#form :input").change(function() {
+  		$('#execute_job_button').hide();
+  		$('#cancel_button').show();
+  });
 
 </script>
 {% endblock %}

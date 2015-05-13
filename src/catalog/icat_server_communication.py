@@ -334,10 +334,13 @@ def get_run_info(instrument, run_number):
     """
     run_info = {}
     try:
+        logger.debug("Getting information for %s and run number = %s."%(instrument,run_number))
         t0 = time.time()
         conn = httplib.HTTPConnection(ICAT_DOMAIN,
-                                      ICAT_PORT, timeout=3.0)
+                                      ICAT_PORT, timeout=20.0)
         url = '/icat-rest-ws/dataset/SNS/%s/%s' % (instrument.upper(), run_number)
+        
+        logger.debug("Connecting %s:%s%s..."%(ICAT_DOMAIN,ICAT_PORT,url))
         conn.request('GET', url)
         r = conn.getresponse()
         dom = xml.dom.minidom.parseString(r.read())

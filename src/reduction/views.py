@@ -210,11 +210,19 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
         options_form = instrument_forms.ReductionOptions(request.POST)
         # If the form is valid update or create an entry for it (if the data_file is different, a new entry is created!)
         if options_form.is_valid():
-            reduction_id = options_form.to_db(request.user, reduction_id)
-            messages.add_message(request, messages.SUCCESS, "Reduction parameters for reduction %s were sucessfully updated."%reduction_id)
-            if reduction_id is not None:
+            new_reduction_id = options_form.to_db(request.user, reduction_id)
+            if new_reduction_id is not None:
+                messages.add_message(request, messages.SUCCESS, "Reduction parameters were sucessfully updated: " +
+                "old_reduction_id=%s :: new_reduction_id=%s"%(reduction_id,new_reduction_id) )
+                ## Keep the new reduction attached to the same configuration of the old one!
+                # This is used for SEQ.
+                # TODO: Check if SANS guys want that!
+                if config_obj is not None:
+                    reduction_proc = get_object_or_404(ReductionProcess, pk=new_reduction_id, owner=request.user)
+                    config_obj.reductions.add(reduction_proc)
+                    config_obj.save()
                 return redirect(reverse('reduction_options',
-                                        kwargs={'reduction_id' : reduction_id, 'instrument_name' : instrument_name}))
+                                        kwargs={'reduction_id' : new_reduction_id, 'instrument_name' : instrument_name}))
         else:
             messages.add_message(request, messages.ERROR, "The form is not valid. See errors above.")
     else:
@@ -231,6 +239,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
     
     if config_obj is not None:
         breadcrumbs.append_configuration(instrument_name_lowercase,config_obj.id)
+        template_values.update({"properties":config_obj.get_data_dict()});
     if reduction_id is not None:
         breadcrumbs.append("reduction %s" % reduction_id)
     else:

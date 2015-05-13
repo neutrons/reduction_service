@@ -198,6 +198,7 @@ def runs_json(request, instrument, ipts):
          @param instrument: instrument name
          @param ipts: experiment id
     """ 
+    logger.debug("Fecthing runs as jsons for ipts = %s"%ipts)
     info_dict = get_ipts_runs_as_json(instrument, ipts)
     response = HttpResponse(json.dumps(info_dict), content_type="application/json")
     return response

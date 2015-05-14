@@ -85,90 +85,110 @@
 
 <script type="text/javascript">
 
-	function getNumbers(stringNumbers) {
-	
-	    //personal preference, but I got this handy tip from the internet that
-	
-	    //if you had assignments, better if they are individually var'ed
-	    var nums = [];
-	    var entries = stringNumbers.split(',');
-	    var length = entries.length;
-	
-	    //for variabes that don't, comma separated
-	    var i, entry, low, high, range;
-	
-	    for (i = 0; i < length; i++) {
-	        entry = entries[i];
-	
-	        //shortcut for testing a -1
-	        if (!~entry.indexOf('-')) {
-	            //absence of dash, must be a number
-	            //force to a number using +
-	            nums.push(+entry);
-	        } else {
-	            //presence of dash, must be range
-	            range = entry.split('-');
-	
-	            //force to numbers
-	            low = +range[0];
-	            high = +range[1];
-	
-	            //XOR swap, no need for an additional variable. still 3 steps though
-	            //http://en.wikipedia.org/wiki/XOR_swap_algorithm
-	            if(high < low){
-	              low = low ^ high;
-	              high = low ^ high;
-	              low = low ^ high;
-	            }
-	
-	            //push for every number starting from low
-	            while (low <= high) {
-	                nums.push(low++);
-	            }
-	        }
-	    }
-	
-	    //edit to sort list at the end
-	    return nums.sort(function (a, b) {
-	        return a - b;
-	    });
-	}
+/*
+ function to transform a ranged fields into an array
+ */
+function getNumbers(stringNumbers) {
 
-    function get_icat_info(selector, values) {
-		var runs_int = getNumbers(values);		
-		for (i = 0; i < runs_int.length; i++) {
-			var run_number = runs_int[i];
-	        $.ajax({ url: "{{ icat_url }}"+run_number+"/", 
-	                 success: function(data) {
-	                 	var text = $('<div />', { text: ' ' + data.title });
-	                 	console.log(run_number + ": " +data.title);
-	                    selector.parent().append("<tr>").append("<th>").prepend("<td>").append(text);
-	        }, dataType: "json", timeout: 30000, cache: true});
+  var nums = [];
+  var entries = stringNumbers.split(',');
+  var length = entries.length;
 
-	    }
+  //for variabes that don't, comma separated
+  var i, entry, low, high, range;
+
+  for (i = 0; i < length; i++) {
+    entry = entries[i];
+
+    //shortcut for testing a -1
+    if (!~entry.indexOf('-')) {
+      //absence of dash, must be a number
+      //force to a number using +
+      nums.push(+entry);
+    } else {
+      //presence of dash, must be range
+      range = entry.split('-');
+
+      //force to numbers
+      low = +range[0];
+      high = +range[1];
+
+      //XOR swap, no need for an additional variable. still 3 steps though
+      //http://en.wikipedia.org/wiki/XOR_swap_algorithm
+      if (high < low) {
+        low = low ^ high;
+        high = low ^ high;
+        low = low ^ high;
+      }
+
+      //push for every number starting from low
+      while (low <= high) {
+        nums.push(low++);
+      }
     }
-    
-	
+  }
+
+  //edit to sort list at the end
+  return nums.sort(function(a, b) {
+    return a - b;
+  });
+}
+
+/**
+  Append to selector the icat description for runs in the values string
+  Values is ranged string
+  **/
+function get_icat_info(selector, values) {
+  var runs_int = getNumbers(values);
+  for (i = 0; i < runs_int.length; i++) {
+    var run_number = runs_int[i];
+    $.ajax({
+      url: "{{ icat_url }}" + run_number + "/",
+      success: function(data) {
+        var text = $("<div />", {
+          text: data.run_number + ': ' + data.title,
+          class: 'temporary'
+        });
+        console.log(run_number + ": " + data.title);
+        selector.parent().append(text);
+      },
+      dataType: "json",
+      timeout: 30000,
+      cache: true
+    });
+
+  }
+}
+
+
 $(document).ready(function() {
 
-	get_icat_info($("#id_vanadium_runs"), $("#id_vanadium_runs td").text());
-	get_icat_info($("#id_data_runs"), $("#id_data_runs").val() );
+  get_icat_info($("#id_vanadium_runs"), $("#id_vanadium_runs td").text());
+  get_icat_info($("#id_data_runs"), $("#id_data_runs").val());
 
-    // enter submit blocker
-    $(window).keydown(function(event){
-      if(event.keyCode == 13) {
-        event.preventDefault();
-        return false;
-      }
-    });
-});
-	
-	// hide submit button when the form is changed    
-  $('#cancel_button').hide();
-  $("#form :input").change(function() {
-  		$('#execute_job_button').hide();
-  		$('#cancel_button').show();
+  // enter submit blocker
+  $(window).keydown(function(event) {
+    if (event.keyCode == 13) {
+      event.preventDefault();
+      return false;
+    }
   });
+});
+
+
+$( "#id_data_runs" ).change(function() {
+  $(".temporary").remove();
+  get_icat_info($("#id_data_runs"), $("#id_data_runs").val());
+  get_icat_info($("#id_vanadium_runs"), $("#id_vanadium_runs td").text());
+});
+
+// hide submit button when the form is changed
+$('#cancel_button').hide();
+$("#form :input").change(function() {
+  $('#execute_job_button').hide();
+  $('#cancel_button').show();
+});
+
 
 </script>
 {% endblock %}

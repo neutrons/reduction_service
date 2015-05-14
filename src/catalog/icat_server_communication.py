@@ -333,6 +333,7 @@ def get_run_info(instrument, run_number):
         @param run_number: run_number
     """
     run_info = {}
+    run_info['run_number'] = run_number
     try:
         logger.debug("Getting information for %s and run number = %s."%(instrument,run_number))
         t0 = time.time()

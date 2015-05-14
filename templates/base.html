@@ -78,53 +78,87 @@
         });
     }
 
-    /* Function to populate the autocomplete from a remote json.
-      For ranged fields, .e.g,: 4588-4590,465-658 */
-    function split(val) {
-        return val.split(/[,-]\s*/);
-    }
 
-    function extractLast(term) {
-        return split(term).pop();
-    }
 
-    function set_autocomplete_ranged(selector, jsonurl) {
-        $.ajax({
-            url: jsonurl,
-            type: 'get',
-            dataType: 'json',
-            async: true,
-            success: function (data) {                
-                $(selector).autocomplete({
-                    minLength: 0,
-                    source: function (request, response) {
-                        response($.ui.autocomplete.filter(
-                        data, extractLast(request.term) ));
-                    },
-                    focus: function () {
-                        return false;
-                    },
-                    select: function (event, ui) {
-                        //var terms = split(this.value);
-                        // remove the current input
-                        //terms.pop();
-                        // add the selected item
-                        //terms.push(ui.item.value);
-                        // add placeholder to get the comma-and-space at the end
-                        //terms.push("");
-                        //this.value = terms.join(",");
-                        var this_value = ui.item.value
-                        var all_values = this.value
-                        this.value = all_values + this_value
-                        $(this).trigger('change');
-                        return false;
-                    }
-                }).bind('focus', function () {
-                    if (!$(this).val().trim()) $(this).keydown();
-                });
-            }
-        });
-    }
+	/* Set of functions to to populate the autocomplete from a remote json.
+	  For ranged fields, .e.g,: 4588-4590,465-658 */
+	function split(val) {
+	  return val.split(/[,-]\s*/);
+	}
+	
+	function extractLast(term) {
+	  return split(term).pop();
+	}
+	
+	function remove_empty_string_from_array(array) {
+	  for (var i = array.length - 1; i >= 0; i--) {
+	    if (array[i] === '') {
+	      array.splice(i, 1);
+	    }
+	  }
+	}
+	
+	function separate(val) {
+	  var values = val.split(/[,-]\s*/);
+	  var delimiters = val.split(/[^,-\s]/);
+	  remove_empty_string_from_array(values);
+	  remove_empty_string_from_array(delimiters);
+	  return [values, delimiters];
+	}
+	
+	function join(values, delimiters) {
+	  out = "";
+	  for (i = 0; i < delimiters.length; i += 1) {
+	    out += values[i] + delimiters[i];
+	  }
+	  out += values[i];
+	  return out;
+	}
+	
+	function set_autocomplete_ranged(selector, jsonurl) {
+	  $.ajax({
+	    url: jsonurl,
+	    type: 'get',
+	    dataType: 'json',
+	    async: true,
+	    success: function(data) {
+	      $(selector).autocomplete({
+	        minLength: 0,
+	        source: function(request, response) {
+	          response($.ui.autocomplete.filter(
+	            data, extractLast(request.term)));
+	        },
+	        focus: function() {
+	          return false;
+	        },
+	        select: function(event, ui) {
+			  // If there's more than a single item
+	          if (this.value.search(/[,-]\s*/) >= 0) {
+	            var terms_all = separate(this.value);
+	            var terms = terms_all[0];
+	            var delimiters = terms_all[1];
+	            // remove the current input
+	            if( this.value.substr(-1) != "," && this.value.substr(-1) != "-") {
+	            	terms.pop();
+	            }
+	            // add the selected item
+	            terms.push(ui.item.value);
+	            this.value = join(terms, delimiters);
+	          } else {
+	            this.value = ui.item.value;
+	          }
+	          $(this).trigger('change');
+	          return false;
+	        }
+	      }).bind('focus', function() {
+	        if (!$(this).val().trim()) $(this).keydown();
+	      });
+	    }
+	  });
+	}
+
+
+
 </script>
 </head>
 <!--[if IE]><body class="ie"><![endif]--> 

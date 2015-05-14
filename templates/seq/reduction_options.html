@@ -71,7 +71,7 @@
   <p>
     <input title="Click to apply your changes to this reduction" id="submit_reduction_button" type="submit" value="update"/>
     {% if reduction_id %}
-    <input title="Click to submit this reduction for execution" id="execute_job_button" type="button" value="submit" onclick='window.location.href = "{% url 'reduction_submit_job' instrument reduction_id %}"'/>
+    <input title="Click to submit this reduction for execution" id="execute_job_button" type="button" value="submit" onclick='window.location.href = "{% url 'reduction_submit' instrument reduction_id %}"'/>
     <input title="Click to cancel your edits" id="cancel_button" type="button" value="cancel" onclick='window.location.href = "{% url 'reduction_options' reduction_id=reduction_id instrument_name=instrument%}"'/>
     {% else %}
     <input title="Click to cancel your edits" id="cancel_button" type="button" value="cancel" onclick='window.location.href = "{% url 'reduction' instrument_name=instrument%}"'/>

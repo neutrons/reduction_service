@@ -105,7 +105,7 @@
               <td title='Click to remove this reduction job'><a href='{% url 'configuration_options' config_id=config_id instrument_name=instrument%}'><span class="ui-icon ui-icon-trash"></span></a></td>
               {% endif %}
               {% endspaceless %}
-              {% if form.reduction_id.value %}<td title='Submit this job by itself, without submitting all the other jobs'><a href="{% url 'reduction_submit_job' 'eqsans' form.reduction_id.value %}"><span class="ui-icon ui-icon-refresh"></span></a></td>{% endif %}
+              {% if form.reduction_id.value %}<td title='Submit this job by itself, without submitting all the other jobs'><a href="{% url 'reduction_submit' 'eqsans' form.reduction_id.value %}"><span class="ui-icon ui-icon-refresh"></span></a></td>{% endif %}
               <script id="source" language="javascript" type="text/javascript">
                 {% spaceless %}
                 {% if form.data_file.value %}get_icat_info('{{ form.data_file.value }}','{{ form.data_file.id_for_label }}'); {% endif %}

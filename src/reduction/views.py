@@ -400,7 +400,7 @@ def xml_reduction_script(request, reduction_id, instrument_name):
     return response
 
 @login_required
-def submit_job(request, reduction_id, instrument_name):
+def reduction_submit(request, reduction_id, instrument_name):
     """
         Submit a reduction script to Fermi.
 

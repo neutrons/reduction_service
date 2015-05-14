@@ -193,7 +193,7 @@
   </div>
   <p>
     <input title="Click to apply your changes to this reduction" id="submit_reduction_button" type="submit" value="update"/>
-    {% if reduction_id %}<input title="Click to submit this reduction for execution" id="execute_job_button" type="button" value="submit" onclick='window.location.href = "{% url 'reduction_submit_job' 'eqsans' reduction_id %}"'/>{% endif %}
+    {% if reduction_id %}<input title="Click to submit this reduction for execution" id="execute_job_button" type="button" value="submit" onclick='window.location.href = "{% url 'reduction_submit' 'eqsans' reduction_id %}"'/>{% endif %}
   </p>
 </form>
 {% if message %}<div class='green'><b>{{ message }} </b></div>{% endif %}

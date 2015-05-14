@@ -162,7 +162,7 @@ def experiment(request, ipts, instrument_name):
                               template_values)
     
 @login_required
-def delete_reduction(request, reduction_id, instrument_name):
+def reduction_delete(request, reduction_id, instrument_name):
     """
         Delete a reduction process entry
         @param request: request object

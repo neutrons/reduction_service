@@ -19,7 +19,7 @@ urlpatterns = patterns('',
     url(r'^(?P<instrument_name>%s)/reduction/(?P<reduction_id>\d+)/download/py$' % valid_instruments, 'reduction.views.py_reduction_script', name='reduction_py_reduction_script'),
     url(r'^(?P<instrument_name>%s)/reduction/(?P<reduction_id>\d+)/submit$' % valid_instruments, 'reduction.views.reduction_submit', name='reduction_submit'),
     url(r'^(?P<instrument_name>%s)/reduction/(?P<reduction_id>\d+)/script$' % valid_instruments, 'reduction.views.reduction_script', name='reduction_script'),
-    url(r'^(?P<instrument_name>%s)/reduction/(?P<reduction_id>\d+)/delete$' % valid_instruments, 'reduction.views.delete_reduction', name='reduction_delete'),
+    url(r'^(?P<instrument_name>%s)/reduction/(?P<reduction_id>\d+)/delete$' % valid_instruments, 'reduction.views.reduction_delete', name='reduction_delete'),
     
     url(r'^(?P<instrument_name>%s)/jobs/$' % valid_instruments, 'reduction.views.reduction_jobs', name='reduction_jobs'),
     url(r'^(?P<instrument_name>%s)/query/(?P<job_id>[\w\-\.]+)/$' % valid_instruments, 'reduction.views.job_details', name='reduction_job_details'),

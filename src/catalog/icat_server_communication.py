@@ -338,7 +338,7 @@ def get_run_info(instrument, run_number):
         t0 = time.time()
         conn = httplib.HTTPConnection(ICAT_DOMAIN,
                                       ICAT_PORT, timeout=20.0)
-        url = '/icat-rest-ws/dataset/SNS/%s/%s' % (instrument.upper(), run_number)
+        url = '/icat-rest-ws/dataset/SNS/%s/%s/lite' % (instrument.upper(), run_number)
         
         logger.debug("Connecting %s:%s%s..."%(ICAT_DOMAIN,ICAT_PORT,url))
         conn.request('GET', url)

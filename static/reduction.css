@@ -207,3 +207,7 @@ table .errorlist {
 .hidden {
     visibility: hidden;
 }   
+
+.temporary {
+	background-color: #E6E6E6;
+}

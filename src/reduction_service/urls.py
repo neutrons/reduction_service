@@ -12,6 +12,7 @@ urlpatterns = patterns('',
     url(r'^users/', include('users.urls')),
     url(r'^database/doc/', include('django.contrib.admindocs.urls')),
     url(r'^database/', include(admin.site.urls)),
+    url(r'^seq/', include('seq.urls')), # specific views for SEQ
 )
 
 if settings.DEBUG_TOOLBAR:

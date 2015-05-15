@@ -5,7 +5,6 @@ from django.core.urlresolvers import reverse
 from django.http.response import HttpResponse
 from django.shortcuts import get_object_or_404, render_to_response, redirect
 from django.template import RequestContext
-import importlib
 import inspect
 import logging
 import pprint
@@ -23,14 +22,7 @@ import remote
 
 logger = logging.getLogger('reduction.views')
 
-def _import_module_from_app(instrument_name_lowercase, module_name):
-    """
-    Note that all forms must be in reduction.<instrument name>.<module>
-    @return the forms module from an instrument name 
-    """
-    module_str = "%s.%s"%(instrument_name_lowercase,module_name)
-    instrument_module = importlib.import_module(module_str)
-    return instrument_module
+
    
 
 @login_required
@@ -195,7 +187,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
     
     instrument_name_capitals = str.capitalize(str(instrument_name))
     instrument_name_lowercase = str.lower(str(instrument_name))
-    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
+    instrument_forms = reduction.view_util.import_module_from_app(instrument_name_lowercase,'forms')
     
     template_values = {}
     # Get reduction and configuration information
@@ -342,7 +334,7 @@ def reduction_script(request, reduction_id, instrument_name):
     
     instrument_name_lowercase = str.lower(str(instrument_name))
     
-    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
+    instrument_forms = reduction.view_util.import_module_from_app(instrument_name_lowercase,'forms')
     
     data = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id)
     
@@ -369,7 +361,7 @@ def py_reduction_script(request, reduction_id, instrument_name):
     logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument_name_lowercase = str.lower(str(instrument_name))
-    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
+    instrument_forms = reduction.view_util.import_module_from_app(instrument_name_lowercase,'forms')
     
     data = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id) 
     response = HttpResponse(instrument_forms.ReductionOptions.as_mantid_script(data))
@@ -391,7 +383,7 @@ def xml_reduction_script(request, reduction_id, instrument_name):
     logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument_name_lowercase = str.lower(str(instrument_name))
-    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
+    instrument_forms = reduction.view_util.import_module_from_app(instrument_name_lowercase,'forms')
     data = instrument_forms.ReductionOptions.data_from_db(request.user, reduction_id) 
     response = HttpResponse(instrument_forms.ReductionOptions.as_xml(data))
     response['Content-Disposition'] = 'attachment; filename="%s_reduction.xml"' % instrument_name_lowercase
@@ -411,7 +403,7 @@ def reduction_submit(request, reduction_id, instrument_name):
     logger.debug("Reduction: %s instrument_name=%s"%(inspect.stack()[0][3],instrument_name))
     
     instrument_name_lowercase = str.lower(str(instrument_name))
-    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
+    instrument_forms = reduction.view_util.import_module_from_app(instrument_name_lowercase,'forms')
     
     # TODO: Make sure the submission errors are clearly reported
     reduction_proc = get_object_or_404(ReductionProcess, pk=reduction_id, owner=request.user)
@@ -426,7 +418,7 @@ def reduction_submit(request, reduction_id, instrument_name):
         
         messages.add_message(request, messages.ERROR, "Could not connect to Fermi and establish transaction.")
         template_values = {'back_url': reverse('reduction_options',
-                                  kwargs={'reduction_id' : reduction_id, 'instrument_name': instrument_name_lowercase}),
+                                               kwargs={'reduction_id' : reduction_id, 'instrument_name': instrument_name_lowercase}),
                            'breadcrumbs': breadcrumbs, }
         template_values = reduction_service.view_util.fill_template_values(request, **template_values)
         return render_to_response('remote/failed_connection.html', template_values,
@@ -486,7 +478,7 @@ def job_details(request, job_id, instrument_name):
     
     # Go through the files and find data to plot
     if 'job_files' in template_values and 'trans_id' in template_values:
-        view_util = _import_module_from_app(instrument_name_lowercase,'view_util')
+        view_util = reduction.view_util.import_module_from_app(instrument_name_lowercase,'view_util')
         template_values = view_util.set_into_template_values_job_files(template_values, request, remote_job)
 
     #logger.debug(pprint.pformat(template_values))
@@ -516,7 +508,7 @@ def configuration_options(request, instrument_name, config_id=None):
             
     instrument_name_capitals = str(instrument_name).upper()
     instrument_name_lowercase = str(instrument_name).lower()
-    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
+    instrument_forms = reduction.view_util.import_module_from_app(instrument_name_lowercase,'forms')
     
     template_values = {}
     forms_handler = instrument_forms.ConfigurationFormHandler(request,config_id)
@@ -653,7 +645,7 @@ def configuration_query(request, remote_set_id, instrument_name):
     template_values['job_files'] = remote.view_util.query_files(request, job_set.transaction.trans_id)
 
     # I(q) plots
-    view_util = _import_module_from_app(instrument_name_lowercase,'view_util')
+    view_util = reduction.view_util.import_module_from_app(instrument_name_lowercase,'view_util')
     template_values = view_util.set_into_template_values_plots(template_values, request, first_job)
     # Link to download all I(q) files
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
@@ -694,13 +686,22 @@ def configuration_iq(request, remote_set_id, instrument_name):
 def configuration_submit(request, config_id, instrument_name):
     """
         Submit all reductions for this configuration.
+        
+        This will work for instruments such as EQSANS.
+        A configuration is a set of reductions and every reduction
+        will be submitted by it self!
+        
         @param request: request object
         @param config_id: pk of configuration
     """
     logger.debug("Reduction: %s"%(inspect.stack()[0][3]))
 
     instrument_name_lowercase = str.lower(str(instrument_name))
-    instrument_forms = _import_module_from_app(instrument_name_lowercase,'forms')
+    instrument_forms = reduction.view_util.import_module_from_app(instrument_name_lowercase,'forms')
+    
+    ## TODO 
+    ## if this view is specific to an instrutment redirects to it!
+    reduction.view_util.redirect_if_view_exists(instrument_name, (inspect.stack()[0][3]), config_id=config_id)
     
     forms_handler = instrument_forms.ConfigurationFormHandler(request,config_id)
     
@@ -731,6 +732,7 @@ def configuration_submit(request, config_id, instrument_name):
     messages.add_message(request, messages.SUCCESS, message="Jobs %s sucessfully submitted."%', '.join(JobIDs) )
     return redirect(reverse('configuration_options',
                             kwargs={'config_id' : config_id, 'instrument_name' : instrument_name_lowercase}))
+
 
 
     

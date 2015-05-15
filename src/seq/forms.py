@@ -406,7 +406,7 @@ class ScanForm(forms.Form):
         script_file_path = os.path.join(scripts_location,'reduce.py')
         data.update({'output_path' : output_path})
         script = build_script(script_file_path, cls, data)
-        logger.debug("\n-------------------------\n"+script+"\n-------------------------\n")
+        #logger.debug("\n-------------------------\n"+script+"\n-------------------------\n")
         return script
 
 

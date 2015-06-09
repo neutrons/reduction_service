@@ -85,11 +85,11 @@ class ConfigurationForm(forms.Form):
 #     </calibration>
 
     processed_vanadium_filename = forms.CharField(widget=forms.HiddenInput(), required=False, 
-                                                  initial= tempfile.NamedTemporaryFile(delete=True).name)
+                                                  initial= tempfile.NamedTemporaryFile(delete=True,prefix='vanadium_', suffix='.nxs').name)
     
     units_choices = [(i,i) for i in ['Wavelength', 'DeltaE', 'DeltaE_inWavenumber', 'Energy', 'Energy_inWavenumber',
                     'Momentum', 'MomentumTransfer', 'QSquared', 'TOF', 'dspacing']]
-    units = forms.ChoiceField(choices=units_choices,initial=units_choices[0],required=True)
+    vanadium_units = forms.ChoiceField(choices=units_choices,initial=units_choices[0],required=True)
     
     normalized_calibration  = forms.BooleanField(required=True, initial=True)
     
@@ -115,7 +115,6 @@ class ConfigurationForm(forms.Form):
     error_bar_criterion = forms.FloatField(required=True,initial=3.3)
     median_test_levels_up = forms.BooleanField(required=False, initial=True)
     
-
     @classmethod
     def data_from_db(cls, user, reduction_config):
         """
@@ -164,6 +163,39 @@ class ConfigurationForm(forms.Form):
             logger.error("Could not process reduction properties: %s" % sys.exc_value)
         
         return reduction_config.pk
+
+    @classmethod
+    def as_mantid_script(cls, data, output_path='/tmp'):
+        """
+            Return the Mantid script associated with the current parameters
+            @param data: dictionary of reduction properties
+            @param output_path: output path to use in the script
+        """
+        
+        script_file_path = os.path.join(scripts_location,'reduce.py')
+        data.update({'output_path' : output_path})
+        script = build_script(script_file_path, cls, data)
+        logger.debug("\n-------------------------\n"+script+"\n-------------------------\n")
+        return script
+    
+        
+    @classmethod
+    def as_xml(cls, data):
+        """
+            Create XML from the current data.
+            @param data: dictionary of reduction properties
+        """
+        data['timestamp'] = time.ctime();
+                
+        xml_file_path = os.path.join(scripts_location,'reduce.xml')
+        xml = build_script(xml_file_path, cls, data)
+        
+        if is_xml_valid(xml):
+            logger.debug("\n-------------------------\n"+xml+"\n-------------------------\n")
+            return xml
+        else:
+            logger.error("XML is not valid!")
+            return None
 
 class MaskForm(forms.Form):
     """
@@ -284,31 +316,15 @@ class ScanForm(forms.Form):
         data_file is part of the reduction_process table
         """
         try:
+            logger.debug("Cleaning data file...")
             data = self.cleaned_data['data_runs']
-        except:
+        except  Exception, e:
+            logger.error("Error getting cleaned data from data_runs...")
+            logging.exception(e)
             data = ""
         if len(data) > 0:
             data = self._hyphen_range(data)
         return data
-    
-    
-    @classmethod
-    def as_xml(cls, data):
-        """
-            Create XML from the current data.
-            @param data: dictionary of reduction properties
-        """
-        data['timestamp'] = time.ctime();
-                
-        xml_file_path = os.path.join(scripts_location,'reduce.xml')
-        xml = build_script(xml_file_path, cls, data)
-        
-        if is_xml_valid(xml):
-            logger.debug("\n-------------------------\n"+xml+"\n-------------------------\n")
-            return xml
-        else:
-            logger.error("XML is not valid!")
-            return None
     
     def to_db(self, user, reduction_id=None, config_id=None, properties={}):
         """
@@ -394,20 +410,6 @@ class ScanForm(forms.Form):
         expt_list = reduction_proc.experiments.all()
         data['experiment'] = ', '.join([str(e.name) for e in expt_list if len(str(e.name))>0])
         return data
-    
-    @classmethod
-    def as_mantid_script(cls, data, output_path='/tmp'):
-        """
-            Return the Mantid script associated with the current parameters
-            @param data: dictionary of reduction properties
-            @param output_path: output path to use in the script
-        """
-        
-        script_file_path = os.path.join(scripts_location,'reduce.py')
-        data.update({'output_path' : output_path})
-        script = build_script(script_file_path, cls, data)
-        #logger.debug("\n-------------------------\n"+script+"\n-------------------------\n")
-        return script
 
 
 
@@ -541,14 +543,32 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
     
     def get_mantid_script(self, reduction_id, transaction_directory):
         """
-        @param reductions: all the reductions for this configuration
+        @param reduction_id: 
         @param transaction: Transaction for this job submission 
         """
-
-        data = ScanForm.data_from_db(self.request.user, reduction_id)
-        code = ScanForm.as_mantid_script(data, transaction_directory)
+        
+        reduction_config = get_object_or_404(ReductionConfiguration, pk=self.config_id, owner=self.request.user)
+        configuration_values = ConfigurationForm.data_from_db(self.request.user, reduction_config)
+        
+        reduction_values = []
+        for item in reduction_config.reductions.all():
+            props = ReductionOptions.data_from_db(self.request.user, item.pk)
+            reduction_values.append(props)
+        
+        
+        data = configuration_values
+        data["reduction"] = reduction_values
+        
+        logger.debug( pprint.pformat(data))
+        
+        xml = ConfigurationForm.as_xml(data)
+        
+        data['xml_content']=xml
+        
+        code = ConfigurationForm.as_mantid_script(data, transaction_directory)
         
         return code
+        
     
     
 

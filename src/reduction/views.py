@@ -701,7 +701,7 @@ def configuration_submit(request, config_id, instrument_name):
     
     ## TODO 
     ## if this view is specific to an instrutment redirects to it!
-    reduction.view_util.redirect_if_view_exists(instrument_name, (inspect.stack()[0][3]), config_id=config_id)
+    #reduction.view_util.redirect_if_view_exists(instrument_name, (inspect.stack()[0][3]), config_id=config_id)
     
     forms_handler = instrument_forms.ConfigurationFormHandler(request,config_id)
     

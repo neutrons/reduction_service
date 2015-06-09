@@ -156,7 +156,7 @@
     <div id="tabs-1">
       <table cellspacing="0" class="property_table">
         <tbody>
-          <tr><th title='{{ config_form.units.help_text }}'>{{ config_form.units.label_tag }}</th><td>{{ config_form.units.errors }}{{ config_form.units }}</td></tr>
+          <tr><th title='{{ config_form.vanadium_units.help_text }}'>{{ config_form.vanadium_units.label_tag }}</th><td>{{ config_form.vanadium_units.errors }}{{ config_form.vanadium_units }}</td></tr>
           <tr><th title='{{ config_form.normalized_calibration.help_text }}'>{{ config_form.normalized_calibration.label_tag }}</th><td>{{ config_form.normalized_calibration.errors }}{{ config_form.normalized_calibration }}</td></tr>
           <tr><th title='{{ config_form.vanadium_runs.help_text }}'>{{ config_form.vanadium_runs.label_tag }}</th><td class='long_input'>{{ config_form.vanadium_runs.errors }}{{ config_form.vanadium_runs }}</td></tr>
           <tr>
@@ -242,7 +242,7 @@
   <p>
     <input id='submit_button' type="submit" value="update"/>
     {% if config_id %}
-    <input title="Click to submit this list of reductions for execution" id="execute_jobs_button" type="button" value="submit" onclick='window.location.href = "{% url 'configuration_submit' config_id=config_id instrument_name=instrument%}"'/>
+    <input title="Click to submit this list of reductions for execution" id="execute_jobs_button" type="button" value="submit" onclick='window.location.href = "{% url 'seq:configuration_submit' config_id=config_id %}"'/>
     <input title="Click to cancel your edits" id="cancel_button" type="button" value="cancel" onclick='window.location.href = "{% url 'configuration_options' config_id=config_id instrument_name=instrument%}"'/>
     {% else %}
     <input title="Click to cancel your edits" id="cancel_button" type="button" value="cancel" onclick='window.location.href = "{% url 'configuration' instrument_name=instrument%}"'/>

@@ -13,7 +13,7 @@ import json
 import logging
 import sys
 from models import Transaction
-from reduction.models import RemoteJob
+from reduction.models import RemoteJob, RemoteJobSet
 from django.conf import settings
 
 logger = logging.getLogger('remote')
@@ -147,6 +147,7 @@ def stop_transaction(request, trans_id):
     transactions = Transaction.objects.filter(trans_id=trans_id)
     if len(transactions)>0:
         transaction_obj = transactions[0]
+        
     if transaction_obj is None:
         logger.error("Local transaction %s does not exist" % trans_id)
     elif not transaction_obj.owner == request.user:
@@ -161,6 +162,8 @@ def stop_transaction(request, trans_id):
         # Once I invalidate the transaction I remove the job.
         # This will remove jobs from Remote jobs right menu
         RemoteJob.objects.filter(transaction_id=transaction_obj.id).delete()
+        # Ric : because once deleted they appear on the right side menu!
+        RemoteJobSet.objects.filter(transaction_id=transaction_obj.id).delete()
         
     request.session['fermi_transID'] = None
     # Regardless of whether we have a local transaction with that ID,

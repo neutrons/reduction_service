@@ -256,24 +256,49 @@
 {% if error_message %}<div class='red'><b>{{ error_message }} </b></div>{% endif %}
 
 <script id="source" language="javascript" type="text/javascript">
- $(document).ready(function() {
 
-    $(window).keydown(function(event){
-        if(event.keyCode == 13) {
-          event.preventDefault();
-          return false;
+// Disable tab
+$(document).ready(function() {
+    $(window).keydown(function(event) {
+        if (event.keyCode == 13) {
+            event.preventDefault();
+            return false;
         }
-      });
     });
-    
-    // Add a star next to the mandatory fields
-    $('#tabs-0,#tabs-1,#tabs-2,.required').find("label").parent().parent().append("<span style='display:inline-block' class='ui-icon ui-icon-star'></span>")
+});
 
-	// hide submit button when the form is changed    
-  $('#cancel_button').hide();
-  $("#global_form :input").change(function() {
-  		$('#execute_jobs_button').hide();
-  		$('#cancel_button').show();
-  });
+// Add a star next to the mandatory fields
+$('#tabs-0,#tabs-1,#tabs-2,.required').find("label").parent().parent().append("<span style='display:inline-block' class='ui-icon ui-icon-star'></span>")
+
+// hide submit button when the form is changed    
+$('#cancel_button').hide();
+$("#global_form :input").change(function() {
+    $('#execute_jobs_button').hide();
+    $('#cancel_button').show();
+});
+
+
+function show_hide_guess(id) {
+	console.log(id);
+	//id_sf-0-use_incident_energy_guess
+	var prefix_regex = new RegExp('(id_\\w+-\\d+-)');
+	matches = id.match(prefix_regex);
+	prefix = matches[0];
+	
+	elems = $("#" + prefix + "time_zero_guess");
+	elems = elems.add($("#" + prefix + "incident_energy_guess") );
+    elems = elems.add($("#" + prefix + "energy_transfer_range") );
+    elems = elems.parent().parent();
+    
+    elems.hide();
+    
+	if ($("#"+id).is(':checked')) {
+        elems.show();
+    } else {
+        elems.hide();
+    }
+}
+
+
 </script>
 {% endblock %}

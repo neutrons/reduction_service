@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <dgsreduction>
 	<!-- DEFAULTS section -->
-	<defaults Instrument="{{ instrument_name }}" FilterBadPulses="{{ filter_bad_pulses }}" Save="{{ save_format }}" />
+	<defaults Instrument="SEQ" FilterBadPulses="{{ filter_bad_pulses }}" Save="{{ save_format | join:"," }}" />
 
 
 	<!-- CALIBRATION AND MaskING section -->
@@ -11,41 +11,58 @@
 		<VanRuns>{{vanadium_runs}}</VanRuns>
 		<DetVanIntRangeLow>{{vanadium_min}}</DetVanIntRangeLow>
 		<DetVanIntRangeHigh>{{vanadium_max}}</DetVanIntRangeHigh>
+		
+		{% for entry in mask %}
+    	<Mask algorithm="MaskBTP" 
+    		{% for key, value in entry.items %}
+				{{key | capfirst}} = "{{value}}"
+			{% endfor %}  />
+		{% endfor %}
 
-		<Mask algorithm="MaskBTP" Pixel="1-7" />
-		<Mask algorithm="MaskBTP" Pixel="122-128" />
-		<Mask algorithm="MaskBTP" Bank="71" Pixel="1-14" />
-		<Mask algorithm="MaskBTP" Bank="71" Pixel="114-128" />
-		<Mask algorithm="MaskBTP" Bank="70" Pixel="1-12" />
-		<Mask algorithm="MaskBTP" Bank="70" Pixel="117-128" />
-		<Mask algorithm="MaskAngle" MaxAngle="2.5" />
-
-		<Mask HighCounts='1E12' LowCounts='0.1' HighOutlier='100'
-			LowOutlier='0.01' MedianTestHigh='1.75' MedianTestLow='0.25'
-			MedianTestCorrectForSolidAngle='1' ErrorBarCriterion='3.3'
-			MedianTestLevelsUp='1' />
-
+		{% if mask_angle_max or  mask_angle_min %}
+			<Mask algorithm="MaskAngle" 
+				{% if mask_angle_min%} MinAngle="{{mask_angle_min}}" {% endif %}
+				{% if mask_angle_max%} MaxAngle="{{mask_angle_max}}" {% endif %} 
+			/>
+		{% endif %}
+		
+		<Mask HighCounts='{{high_counts}}' LowCounts='{{low_counts}}' HighOutlier='{{high_outlier}}'
+			LowOutlier='{{low_outlier}}' MedianTestHigh='{{median_test_high}}' MedianTestLow='{{median_test_low}}'
+			MedianTestCorrectForSolidAngle='{{median_test_correct_for_solid_angle}}' ErrorBarCriterion='{{error_bar_criterion}}'
+			MedianTestLevelsUp='{{median_test_levels_up}}' />
 
 	</calibration>
 
 	<!-- DATA section -->
 
+	{% for scan in reduction %}
+		<scan Runs="{{scan.data_runs}}" Save='{{ scan.save_format | join:"," }}' FriendlyName="{{data.friendly_name}}"
+		FriendlyNameLogs='{{data.friendly_name_logs}}' UseIncidentEnergyGuess='true'
+		TimeZeroGuess='4.2' IncidentEnergyGuess='710.45' GroupingFile='powder'
+		ScanType='step' />
+	
+	{% endfor %}
+		
+	
+
 	<!-- BKG 2.7 K -->
 	<!-- <scan Runs="37865-37874" Save='nxspe, summary' FriendlyName="Reduction2" 
 		UseIncidentEnergyGuess='false' TimeZeroGuess='4.2' IncidentEnergyGuess='710.45' 
 		EnergyTransferRange='-100,1,685' GroupingFile='powder' ScanType='single'/> 
+		
 		<scan Runs="37878-37893,37895" Save='nxspe, summary' FriendlyName="Reduction2" 
 		UseIncidentEnergyGuess='false' TimeZeroGuess='4.2' IncidentEnergyGuess='710.45' 
 		EnergyTransferRange='-100,1,685' GroupingFile='powder' ScanType='single'/> -->
 
-	<!-- NF 2.65 K <scan Runs="37878" FriendlyName="Reduction2_NF_2p65filteredwide" 
+	<!-- NF 2.65 K
+		<scan Runs="37878" FriendlyName="Reduction2_NF_2p65filteredwide" 
 		ScanType='single' CorrectKiKf='0' /> -->
 
 
-	<scan Runs="37878-37879" Save='summary' FriendlyName="STEPC"
+	<!-- <scan Runs="37878-37879" Save='summary' FriendlyName="STEPC"
 		FriendlyNameLogs='SensorB' UseIncidentEnergyGuess='true'
 		TimeZeroGuess='4.2' IncidentEnergyGuess='710.45' GroupingFile='powder'
-		ScanType='step' />
+		ScanType='step' /> -->
 
 	<!-- <scan Runs="37878" Save='summary' FriendlyName="SINGLEC" FriendlyNameLogs='SensorB' 
 		UseIncidentEnergyGuess='true' TimeZeroGuess='4.2' IncidentEnergyGuess='710.45' 
@@ -58,10 +75,13 @@
 	<!--<scan runs="37878-37893" save='nxspe, summary' friendlyname="Reduction2_NF_2p65filterednarrow" 
 		calce='false' t0='4.2' efixed='710.45' emin = "-100" emax="685" ebin="1" 
 		grouping='powder' scantype='single' filternames='SensorB' filtermin='2.55' 
-		filtermax='2.75'/> <scan runs="37878-37893" save='nxspe, summary' friendlyname="Reduction2_NF_2p65tempsweep" 
+		filtermax='2.75'/>
+		
+		<scan runs="37878-37893" save='nxspe, summary' friendlyname="Reduction2_NF_2p65tempsweep" 
 		friendlynamelogs='SensorB' calce='false' t0='4.2' efixed='710.45' emin = 
 		"-100" emax="685" ebin="1" grouping='powder' scantype='sweep' logvalue='SensorB' 
 		logvaluemin='2.35' logvaluemax='2.95' logvaluestep='0.01'/> -->
+		
 	<!-- SF 1.09 K <scan runs="37894-37898,37900-37902" save='nxspe, summary' 
 		friendlyname="Reduction2" calce='false' t0='4.2' efixed='710.45' emin = "-100" 
 		emax="685" ebin="1" grouping='powder' scantype='single'/> -->

@@ -253,18 +253,28 @@ class ScanForm(forms.Form):
                                       choices= ConfigurationForm.save_choices, help_text="Hit 'Ctrl' for multiple selection." )
     
     friendly_name = forms.CharField(required=False, initial='Scan for ', widget=forms.TextInput(attrs={'size':'60'}))
+    friendly_name_logs = forms.CharField(required=False, initial='Log for ', widget=forms.TextInput(attrs={'size':'60'}))
     
-    calc_e = forms.BooleanField(required=False, initial=False, help_text=r"Set to true to fit the beam monitors for the incident energy. If the efixed keyvalue is set, then calce will use that value as the starting point for the fitting. If efixed is not set, then calce will use the value that was saved to the data file during the measurement as the starting point for the fitting. Set typically line by line in the data section, in the defaults section, or in the instrument defaults file. If calce is set to false, one must set the efixed value.")
+    calculate_energy = forms.BooleanField(required=False, initial=False, help_text=r"Set to true to fit the beam monitors for the incident energy. If the efixed keyvalue is set, then calce will use that value as the starting point for the fitting. If efixed is not set, then calce will use the value that was saved to the data file during the measurement as the starting point for the fitting. Set typically line by line in the data section, in the defaults section, or in the instrument defaults file. If calce is set to false, one must set the efixed value.")
     
     t_0 = forms.FloatField(required=False, help_text=r"This is the time in microseconds that the peak in the neutron pulse takes to leave the moderator. If the incident energy is fitted, than the value of t0 from this fit is used, regardless if t0 is set or not. The t0 value is typically set line by line in the data section or in the defaults section. Example: t0='12.75'.")
     
     energy_fixed = forms.FloatField(required=False, help_text=r"The incident energy in meV to be used for the data reduction. If calce is set to false, then efixed must be set and will be used without fitting the beam monitors for the incident energy. Set typically line by line in the data section or in the defaults section. Example: efixed='12.7'.")
     
+    # Energy binning fields
     energy_min = forms.FloatField(required=False, help_text=r"The minimum energy transfer in meV for the energy binning. The default value in the code is set to choose emin as -0.5 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emin='-10'.")
     energy_max = forms.FloatField(required=False, help_text=r"The maximum energy transfer in meV for the energy binning. The default value in the code is set to choose emax as 1.0 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emax='10'.")
-
     energy_bin = forms.FloatField(required=False, initial=100, help_text=r"Bin size in energy transfer in meV units for energy binning. Default value in the code is set to choose ebin based upon 100 steps between emin and emax. Set typically line by line in the data section or in the defaults section. Example, ebin='0.5'.") 
-
+    
+    #guess
+    use_incident_energy_guess = forms.BooleanField(required=False, initial=False,
+                                                   widget=forms.CheckboxInput(attrs={'onchange':'show_hide_guess(this.id);',
+                                                                                     'onload':'show_hide_guess(this.id);'}))
+    time_zero_guess = forms.FloatField(required=False)
+    incident_energy_guess = forms.FloatField(required=False)
+    energy_transfer_range = forms.RegexField(regex=r'^-?\d+,\d+,-?\d+$', required=False, 
+                                             help_text="Use a range of the form  <Low>,<Width>,<High>. E.g.: -100,1,685.",
+                                             error_messages={'invalid': "Use a range of the form  <Low>,<Width>,<High>."})
     
     grouping_choices = [(i,i) for i in ["%dx%d"%(v,h) for v in [1,2,4,8,16,32,64,128] for h in [1,2,4,8]] + ['powder']]
     grouping = forms.ChoiceField(choices=grouping_choices,initial=grouping_choices[0],required=True, 
@@ -276,6 +286,9 @@ class ScanForm(forms.Form):
     
     
     def clean(self):
+        """
+        It will be used mainly to test boundaries, e.g., max > min, etc
+        """
         cleaned_data = super(ScanForm, self).clean()
         energy_min = cleaned_data.get("energy_min")
         energy_max = cleaned_data.get("energy_max")

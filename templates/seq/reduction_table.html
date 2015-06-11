@@ -277,19 +277,30 @@ $("#global_form :input").change(function() {
     $('#cancel_button').show();
 });
 
+$(document).ready(function() {
+	//Hide the energy guess checkbox depending fields
+    $('.input_energy_guess').each(function () {
+       show_hide_guess(this.id);
+    }).click(function() {
+    	if( $(this).is(':checked')) {
+	        show_hide_guess(this.id);
+	    } else {
+	        show_hide_guess(this.id);
+	    }
+	}); 
+});
 
 function show_hide_guess(id) {
-	console.log(id);
 	//id_sf-0-use_incident_energy_guess
 	var prefix_regex = new RegExp('(id_\\w+-\\d+-)');
 	matches = id.match(prefix_regex);
 	prefix = matches[0];
 	
-	elems = $("#" + prefix + "time_zero_guess");
-	elems = elems.add($("#" + prefix + "incident_energy_guess") );
-    elems = elems.add($("#" + prefix + "energy_transfer_range") );
-    elems = elems.parent().parent();
-    
+	elems = $("input[id^='" + prefix+ "'].depends_on_energy_guess"); 
+//	elems = $("#" + prefix + "time_zero_guess");
+//	elems = elems.add($("#" + prefix + "incident_energy_guess") );
+//   elems = elems.add($("#" + prefix + "energy_transfer_range") );
+    elems = elems.parent().parent();   
     elems.hide();
     
 	if ($("#"+id).is(':checked')) {

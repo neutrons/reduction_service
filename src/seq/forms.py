@@ -268,13 +268,15 @@ class ScanForm(forms.Form):
     
     #guess
     use_incident_energy_guess = forms.BooleanField(required=False, initial=False,
-                                                   widget=forms.CheckboxInput(attrs={'onchange':'show_hide_guess(this.id);',
-                                                                                     'onload':'show_hide_guess(this.id);'}))
-    time_zero_guess = forms.FloatField(required=False)
-    incident_energy_guess = forms.FloatField(required=False)
+                                                   widget=forms.CheckboxInput(attrs={'class':'input_energy_guess'}))
+    time_zero_guess = forms.FloatField(required=False,
+                                       widget=forms.NumberInput(attrs={'class':'depends_on_energy_guess'}) )
+    incident_energy_guess = forms.FloatField(required=False,
+                                             widget=forms.NumberInput(attrs={'class':'depends_on_energy_guess'}) )
     energy_transfer_range = forms.RegexField(regex=r'^-?\d+,\d+,-?\d+$', required=False, 
                                              help_text="Use a range of the form  <Low>,<Width>,<High>. E.g.: -100,1,685.",
-                                             error_messages={'invalid': "Use a range of the form  <Low>,<Width>,<High>."})
+                                             error_messages={'invalid': "Use a range of the form  <Low>,<Width>,<High>."},
+                                             widget=forms.TextInput(attrs={'class':'depends_on_energy_guess'}) )
     
     grouping_choices = [(i,i) for i in ["%dx%d"%(v,h) for v in [1,2,4,8,16,32,64,128] for h in [1,2,4,8]] + ['powder']]
     grouping = forms.ChoiceField(choices=grouping_choices,initial=grouping_choices[0],required=True, 

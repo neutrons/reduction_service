@@ -649,7 +649,7 @@ def configuration_query(request, remote_set_id, instrument_name):
     template_values = view_util.set_into_template_values_plots(template_values, request, first_job)
     # Link to download all I(q) files
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    return render_to_response('reduction/configuration_query.html', template_values)
+    return render_to_response('%s/configuration_query.html'%instrument_name_lowercase, template_values)
     
 @login_required
 def configuration_iq(request, remote_set_id, instrument_name):

@@ -288,7 +288,7 @@ def reduction_jobs(request, instrument_name):
         status_data.append(j_data)
     
     # Get config jobs
-    config_jobs = RemoteJobSet.objects.filter(transaction__owner=request.user)
+    config_jobs = RemoteJobSet.objects.filter(transaction__owner=request.user).filter(configuration__instrument__name=instrument_name )
     config_data = []
     for job in config_jobs:
         logger.debug("Config jobs: %s"%job)

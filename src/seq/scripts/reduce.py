@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""
+
+SEQ Reduction script
+
+"""
 
 #DGS_REDUCTION_PATH = "/SNS/SEQ/shared/mantid/matts_scripts"
 DGS_REDUCTION_PATH = "/SNS/ARCS/shared/mantidscripts/dgsreduction/V6p0/newdgs"

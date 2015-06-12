@@ -243,6 +243,7 @@ class ScanForm(forms.Form):
     reduction_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     expt_id = forms.IntegerField(required=False, widget=forms.HiddenInput)
     experiment = forms.CharField(required=False, initial='uncategorized',widget=forms.HiddenInput)
+    
     # Scans:    
     data_runs = forms.RegexField(regex=ranged_field_regex, required=True, help_text=ranged_field_help_text,
                                    error_messages=ranged_field_error_message, widget=forms.TextInput(attrs={'size':'60'}))
@@ -254,17 +255,6 @@ class ScanForm(forms.Form):
     
     friendly_name = forms.CharField(required=False, initial='Scan for ', widget=forms.TextInput(attrs={'size':'60'}))
     friendly_name_logs = forms.CharField(required=False, initial='Log for ', widget=forms.TextInput(attrs={'size':'60'}))
-    
-    calculate_energy = forms.BooleanField(required=False, initial=False, help_text=r"Set to true to fit the beam monitors for the incident energy. If the efixed keyvalue is set, then calce will use that value as the starting point for the fitting. If efixed is not set, then calce will use the value that was saved to the data file during the measurement as the starting point for the fitting. Set typically line by line in the data section, in the defaults section, or in the instrument defaults file. If calce is set to false, one must set the efixed value.")
-    
-    t_0 = forms.FloatField(required=False, help_text=r"This is the time in microseconds that the peak in the neutron pulse takes to leave the moderator. If the incident energy is fitted, than the value of t0 from this fit is used, regardless if t0 is set or not. The t0 value is typically set line by line in the data section or in the defaults section. Example: t0='12.75'.")
-    
-    energy_fixed = forms.FloatField(required=False, help_text=r"The incident energy in meV to be used for the data reduction. If calce is set to false, then efixed must be set and will be used without fitting the beam monitors for the incident energy. Set typically line by line in the data section or in the defaults section. Example: efixed='12.7'.")
-    
-    # Energy binning fields
-    energy_min = forms.FloatField(required=False, help_text=r"The minimum energy transfer in meV for the energy binning. The default value in the code is set to choose emin as -0.5 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emin='-10'.")
-    energy_max = forms.FloatField(required=False, help_text=r"The maximum energy transfer in meV for the energy binning. The default value in the code is set to choose emax as 1.0 times the incident energy. Set typically line by line in the data section or in the defaults section. Example, emax='10'.")
-    energy_bin = forms.FloatField(required=False, initial=100, help_text=r"Bin size in energy transfer in meV units for energy binning. Default value in the code is set to choose ebin based upon 100 steps between emin and emax. Set typically line by line in the data section or in the defaults section. Example, ebin='0.5'.") 
     
     #guess
     use_incident_energy_guess = forms.BooleanField(required=False, initial=False,
@@ -287,16 +277,16 @@ class ScanForm(forms.Form):
                                   help_text=r"The scantype keywords determines how runs are combined in a given call of the <scan> reduction line. scantype can be, single, step, or sweep. single will combine all of the data together for a single reduction. step will individually reduce all of the given runs listed. sweep will combine all of the data together, and then bin them according to the log parameter chosen by the keywords logvalue, logvaluemin, logvaluemax, and logvaluestep. Note that currently there must be more than one value in the logvalue for sweep mode to work correctly (see Appendix 4). Example: scantype='step'.")
     
     
-    def clean(self):
-        """
-        It will be used mainly to test boundaries, e.g., max > min, etc
-        """
-        cleaned_data = super(ScanForm, self).clean()
-        energy_min = cleaned_data.get("energy_min")
-        energy_max = cleaned_data.get("energy_max")
-        if energy_max < energy_min:
-            raise forms.ValidationError("Energy min is higher than Energy max!")
-        return cleaned_data
+#     def clean(self):
+#         """
+#         It will be used mainly to test boundaries, e.g., max > min, etc
+#         """
+#         cleaned_data = super(ScanForm, self).clean()
+#         energy_min = cleaned_data.get("energy_min")
+#         energy_max = cleaned_data.get("energy_max")
+#         if energy_max < energy_min:
+#             raise forms.ValidationError("Energy min is higher than Energy max!")
+#         return cleaned_data
 
     
     def as_table(self):
@@ -569,10 +559,11 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
         for item in reduction_config.reductions.all():
             props = ReductionOptions.data_from_db(self.request.user, item.pk)
             reduction_values.append(props)
-        
-        
+                
         data = configuration_values
         data["reduction"] = reduction_values
+        
+        logger.debug(pprint.pformat(data))
         
         logger.debug( pprint.pformat(data))
         

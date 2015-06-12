@@ -56,20 +56,19 @@ def configuration_submit(request, config_id):
         
         code = forms_handler.get_mantid_script(None, transaction.directory)
         
-        # REMOVE!
-        import random
-        jobID =  random.randint(1,1000)
-#         jobID = remote.view_util.submit_job(request, transaction, code)
+        jobID = remote.view_util.submit_job(request, transaction, code)
         
         if jobID is not None:
             # In EQSANS one config gas several reductions. For DEQ is different. We just use one reduction! 
-#             job = RemoteJob(reduction=reductions[0],
-#                             remote_id=jobID,
-#                             properties=reductions[0].properties,
-#                             transaction=transaction)
-#             job.save()
-#             job_set.jobs.add(job) 
-            messages.add_message(request, messages.SUCCESS, message="Jobt %s sucessfully submitted."%jobID )
+            job = RemoteJob(reduction=reductions[0],
+                            remote_id=jobID,
+                            properties=reductions[0].properties,
+                            transaction=transaction)
+            job.save()
+            job_set.jobs.add(job) 
+            messages.add_message(request, messages.SUCCESS, message="Job %s sucessfully submitted."%jobID )
+        else:
+            messages.add_message(request, messages.ERROR, message="The job was not submitted. There was an internal problem with Fermi. The administrators have been notified.")
     
     redirect_url = reverse('configuration_options',
                            kwargs={'config_id' : config_id, 'instrument_name' : INSTRUMENT_NAME})

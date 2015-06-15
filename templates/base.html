@@ -215,9 +215,9 @@
 	{% if messages %}
 	    {% for message in messages %}
 	    	{% if message.tags %} 
-	    	<div class="message message-{{ message.tags }}">{{ message }}</div>
+	    	<div class="message message-{{ message.tags }}">{{ message|safe }}</div>
 	    	{% else %}
-	    	<div class="message">{{ message }}</div>
+	    	<div class="message">{{ message|safe }}</div>
 	    	{% endif %}
 	    {% endfor %}
 	{% endif %}

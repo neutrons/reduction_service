@@ -55,5 +55,18 @@ background-color: #d9edf7;
 border-color: #bce8f1;
 }
 
-
-
+.message .message-link {
+  font-weight: bold;
+}
+.message-success .message-link {
+  color: #2b542c;
+}
+.message-info .message-link {
+  color: #245269;
+}
+.message-warning .message-link {
+  color: #66512c;
+}
+.message-danger .message-link {
+  color: #843534;
+}

@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <dgsreduction>
 	<!-- DEFAULTS section -->
-	<defaults Instrument="SEQ" FilterBadPulses="{{ filter_bad_pulses }}" Save="{{ save_format | join:"," }}" />
+	<defaults Instrument="SEQUOIA" FilterBadPulses="{{ filter_bad_pulses }}" Save="{{ save_format | join:"," }}" />
 
 
 	<!-- CALIBRATION AND MaskING section -->
@@ -30,8 +30,8 @@
 		
 		<Mask HighCounts='{{high_counts}}' LowCounts='{{low_counts}}' HighOutlier='{{high_outlier}}'
 			LowOutlier='{{low_outlier}}' MedianTestHigh='{{median_test_high}}' MedianTestLow='{{median_test_low}}'
-			MedianTestCorrectForSolidAngle='{{median_test_correct_for_solid_angle}}' ErrorBarCriterion='{{error_bar_criterion}}'
-			MedianTestLevelsUp='{{median_test_levels_up}}' />
+			MedianTestCorrectForSolidAngle='{{median_test_correct_for_solid_angle|yesno:"1,0"}}' ErrorBarCriterion='{{error_bar_criterion}}'
+			MedianTestLevelsUp='{{median_test_levels_up|yesno:"1,0"}}' />
 
 	</calibration>
 

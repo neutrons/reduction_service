@@ -22,13 +22,14 @@ The XML content must be assigned below!
 
 XML_CONTENT = '''{{ xml_content|safe }}'''
 
-import dgsreductionmantid
+from dgsreductionmantid import dgsreduction
 import tempfile
 
 f = tempfile.NamedTemporaryFile()
 try:
-    f.write(XML_CONTENT)    
-    dgsreduction(XMLfile=f)
+    f.write(XML_CONTENT)  
+    f.flush()  
+    dgsreduction(XMLfile=f.name)
     
 finally:
     # Automatically cleans up the file

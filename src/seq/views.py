@@ -51,7 +51,7 @@ def configuration_submit(request, config_id):
         # Start a new transaction
         transaction = remote.view_util.transaction(request, start=True)
         if transaction is None:
-             messages.add_message(request, messages.ERROR, message="Could not get a transaction ID from Fermi. Try the submission again...")
+            messages.add_message(request, messages.ERROR, message="Could not get a transaction ID from Fermi. Try the submission again...")
         else:
             job_set = RemoteJobSet(transaction=transaction,
                                    configuration=reduction_config)

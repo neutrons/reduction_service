@@ -478,6 +478,7 @@ def job_details(request, job_id, instrument_name):
     
     # Go through the files and find data to plot
     if 'job_files' in template_values and 'trans_id' in template_values:
+        logger.debug(pprint.pformat(template_values['job_files']))
         view_util = reduction.view_util.import_module_from_app(instrument_name_lowercase,'view_util')
         template_values = view_util.set_into_template_values_job_files(template_values, request, remote_job)
 
@@ -643,7 +644,8 @@ def configuration_query(request, remote_set_id, instrument_name):
     
     # Show list of files in the transaction
     template_values['job_files'] = remote.view_util.query_files(request, job_set.transaction.trans_id)
-
+    logger.debug(pprint.pformat(template_values['job_files']))
+    
     # I(q) plots
     view_util = reduction.view_util.import_module_from_app(instrument_name_lowercase,'view_util')
     template_values = view_util.set_into_template_values_plots(template_values, request, first_job)

@@ -18,6 +18,7 @@
    
   <script>
  // File preview
+ // Need to escape the XML characters!!
   function preview_pre(title, url) {
   	var windowWidth = $(window).width();
 	var windowHeight = $(window).height();
@@ -25,7 +26,9 @@
   		url: url,
   		success: function(result){
   			if ( $( "#dialog-preview" ).length ) {$("#dialog-preview").remove();}  			
-        	$("body").append('<div id="dialog-preview"><pre><code>' + result + '</code></pre></div>');
+        	$("body").append('<div id="dialog-preview"><pre><code>' + 
+        	  result.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;") 
+        	  + '</code></pre></div>');
         	$("#dialog-preview").dialog({
         		title: title,
         		resizable: false,

@@ -478,11 +478,10 @@ def job_details(request, job_id, instrument_name):
     
     # Go through the files and find data to plot
     if 'job_files' in template_values and 'trans_id' in template_values:
-        logger.debug(pprint.pformat(template_values['job_files']))
         view_util = reduction.view_util.import_module_from_app(instrument_name_lowercase,'view_util')
         template_values = view_util.set_into_template_values_job_files(template_values, request, remote_job)
 
-    #logger.debug(pprint.pformat(template_values))
+    logger.debug(pprint.pformat(template_values))
     return render_to_response('reduction/reduction_job_details.html',
                               template_values)
 
@@ -651,6 +650,9 @@ def configuration_query(request, remote_set_id, instrument_name):
     template_values = view_util.set_into_template_values_plots(template_values, request, first_job)
     # Link to download all I(q) files
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
+    
+    logger.debug(pprint.pformat(template_values))
+    
     return render_to_response('%s/configuration_query.html'%instrument_name_lowercase, template_values)
     
 @login_required

@@ -137,8 +137,10 @@ def set_into_template_values_plots(template_values, request, first_job):
     if first_job is not None and template_values['job_files'] is not None:
         for f in template_values['job_files']:
             if f.endswith('_Iq.txt'):
-                plot_info = process_iq_output(request, first_job, 
-                                                        template_values['trans_id'], f)
+                plot_info = process_iq_output(request,
+                                              first_job,
+                                              template_values['trans_id'],
+                                              f)
                 plot_info['name'] = f
                 plot_data.append(plot_info)
     template_values['plot_data'] = plot_data

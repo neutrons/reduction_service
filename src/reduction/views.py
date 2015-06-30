@@ -49,7 +49,8 @@ def reduction_home(request, instrument_name):
     
     logger.debug(pprint.pformat(template_values))
     return render_to_response('reduction/reduction_home.html',
-                              template_values)
+                              template_values,
+                              context_instance=RequestContext(request))
 
 
 @login_required
@@ -169,6 +170,7 @@ def reduction_delete(request, reduction_id, instrument_name):
     
     reduction_proc = get_object_or_404(ReductionProcess, pk=reduction_id, owner=request.user)
     reduction_proc.delete()
+    messages.add_message(request, messages.SUCCESS, "Reduction %s successfully deleted."%(reduction_id))
     if 'back_url' in request.GET:
         return redirect(request.GET['back_url'])
     return redirect(reverse('reduction_home', args=[instrument_name]))
@@ -317,7 +319,8 @@ def reduction_jobs(request, instrument_name):
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     logger.debug(pprint.pformat(template_values))   
     return render_to_response('%s/reduction_jobs.html' % instrument_name,
-                              template_values)    
+                              template_values,
+                              context_instance=RequestContext(request))
     
 
 @login_required
@@ -347,7 +350,8 @@ def reduction_script(request, reduction_id, instrument_name):
                        'code': instrument_forms.ReductionOptions.as_mantid_script(data) }
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     logger.debug(pprint.pformat(template_values))
-    return render_to_response('reduction/reduction_script.html', template_values)
+    return render_to_response('reduction/reduction_script.html', template_values,
+                              context_instance=RequestContext(request))
 
 @login_required
 def py_reduction_script(request, reduction_id, instrument_name):
@@ -438,7 +442,7 @@ def reduction_submit(request, reduction_id, instrument_name):
     
     messages.add_message(request, messages.SUCCESS, 
                          message="Job %s sucessfully submitted. <a href='%s' class='message-link'>Click to see the results this job </a>."%
-                                     (job.id, reverse('reduction_job_details', kwargs={'remote_job_id' : job.id, 'instrument_name' : "seq"})))
+                                     (job.id, reverse('reduction_job_details', kwargs={'remote_job_id' : job.id, 'instrument_name' : instrument_name_lowercase})))
     
     return redirect(reverse('reduction_options',
                                   kwargs={'reduction_id' : reduction_id, 
@@ -486,7 +490,8 @@ def job_details(request, remote_job_id, instrument_name):
 
     logger.debug(pprint.pformat(template_values))
     return render_to_response('reduction/reduction_job_details.html',
-                              template_values)
+                              template_values,
+                              context_instance=RequestContext(request))
 
 @login_required
 def configuration_options(request, instrument_name, config_id=None):
@@ -577,6 +582,8 @@ def configuration_job_delete(request, config_id, reduction_id, instrument_name):
     if reduction_proc in reduction_config.reductions.all():
         reduction_config.reductions.remove(reduction_proc)
         reduction_proc.delete()
+        messages.add_message(request, messages.SUCCESS, "Reduction %s from Configuration %s successfully deleted."%
+                             (reduction_id,config_id))
     return redirect(reverse('configuration_options', kwargs={'config_id' : config_id,
                                                              'instrument_name' : instrument_name_lowercase}))
     
@@ -596,7 +603,9 @@ def configuration_delete(request, config_id, instrument_name):
     for item in reduction_config.reductions.all():
         reduction_config.reductions.remove(item)
         item.delete()
+        messages.add_message(request, messages.SUCCESS, "Reduction %s successfully deleted."%(item.id))
     reduction_config.delete()
+    messages.add_message(request, messages.SUCCESS, "Configuration %s successfully deleted."%(config_id))
     if 'back_url' in request.GET:
         return redirect(request.GET['back_url'])
     return redirect(reverse('reduction_home', args=[instrument_name_lowercase]))
@@ -658,7 +667,8 @@ def configuration_query(request, remote_set_id, instrument_name):
     
     logger.debug(pprint.pformat(template_values))
     
-    return render_to_response('%s/configuration_query.html'%instrument_name_lowercase, template_values)
+    return render_to_response('%s/configuration_query.html'%instrument_name_lowercase, template_values,
+                              context_instance=RequestContext(request))
     
 @login_required
 def configuration_iq(request, remote_set_id, instrument_name):

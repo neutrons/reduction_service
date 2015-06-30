@@ -22,7 +22,7 @@ urlpatterns = patterns('',
     url(r'^(?P<instrument_name>%s)/reduction/(?P<reduction_id>\d+)/delete$' % valid_instruments, 'reduction.views.reduction_delete', name='reduction_delete'),
     
     url(r'^(?P<instrument_name>%s)/jobs/$' % valid_instruments, 'reduction.views.reduction_jobs', name='reduction_jobs'),
-    url(r'^(?P<instrument_name>%s)/query/(?P<job_id>[\w\-\.]+)/$' % valid_instruments, 'reduction.views.job_details', name='reduction_job_details'),
+    url(r'^(?P<instrument_name>%s)/query/(?P<remote_job_id>[\w\-\.]+)/$' % valid_instruments, 'reduction.views.job_details', name='reduction_job_details'),
     
     # Those are instrument specific. If the regular expression is met above this is never called!
     # url(r'^eqsans/', include('eqsans.urls', namespace='eqsans')),

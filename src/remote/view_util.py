@@ -15,6 +15,7 @@ import sys
 from models import Transaction
 from reduction.models import RemoteJob, RemoteJobSet
 from django.conf import settings
+from django.contrib import messages
 
 logger = logging.getLogger('remote')
 
@@ -91,6 +92,7 @@ def authenticate(request):
     except Exception, e:
         logger.error("Could not authenticate with Fermi: %s" % sys.exc_value)
         logger.exception(str(e))
+        messages.add_message(request, messages.ERROR, "Could not authenticate with Fermi: %s" % sys.exc_value)
     return 500, reason
 
 def transaction(request, start=False):
@@ -99,9 +101,6 @@ def transaction(request, start=False):
         @param request: request object
         @param start: if True, a new transaction will be started if we didn't already have one
     """
-    
-    
-    
     if start is not True:
         transID = request.session.get('fermi_transID', None)
         if transID is not None:
@@ -129,8 +128,10 @@ def transaction(request, start=False):
         transaction_obj.save()
         logger.debug("Transaction created: %s"%transaction_obj)
         return transaction_obj
-    except:
+    except Exception, e:
         logger.error("Could not get new transaction ID: %s" % sys.exc_value)
+        logger.exception(str(e))
+        messages.add_message(request, messages.ERROR, "Could not get new transaction ID: %s" % sys.exc_value)
     return None
 
 def stop_transaction(request, trans_id):
@@ -150,8 +151,12 @@ def stop_transaction(request, trans_id):
         
     if transaction_obj is None:
         logger.error("Local transaction %s does not exist" % trans_id)
+        messages.add_message(request, messages.ERROR, "Local transaction %s does not exist" % trans_id)
     elif not transaction_obj.owner == request.user:
         logger.error("User %s trying to stop transaction %s belonging to %s" % (request.user,
+                                                                                 trans_id,
+                                                                                 transaction_obj.owner))
+        messages.add_message(request, messages.ERROR, "User %s trying to stop transaction %s belonging to %s" % (request.user,
                                                                                  trans_id,
                                                                                  transaction_obj.owner))
     else:
@@ -178,8 +183,12 @@ def stop_transaction(request, trans_id):
             info = json.loads(r.read())
             if "Err_Msg" in info:
                 logger.error("MantidRemote: %s" % info["Err_Msg"])
+                messages.add_message(request, messages.ERROR, "MantidRemote: %s" % info["Err_Msg"])
+        else:
+            messages.add_message(request, messages.SUCCESS, "Transaction %s successfully stopped"%trans_id )
     except:
         logger.error("Could not close Fermi transaction: %s" % sys.exc_value)
+        messages.add_message(request, messages.ERROR, "Could not close Fermi transaction: %s" % sys.exc_value)
 
     
 def submit_job(request, transaction, script_code, script_name='web_submission.py'):
@@ -208,17 +217,19 @@ def submit_job(request, transaction, script_code, script_name='web_submission.py
         resp = json.loads(r.read())
         if "Err_Msg" in resp:
             logger.error("MantidRemote: %s" % resp["Err_Msg"])
+            messages.add_message(request, messages.ERROR, "MantidRemote: %s" % resp["Err_Msg"])
         if 'JobID' in resp:
             jobID = request.session['fermi_jobID'] = resp['JobID']
     except:
         logger.error("Could not submit job: %s" % sys.exc_value)
+        messages.add_message(request, messages.ERROR, "Could not submit job: %s" % sys.exc_value)
     return jobID
 
-def query_job(request, job_id):
+def query_remote_job(request, remote_job_remote_id):
     """
         Query Fermi for a specific job
         @param request: request object
-        @param job_id: remote job id string
+        @param remote_job_remote_id: remote job id string
         
         The call to Fermi will look like this:
             https://fermi.ornl.gov/MantidRemote/query?JobID=7665
@@ -234,19 +245,21 @@ def query_job(request, job_id):
     """
     try:
         conn = httplib.HTTPSConnection(settings.FERMI_HOST, timeout=1.5)
-        conn.request('GET', '%squery?JobID=%s' % (settings.FERMI_BASE_URL, job_id),
+        conn.request('GET', '%squery?JobID=%s' % (settings.FERMI_BASE_URL, remote_job_remote_id),
                      headers={'Cookie':request.session.get('fermi', '')})
         r = conn.getresponse()
         if r.status == 200:
-            job_info = json.loads(r.read())[job_id]
+            job_info = json.loads(r.read())[remote_job_remote_id]
             job_info['CompletionDate'] = parse_datetime(job_info['CompletionDate'])
             job_info['StartDate'] = parse_datetime(job_info['StartDate'])
             job_info['SubmitDate'] = parse_datetime(job_info['SubmitDate'])
             return job_info
         else:
-            logger.error("Could not get job info: %s" % r.status)
+            logger.error("Could not get job info: %s %s" % (r.status,r.reason))
+            messages.add_message(request, messages.ERROR, "Could not get job info for job %s: %s %s" % (remote_job_remote_id, r.status,r.reason))
     except:
         logger.error("Could not get job info: %s" % sys.exc_value)
+        messages.add_message(request, messages.ERROR, "Could not get job info for job %s: %s" % (remote_job_remote_id, sys.exc_value))
     return None
 
 def get_remote_jobs(request):
@@ -280,6 +293,7 @@ def get_remote_jobs(request):
             status_data.append(jobs[key])
     except:
         logger.error("Could not connect to status page: %s" % sys.exc_value)
+        messages.add_message(request, messages.ERROR, "Could not connect to status page: %s" % sys.exc_value)
     
     return status_data
     
@@ -308,8 +322,10 @@ def query_files(request, trans_id):
             return file_list
         else:
             logger.error("Could not get files for transaction: %s" % r.status)
+            messages.add_message(request, messages.ERROR, "Could not get files for transaction: %s" % r.status)
     except:
         logger.error("Could not get files for transaction: %s" % sys.exc_value)
+        messages.add_message(request, messages.ERROR, "Could not get files for transaction: %s" % sys.exc_value)
     return None
 
 def download_file(request, trans_id, filename):
@@ -335,28 +351,31 @@ def download_file(request, trans_id, filename):
         else:
             logger.error("Could not get file from compute node: %s" % r.status)
             logger.error( r.read() )
+            messages.add_message(request, messages.ERROR, "Could not get file from compute node: %s" % r.status)
     except:
         logger.error("Could not get file from compute node: %s" % sys.exc_value)
+        messages.add_message(request, messages.ERROR, "Could not get file from compute node: %s" % sys.exc_value)
     return None
 
-def fill_job_dictionary(request, remote_job_id, **template_values):
+def fill_job_values(request, remote_job_remote_id, **template_values):
     """
-        Fill in a dictionary with job information
+        Fill in a dictionary with job information.
+        It does not access the database. Only gets information from fermi.
         @param request: request object
         @param remote_job_id: remote job id string
         @param template_values: dictionary to fill
     """
     # Verify whether we are dealing with a test job.
     # There is only one allowed test job and it has '-1' as its ID.
-    if remote_job_id == '-1':
+    if remote_job_remote_id == '-1':
         template_values['trans_id'] = -1
         template_values['job_files'] = ['4065_Iq.txt', '4065_Iqxy.nxs']
 
-    template_values['title'] = 'Job %s' % remote_job_id
-    template_values['job_id'] = remote_job_id
+    template_values['title'] = 'Job %s' % remote_job_remote_id
+    template_values['remote_job_remote_id'] = remote_job_remote_id
 
     # Query basic job info
-    job_info = query_job(request, remote_job_id)
+    job_info = query_remote_job(request, remote_job_remote_id)
     if job_info is None:
         template_values['user_alert'] = ["Could not find job on Fermi"]
         template_values['job_not_found'] = True

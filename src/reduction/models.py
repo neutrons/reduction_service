@@ -161,8 +161,13 @@ class ReductionConfiguration(models.Model):
             return ''
 
 class RemoteJob(models.Model):
+    '''
+    When accessing this model use:
+    remote_job_id for primary key
+    remote_job_remote_id for fermi id
+    '''
     reduction = models.ForeignKey(ReductionProcess)
-    remote_id = models.CharField(max_length = 30, unique=True)
+    remote_id = models.CharField(max_length = 30)#, unique=True)
     transaction = models.ForeignKey(Transaction)
     properties = models.TextField()
     plots = models.ManyToManyField(Plot1D, blank=True, related_name='_remote_job_plot+')
@@ -207,6 +212,7 @@ class RemoteJob(models.Model):
     def __str__(self):
         d = { 'reduction' : self.reduction,
         'remote_id' : self.remote_id,
+        'id' : self.pk,
         'transaction' : self.transaction}
         return str(d)
 

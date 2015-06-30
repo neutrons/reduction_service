@@ -15,14 +15,14 @@ import numpy
 import h5py
 import os
 
-def get_dummy_data(request, job_id):
+def get_dummy_data(request, remote_job_id):
     """
         Create a dummy job and plot data
         @param request: request object
         @param job_id: RemoteJob pk
     """
     try:
-        remote_job = RemoteJob.objects.get(remote_id=job_id)
+        remote_job = RemoteJob.objects.get(pk=remote_job_id)
     except:
         eqsans = Instrument.objects.get(name='eqsans')
         reduction = ReductionProcess(instrument=eqsans,
@@ -52,7 +52,7 @@ def get_dummy_data(request, job_id):
                        'reduction_id': remote_job.reduction.id,
                        'breadcrumbs': breadcrumbs,
                        'back_url': request.path}
-    template_values = remote.view_util.fill_job_dictionary(request, job_id, **template_values)
+    template_values = remote.view_util.fill_job_values(request, remote_job.remote_id, **template_values)
     template_values = users.view_util.fill_template_values(request, **template_values)
     template_values = remote.view_util.fill_template_values(request, **template_values)
     

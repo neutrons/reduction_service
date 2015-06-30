@@ -80,16 +80,16 @@
 		      {% endfor %}
 	      {% endif %}
           {% endif %}
-      	  {% block jobs_instrument_specific %} 
-      	  
-      	  {% endblock %}
+          
+      	  {% block jobs_instrument_specific %} {% endblock %}
+          
           {% if reduction_id %}
-          <li><a href="{% url 'reduction_submit' instrument reduction_id%}" title="Submit this reduction job">submit this job</a></li>
-          {% if existing_jobs and existing_jobs|length > 0 %}
-          {% for job in existing_jobs %}
-          <li><a href="{% url 'reduction_job_details' instrument job.remote_id %}" title="See job details">job {{ job.remote_id }}</a></li>
-          {% endfor %}
-          {% endif %}
+	          <li><a href="{% url 'reduction_submit' instrument reduction_id%}" title="Submit this reduction job">submit this job</a></li>
+	          {% if existing_jobs and existing_jobs|length > 0 %}
+		          {% for job in existing_jobs %}
+		          <li><a href="{% url 'reduction_job_details' instrument job.id %}" title="See job details">job {{ job.id }}</a></li>
+		          {% endfor %}
+	          {% endif %}
           {% endif %}
           {% if trans_id %}
           <li><a href="{% url 'remote_stop_transaction' trans_id %}?back_url={% url 'reduction_jobs' instrument %}" title="Delete this job and all the files associated with this transaction">delete this job</a></li>

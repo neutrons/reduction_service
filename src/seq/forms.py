@@ -352,7 +352,7 @@ class ScanForm(forms.Form):
         if reduction_id is not None:
             reduction_proc = get_object_or_404(ReductionProcess, pk=reduction_id, owner=user)
             # If the user changed the data to be reduced, create a new reduction process entry
-            new_reduction = not reduction_proc.data_file==self.cleaned_data['data_file']
+            new_reduction = not str(reduction_proc.data_file) == str(self.cleaned_data['data_file'])
             # If the reduction process is configured and the config isn't the provided one
             config_obj = reduction_proc.get_config()
             new_reduction = new_reduction or (config_obj is not None and not config_obj.id == config_id)

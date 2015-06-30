@@ -28,6 +28,8 @@ def configuration_submit(request, config_id):
     /seq/configuration/(?P<config_id>\d+)/submit$
     http://localhost:8000/seq/configuration/75/submit
     
+    Contrary to EQSANS, for SEQ, 1 configuration has 1 reduction!
+    
     @param request: request object
     @param config_id: pk of configuration
     """
@@ -64,13 +66,15 @@ def configuration_submit(request, config_id):
     #         jobID = random.randrange(9899898)
             
             if jobID is not None:
-                # In EQSANS one config gas several reductions. For DEQ is different. We just use one reduction! 
-                job = RemoteJob(reduction=reductions[0],
-                                remote_id=jobID,
-                                properties=reductions[0].properties,
-                                transaction=transaction)
-                job.save()
-                job_set.jobs.add(job) 
+                # In EQSANS one config has several reductions. For QEQ is different. We just use one reduction! 
+                # However the remote job must have entries for all the redution processes:
+                for r in reductions:
+                    job = RemoteJob(reduction=r,
+                                    remote_id=jobID,
+                                    properties=r.properties,
+                                    transaction=transaction)
+                    job.save()
+                    job_set.jobs.add(job) 
                 messages.add_message(request, messages.SUCCESS, 
                                      message="Job set %s sucessfully submitted. <a href='%s' class='message-link'>Click to see the results this job set</a>."%
                                      (job_set.id, reverse('configuration_query', kwargs={'remote_set_id' : job_set.id, 'instrument_name' : "seq"})))

@@ -47,7 +47,7 @@ def reduction_home(request, instrument_name):
                        'instrument' : instrument_name, }
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     
-    #logger.debug(pprint.pformat(template_values))
+    logger.debug(pprint.pformat(template_values))
     return render_to_response('reduction/reduction_home.html',
                               template_values)
 
@@ -75,7 +75,8 @@ def experiment(request, ipts, instrument_name):
         experiment_obj = uncategorized
     
     IS_UNCATEGORIZED = experiment_obj.is_uncategorized()
-
+    
+    #RIC: Don't understand this one!
     reduction_start_form = reduction.forms.ReductionStart(request.GET)
 
     icat_ipts = {}
@@ -105,10 +106,11 @@ def experiment(request, ipts, instrument_name):
         data_dict = r.get_data_dict()
         data_dict['id'] = r.id
         data_dict['config'] = r.get_config()
+        # For this reduction_process (r) check if there more more jobs, if so get the most recent!
         latest_job = reduction.view_util.get_latest_job(request, r)
         if latest_job is not None:
             data_dict['completed_job'] = reverse('reduction_job_details',
-                                                 kwargs={'job_id' : latest_job.remote_id,
+                                                 kwargs={'remote_job_id' : latest_job.pk,
                                                          'instrument_name': instrument_name_lowercase })
         try:
             run_id = int(data_dict['data_file'])
@@ -148,10 +150,12 @@ def experiment(request, ipts, instrument_name):
     if 'icat_error' in icat_ipts:
         template_values['user_alert'] = [icat_ipts['icat_error']]
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    logger.debug(pprint.pformat(configurations))
-    logger.debug(pprint.pformat(reductions))
+#     logger.debug(pprint.pformat(configurations))
+#     logger.debug(pprint.pformat(reductions))
+    logger.debug(pprint.pformat(template_values))
     return render_to_response('%s/experiment.html' % instrument_name_lowercase,
-                              template_values)
+                              template_values,
+                              context_instance=RequestContext(request))
     
 @login_required
 def reduction_delete(request, reduction_id, instrument_name):
@@ -177,7 +181,7 @@ def reduction_options(request, reduction_id=None, instrument_name=None):
     """
         Display the reduction options form:
         
-        If reduction_id exists already then it can be submitted as a new job
+        If reduction_id exists, it will populate the form with information from that reduction.
             
         @param request: request object
         @param reduction_id: pk of reduction process object
@@ -277,7 +281,8 @@ def reduction_jobs(request, instrument_name):
     for job in jobs:
         if not job.transaction.is_active or job.reduction.get_config() is not None:
             continue
-        j_data = {'id': job.remote_id,
+        j_data = {'remote_id': job.remote_id,
+                  'id': job.pk,
                   'name': job.reduction.name,
                   'reduction_id': job.reduction.id,
                   'start_date': job.transaction.start_time,
@@ -291,7 +296,6 @@ def reduction_jobs(request, instrument_name):
     config_jobs = RemoteJobSet.objects.filter(transaction__owner=request.user).filter(configuration__instrument__name=instrument_name )
     config_data = []
     for job in config_jobs:
-        logger.debug("Config jobs: %s"%job)
         if not job.transaction.is_active:
             continue
         j_data = {'id': job.id,
@@ -310,15 +314,10 @@ def reduction_jobs(request, instrument_name):
                        'back_url': request.path,
                        'breadcrumbs': breadcrumbs,
                        'instrument' : instrument_name, }
-    template_values = reduction_service.view_util.fill_template_values(request, **template_values)   
+    template_values = reduction_service.view_util.fill_template_values(request, **template_values)
+    logger.debug(pprint.pformat(template_values))   
     return render_to_response('%s/reduction_jobs.html' % instrument_name,
                               template_values)    
-
-
-
-
-
-
     
 
 @login_required
@@ -347,6 +346,7 @@ def reduction_script(request, reduction_id, instrument_name):
                        'breadcrumbs': breadcrumbs,
                        'code': instrument_forms.ReductionOptions.as_mantid_script(data) }
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
+    logger.debug(pprint.pformat(template_values))
     return render_to_response('reduction/reduction_script.html', template_values)
 
 @login_required
@@ -421,6 +421,7 @@ def reduction_submit(request, reduction_id, instrument_name):
                                                kwargs={'reduction_id' : reduction_id, 'instrument_name': instrument_name_lowercase}),
                            'breadcrumbs': breadcrumbs, }
         template_values = reduction_service.view_util.fill_template_values(request, **template_values)
+        logger.debug(pprint.pformat(template_values))
         return render_to_response('remote/failed_connection.html', template_values,
                                   context_instance=RequestContext(request))
 
@@ -435,28 +436,29 @@ def reduction_submit(request, reduction_id, instrument_name):
         job.save()
         logger.debug("Created a RemoteJob: %s",job)
     
-    messages.add_message(request, messages.SUCCESS, message="Job %s sucessfully submitted."%jobID)
+    messages.add_message(request, messages.SUCCESS, 
+                         message="Job %s sucessfully submitted. <a href='%s' class='message-link'>Click to see the results this job </a>."%
+                                     (job.id, reverse('reduction_job_details', kwargs={'remote_job_id' : job.id, 'instrument_name' : "seq"})))
+    
     return redirect(reverse('reduction_options',
                                   kwargs={'reduction_id' : reduction_id, 
                                           'instrument_name': instrument_name_lowercase}))
 
-
-
 @login_required
-def job_details(request, job_id, instrument_name):
+def job_details(request, remote_job_id, instrument_name):
     """
         Show status of a given remote job.
         
         @param request: request object
-        @param job_id: pk of the RemoteJob object
+        @param remote_job_id: pk of the RemoteJob object
         
     """
     instrument_name_lowercase = str.lower(str(instrument_name))
     instrument_name_capitals = str.capitalize(str(instrument_name))
     
-    logger.debug("Views: %s job_id=%s"%(inspect.stack()[0][3],job_id))
+    logger.debug("Views: %s job_id=%s"%(inspect.stack()[0][3],remote_job_id))
     
-    remote_job = get_object_or_404(RemoteJob, remote_id=job_id)
+    remote_job = get_object_or_404(RemoteJob, pk=remote_job_id)
 
     breadcrumbs = Breadcrumbs()
     breadcrumbs.append('%s reduction'%instrument_name_lowercase,reverse('reduction_home',
@@ -464,15 +466,16 @@ def job_details(request, job_id, instrument_name):
     breadcrumbs.append_reduction_options(instrument_name_lowercase, remote_job.reduction.id )
     breadcrumbs.append('jobs',reverse('reduction_jobs',
                                       kwargs={'instrument_name': instrument_name_lowercase }))
-    breadcrumbs.append("job %s" % job_id)
+    breadcrumbs.append("job %s" % remote_job_id)
     
     template_values = {'remote_job': remote_job,
+                       'remote_job_id' : remote_job.pk,
                        'parameters': remote_job.get_data_dict(),
                        'reduction_id': remote_job.reduction.id,
                        'breadcrumbs': breadcrumbs,
                        'back_url': request.path,
                        'instrument': instrument_name_lowercase}
-    template_values = remote.view_util.fill_job_dictionary(request, job_id, **template_values)
+    template_values = remote.view_util.fill_job_values(request, remote_job.remote_id, **template_values)
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     template_values['title'] = "%s job results"%instrument_name_capitals
     
@@ -553,7 +556,8 @@ def configuration_options(request, instrument_name, config_id=None):
     
     template_values.update( forms_handler.get_forms())
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
-    #logger.debug(pprint.pformat(template_values))
+    
+    logger.debug(pprint.pformat(template_values))
     return render_to_response('%s/reduction_table.html' % instrument_name_lowercase,
                               template_values, context_instance=RequestContext(request))
 
@@ -631,12 +635,13 @@ def configuration_query(request, remote_set_id, instrument_name):
     job_set_info = []
     first_job = None
     for item in job_set.jobs.all():
-        job_info = remote.view_util.query_job(request, item.remote_id)
+        job_info = remote.view_util.query_remote_job(request, item.remote_id)
         if job_info is not None:
             first_job = item
             job_info['reduction_name'] = item.reduction.name
             job_info['reduction_id'] = item.reduction.id
-            job_info['job_id'] = item.remote_id
+            job_info['id'] = item.id
+            job_info['remote_id'] = item.remote_id
             job_info['parameters'] = item.get_data_dict()
             job_set_info.append(job_info)
     template_values['job_set_info'] = job_set_info
@@ -659,7 +664,7 @@ def configuration_query(request, remote_set_id, instrument_name):
 def configuration_iq(request, remote_set_id, instrument_name):
     """
         @param request: request object
-        @param remote_id: pk of RemoteJobSet object
+        @param remote_set_id: pk of RemoteJobSet object
     """
     
     logger.debug("%s remote_set_id=%s"%(inspect.stack()[0][3],remote_set_id))

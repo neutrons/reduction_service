@@ -57,13 +57,14 @@ def authenticate(request):
     return redirect(redirect_url)
       
 @login_required
-def job_details(request, job_id):
+def job_details(request, remote_job_remote_id):
     """
-        Show job details
+        Show remote job details!
+        It doesn't access the database for this. 
         @param request: request object
         @param job_id: pk of the RemoteJob object
     """
-    template_values = remote.view_util.fill_job_dictionary(request, job_id)
+    template_values = remote.view_util.fill_job_values(request, remote_job_remote_id)
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     return render_to_response('remote/job_details.html',
                               template_values)

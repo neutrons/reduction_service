@@ -167,7 +167,7 @@ def download_link(request, job_id, filename):
         @param request: request object
         @param job_id: remote job ID 
     """
-    template_values = remote.view_util.fill_job_dictionary(request, job_id)
+    template_values = remote.view_util.fill_job_values(request, job_id)
     template_values = reduction_service.view_util.fill_template_values(request, **template_values)
     template_values = catalog.view_util.fill_template_values(request, **template_values)
     template_values['title'] = 'Download area'

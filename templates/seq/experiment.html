@@ -1,42 +1,38 @@
 {% extends "seq/base.html" %}
 {% load reduction_tags %}
 {% block content %}
+
 {% if is_categorized %}
-{% if icat_info %}
-<div class='tiled_area'><div class='flexible tile'>
-<b>Catalog information</b><p>
-Title: {{ icat_info.title|default:"-" }}<br>
-IPTS date: {{ icat_info.createTime|default:"-" }}<br>
-Run range: <b>{{ icat_info.run_range|default:"-" }}</b>
-</div></div>
-{% else %}
-<span class="ui-state-error-text"><span class="ui-icon ui-icon-info"></span>
- The experiment <i>{{ ipts_number }}</i> was not found in the catalog. Try using the following format <i>{{ ipts_number|ipts_suggestion }}</i>.
-</span>
-{% endif %}
+	{% if icat_info %}
+		<div class='tiled_area'><div class='flexible tile'>
+		<b>Catalog information</b><p>
+		Title: {{ icat_info.title|default:"-" }}<br>
+		IPTS date: {{ icat_info.createTime|default:"-" }}<br>
+		Run range: <b>{{ icat_info.run_range|default:"-" }}</b>
+		</div></div>
+	{% else %}
+		<span class="ui-state-error-text"><span class="ui-icon ui-icon-info"></span>
+		 The experiment <i>{{ ipts_number }}</i> was not found in the catalog. Try using the following format <i>{{ ipts_number|ipts_suggestion }}</i>.
+		</span>
+	{% endif %}
 {% endif %}
 
 {% if configurations %}
 <div class='display_section'>
-<h1>TO DO!</h1>
 <h2>Instrument configuration jobs</h2>
 <p >The following are all the configurations you have for this experiment. You can use a configurations to
 defined several reduction jobs and submit them all at once.</p>
 <table class="scrolling_table reduction_table">
   <thead>
     <tr>
-      <th>Configuration</th><th>Beam center run</th><th>Transmission</th><th>Dark current</th><th>Sensitivity</th><th>Sample aperture</th><th></th>
+      <th>Configuration</th><th>Filter Bad Pulses</th><th></th>
     </tr>
   </thead>
   <tbody>
   {% for c in configurations %}
     <tr class="{% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
         <td><a href="{% url 'configuration_options' config_id=c.id instrument_name=instrument%}" >{{ c.reduction_name }}</a></td>
-        <td><div class='subtitle_black'>{{ c.direct_beam_run }}</div></td>
-        <td>{% if c.transmission_empty %}<div class='subtitle_black'>T-Empty: {{ c.transmission_empty }}</div>{% endif %}</td>
-        <td>{% if c.dark_current_run %}<div class='subtitle_black'>{{ c.dark_current_run }}</div>{% endif %}</td>
-        <td>{% if c.sensitivity_file %}<div class='subtitle_black'>{{ c.sensitivity_file }}</div>{% endif %}</td>
-        <td>{% if c.sample_aperture_diameter %}<div class='subtitle_black'>{{ c.sample_aperture_diameter }} mm</div>{% endif %}</td>
+        <td><div class='subtitle_black'>{{ c.filter_bad_pulses }}</div></td>
         <td><a href="{% url 'configuration_delete' config_id=c.id instrument_name=instrument%}?back_url={{ back_url }}" title='Click to delete this configuration. ALL ASSOCIATED REDUCTION JOBS WILL BE DELETED'><span style='display:inline-block' class="ui-icon ui-icon-trash"></span></a>
         {% if c.latest_job %}<a title='Click to see latest results' href="{% url 'configuration_query' remote_set_id=c.latest_job instrument_name=instrument%}"><span style='display:inline-block' class="ui-icon ui-icon-info"></span></a>
         <a title="Click to download all I(q) files" href="{% url 'configuration_iq' remote_set_id=c.latest_job instrument_name=instrument%}" ><span style='display:inline-block' class="ui-icon ui-icon-arrowthickstop-1-s"></span></a>
@@ -48,7 +44,9 @@ defined several reduction jobs and submit them all at once.</p>
 </table>
 </div>
 {% endif %}
-<br>
+
+<br/>
+
 {% if reductions %}
 <div class='display_section'>
 <h2>Individual reduction jobs</h2>
@@ -56,7 +54,7 @@ defined several reduction jobs and submit them all at once.</p>
 <table class="scrolling_table reduction_table">
   <thead>
     <tr>
-      <th>Run</th><th>Beam center run</th><th>Transmission</th><th>Background</th><th>Dark current</th><th>Sensitivity</th><th>Sample aperture</th><th></th>
+      <th>Runs</th><th>Griendly name</th><th>grouping</th><th></th>
     </tr>
   </thead>
   <tbody>
@@ -65,17 +63,12 @@ defined several reduction jobs and submit them all at once.</p>
         <td><a href="{% url 'reduction_options' instrument r.id %}" >{{ r.data_file }}</a> {% spaceless %}
             {% if r.config %}(<a title='Click to go to the configuration page for this reduction' href='{% url 'configuration_options' instrument_name=instrument config_id=r.config.id %}'>config</a>){% endif %}
             {% endspaceless %}<div class='subtitle'>{{ r.reduction_name }}</div></td>
-        <td><div class='subtitle_black'>{{ r.direct_beam_run }}</div></td>
-        <td>{% if r.transmission_sample %}<div class='subtitle_black'>T-Sample: {{ r.transmission_sample }}</div>{% endif %}
-            {% if r.transmission_empty %}<div class='subtitle_black'>T-Empty: {{ r.transmission_empty }}</div>{% endif %}</td>
-        <td>{% if r.background_file %}<div class='subtitle_black'>Background: {{ r.background_file }}</div>{% endif %}
-            {% if r.background_transmission_sample %}<div class='subtitle_black'>T-Sample: {{ r.background_transmission_sample }}</div>{% endif %}
-            {% if r.background_transmission_empty %}<div class='subtitle_black'>T-Empty: {{ r.background_transmission_empty }}</div>{% endif %}</td>
-        <td>{% if r.dark_current_run %}<div class='subtitle_black'>{{ r.dark_current_run }}</div>{% endif %}</td>
-        <td>{% if r.sensitivity_file %}<div class='subtitle_black'>{{ r.sensitivity_file }}</div>{% endif %}</td>
-        <td>{% if r.sample_aperture_diameter %}<div class='subtitle_black'>{{ r.sample_aperture_diameter }} mm</div>{% endif %}</td>
-        <td><a title='Click to delete this reduction' href="{% url 'reduction_delete' instrument r.id %}?back_url={{ back_url }}"><span style='display:inline-block' class="ui-icon ui-icon-trash"></span></a>
-        {% if r.completed_job %}<a title='Click to see latest results' href="{{ r.completed_job }}"><span style='display:inline-block' class="ui-icon ui-icon-info"></span></a>{% endif %}
+        <td><div class='subtitle_black'>{{ r.friendly_name }}</div></td>
+        <td><div class='subtitle_black'>{{ r.grouping }}</div></td>
+        <td><a title='Click to delete this reduction' href="{% url 'reduction_delete' instrument r.id %}?back_url={{ back_url }}">
+        	<span style='display:inline-block' class="ui-icon ui-icon-trash"></span></a>
+        	{% if r.completed_job %}<a title='Click to see latest results' href="{{ r.completed_job }}">
+        	<span style='display:inline-block' class="ui-icon ui-icon-info"></span></a>{% endif %}
         </td>
     </tr>
   {% endfor %}

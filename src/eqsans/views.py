@@ -15,7 +15,7 @@ def test_result(request, job_id='-1'):
     """
     from test_util import get_dummy_data
     template_values = get_dummy_data(request, job_id)
-    return render_to_response('eqsans/reduction_job_details.html',
+    return render_to_response('eqsans/reduction_query.html',
                               template_values)
     
 

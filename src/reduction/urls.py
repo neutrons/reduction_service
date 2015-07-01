@@ -12,6 +12,8 @@ urlpatterns = patterns('',
     url(r'^(?P<instrument_name>%s)/$' % valid_instruments, 'reduction.views.reduction_home', name='reduction_home'),
     
     url(r'^(?P<instrument_name>%s)/experiment/(?P<ipts>[\w\-]+)/$' % valid_instruments, 'reduction.views.experiment', name='reduction_experiment'),
+    url(r'^(?P<instrument_name>%s)/jobs/$' % valid_instruments, 'reduction.views.reduction_jobs', name='reduction_jobs'),
+    
     
     url(r'^(?P<instrument_name>%s)/reduction/$' % valid_instruments, 'reduction.views.reduction_options', name='reduction'),
     url(r'^(?P<instrument_name>%s)/reduction/(?P<reduction_id>\d+)/$' % valid_instruments, 'reduction.views.reduction_options', name='reduction_options'),
@@ -20,9 +22,7 @@ urlpatterns = patterns('',
     url(r'^(?P<instrument_name>%s)/reduction/(?P<reduction_id>\d+)/submit$' % valid_instruments, 'reduction.views.reduction_submit', name='reduction_submit'),
     url(r'^(?P<instrument_name>%s)/reduction/(?P<reduction_id>\d+)/script$' % valid_instruments, 'reduction.views.reduction_script', name='reduction_script'),
     url(r'^(?P<instrument_name>%s)/reduction/(?P<reduction_id>\d+)/delete$' % valid_instruments, 'reduction.views.reduction_delete', name='reduction_delete'),
-    
-    url(r'^(?P<instrument_name>%s)/jobs/$' % valid_instruments, 'reduction.views.reduction_jobs', name='reduction_jobs'),
-    url(r'^(?P<instrument_name>%s)/query/(?P<remote_job_id>[\w\-\.]+)/$' % valid_instruments, 'reduction.views.job_details', name='reduction_job_details'),
+    url(r'^(?P<instrument_name>%s)/reduction/query/(?P<remote_job_id>[\w\-\.]+)/$' % valid_instruments, 'reduction.views.reduction_query', name='reduction_query'),
     
     # Those are instrument specific. If the regular expression is met above this is never called!
     # url(r'^eqsans/', include('eqsans.urls', namespace='eqsans')),

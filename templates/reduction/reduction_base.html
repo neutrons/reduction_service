@@ -87,7 +87,7 @@
 	          <li><a href="{% url 'reduction_submit' instrument reduction_id%}" title="Submit this reduction job">submit this job</a></li>
 	          {% if existing_jobs and existing_jobs|length > 0 %}
 		          {% for job in existing_jobs %}
-		          <li><a href="{% url 'reduction_job_details' instrument job.id %}" title="See job details">job {{ job.id }}</a></li>
+		          <li><a href="{% url 'reduction_query' instrument job.id %}" title="See job details">job {{ job.id }}</a></li>
 		          {% endfor %}
 	          {% endif %}
           {% endif %}

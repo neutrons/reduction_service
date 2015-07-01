@@ -60,7 +60,7 @@
   {% if not job_set_info %}No job information could be retrieved{% endif %}
   {% for job_info in job_set_info %}
     <div class='sub-tile'>
-      Job <a href="{% url 'reduction_job_details' instrument_name=instrument remote_job_id=job_info.id %}" title="See detailed result for this job">
+      Job <a href="{% url 'reduction_query' instrument_name=instrument remote_job_id=job_info.id %}" title="See detailed result for this job">
       	{{ job_info.job_id }}</a> - Data: <b>{{ job_info.parameters.data_file }}</b> (<a href="{% url 'reduction_options' reduction_id=job_info.reduction_id instrument_name=instrument %}" title='Edit latest version of this reduction'>edit <span style="padding-bottom:3px" class="ui-button ui-icon ui-icon-pencil"></span></a>)
       <ul>
         <li>Status: {{ job_info.JobStatus }}</li>

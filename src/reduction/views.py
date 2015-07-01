@@ -110,7 +110,7 @@ def experiment(request, ipts, instrument_name):
         # For this reduction_process (r) check if there more more jobs, if so get the most recent!
         latest_job = reduction.view_util.get_latest_job(request, r)
         if latest_job is not None:
-            data_dict['completed_job'] = reverse('reduction_job_details',
+            data_dict['completed_job'] = reverse('reduction_query',
                                                  kwargs={'remote_job_id' : latest_job.pk,
                                                          'instrument_name': instrument_name_lowercase })
         try:
@@ -442,14 +442,14 @@ def reduction_submit(request, reduction_id, instrument_name):
     
     messages.add_message(request, messages.SUCCESS, 
                          message="Job %s sucessfully submitted. <a href='%s' class='message-link'>Click to see the results this job </a>."%
-                                     (job.id, reverse('reduction_job_details', kwargs={'remote_job_id' : job.id, 'instrument_name' : instrument_name_lowercase})))
+                                     (job.id, reverse('reduction_query', kwargs={'remote_job_id' : job.id, 'instrument_name' : instrument_name_lowercase})))
     
     return redirect(reverse('reduction_options',
                                   kwargs={'reduction_id' : reduction_id, 
                                           'instrument_name': instrument_name_lowercase}))
 
 @login_required
-def job_details(request, remote_job_id, instrument_name):
+def reduction_query(request, remote_job_id, instrument_name):
     """
         Show status of a given remote job.
         
@@ -489,7 +489,7 @@ def job_details(request, remote_job_id, instrument_name):
         template_values = view_util.set_into_template_values_job_files(template_values, request, remote_job)
 
     logger.debug(pprint.pformat(template_values))
-    return render_to_response('reduction/reduction_job_details.html',
+    return render_to_response('reduction/reduction_query.html',
                               template_values,
                               context_instance=RequestContext(request))
 
@@ -505,14 +505,14 @@ def configuration_options(request, instrument_name, config_id=None):
     """
     
     logger.debug("configuration_options: %s"%inspect.stack()[0][3])
-    logger.debug("************************** POST")
-    l = request.POST.items()
-    l.sort()
-    logger.debug(pprint.pformat(l))
-    logger.debug("************************** GET")
-    l = request.GET.items()
-    l.sort()
-    logger.debug(pprint.pformat(l))
+#     logger.debug("************************** POST")
+#     l = request.POST.items()
+#     l.sort()
+#     logger.debug(pprint.pformat(l))
+#     logger.debug("************************** GET")
+#     l = request.GET.items()
+#     l.sort()
+#     logger.debug(pprint.pformat(l))
             
     instrument_name_capitals = str(instrument_name).upper()
     instrument_name_lowercase = str(instrument_name).lower()

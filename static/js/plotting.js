@@ -107,7 +107,13 @@ function get_color(i, n_max) {
     return 'rgb('+r+','+g+','+b+')';
 }
 
-function plot_2d(data, qx, qy, max_iq, options) {
+function plot_2d(data, qx, qy, max_iq, options, anchor) {
+	
+	// if anchor not present use default
+	anchor = typeof anchor !== 'undefined' ? anchor : "plot_anchor_2d";
+	
+	console.log("using anchor: " + anchor)
+	
     options = (typeof options === "undefined") ? {} : options;
     height = (typeof options.height === "undefined") ? 400 : options.height;
     width = (typeof options.width === "undefined") ? 400 : options.width;
@@ -128,8 +134,8 @@ function plot_2d(data, qx, qy, max_iq, options) {
     var yAxis = d3.svg.axis().scale(y).orient("left");
 
     // Remove old plot
-    d3.select("plot_anchor_2d").select("svg").remove();
-    var svg = d3.select("plot_anchor_2d").append("svg")
+    d3.select(anchor).select("svg").remove();
+    var svg = d3.select(anchor).append("svg")
       .attr("class", "Spectral")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)

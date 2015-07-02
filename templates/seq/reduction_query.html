@@ -1,0 +1,161 @@
+{% extends "seq/base.html" %}
+{% load staticfiles %}
+{% load reduction_tags %}
+
+{% block header %}
+  <link rel="stylesheet" href="{% static 'css/plotting.css' %}" type="text/css" title="no title" charset="utf-8">
+  <link rel="stylesheet" href="{% static 'css/plotting_print.css' %}" type="text/css" media="print" title="no title" charset="utf-8">
+  <script type="text/javascript" src="{% static 'thirdparty/d3.v3/d3.v3.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/plotting.js' %}"></script>
+   
+  <!-- Ref. 1D={{ plot_1d_id }} 2D={{ plot_2d.id }} -->
+  <script type="text/javascript">
+  	{% for plot in plots %}
+	    {% if plot.plot_1d_id %}
+	    	var data_{{ forloop.counter }} = {{ plot.plot_1d|safe }};
+	    {% endif %}
+	    {% if plot.plot_2d %}
+		    var max_iq_{{ forloop.counter }} = {{ plot.plot_2d.z_max }};
+		    var qx_{{ forloop.counter }} = {{ plot.plot_2d.x_axis }};
+		    var qy_{{ forloop.counter }} = {{ plot.plot_2d.y_axis }};
+		    var data2d_{{ forloop.counter }} = {{ plot.plot_2d.data|safe }};
+	    {% endif %}
+    {% endfor %}
+  </script>  
+
+
+ <script>
+ // File preview
+  function preview_pre(title, url) {
+  	var windowWidth = $(window).width();
+	var windowHeight = $(window).height();
+  	$.ajax({
+  		url: url,
+  		success: function(result){
+  			if ( $( "#dialog-preview" ).length ) {$("#dialog-preview").remove();}
+        	$("body").append('<div id="dialog-preview"><pre><code>' + result + '</code></pre></div>');
+        	$("#dialog-preview").dialog({
+        		title: title,
+        		resizable: false,
+        		maxHeight : windowHeight - 150,
+				maxWidth : windowWidth -150,
+				minWidth : windowWidth -250,
+        		close: function( event, ui ) {$("#dialog-preview").remove();}
+     		})
+     		.css({overflow:"auto"});
+     		$('pre code').each(function(i, block) {
+     		  hljs.highlightBlock(block);
+            });
+    	}
+    });
+  };
+  $(function() { $("#dialog-preview").hide(); });
+  // closes the dialog when click outside
+//  $(document).mouseup(function(e) {
+//	  var alert_box = $(".ui-widget-overlay");
+//	  if (alert_box.has(e.target).length === 0)
+//	     $("#dialog-preview").dialog("close");
+//  });
+
+  </script>
+  
+{% endblock %}
+
+{% block content %}
+    <h2>Results for <a href="{% url 'reduction_options' reduction_id=remote_job.reduction.id instrument_name=instrument %}" title='Click to see the latest version of this reduction'>
+    	{% if remote_job.reduction.name|length > 0 %}{{ remote_job.reduction.name }}{% else %}reduction {{ remote_job.reduction.id }}{% endif %}</a></h2>
+    <div class='tiled_area'>
+      <div class='tile'>
+        Job {{ job_id }}
+        <ul>
+          <li>Status: {{ job_info.JobStatus }}</li>
+          <li>Start time: {{ job_info.StartDate }}</li>
+          <li>End time: {{ job_info.CompletionDate }}</li>
+        </ul>
+      </div>
+      
+      <div class='tile'>
+        Reduction parameters
+        <ul>
+          {% for key, value in parameters.items|sortdic %}
+          <li><strong>{{key}}:</strong> {{value}} </li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class='tile'>
+        Job directory: {{ job_directory }}
+        <ul>
+        {% for file in job_files %}
+          {% url 'remote_download' trans_id file as download_url %}
+          {% if download_url %}
+          <li><a href="{{ download_url }}">{{ file }}</a>
+          {% if ".txt" in download_url or ".py" in download_url or ".sh" in download_url or ".ER" in download_url or ".OU" in download_url or ".log" in download_url %}
+          	&nbsp;<a title="Click to preview this file." onClick="preview_pre('{{ file }}','{{ download_url }}');">
+          	    <span style='display:inline-block' class="ui-icon ui-icon-zoomin"></span></a>
+          {% endif %}
+          </li>
+          {% else %}
+          <li>{{ file }}</li>
+          {% endif %}
+        {% endfor %}
+        </ul>
+      </div>
+    </div>
+    
+    <div class='tiled_area'>
+    {% for plot in plots %}    
+    
+    	<!-- Plot tip -->
+	    {% if forloop.first %}
+		    <div class='wide_tile tile'>
+		    Need to print? Click the 'adjust plot' link and use the print functionality of your browser.
+		    </div>
+		{% endif %}
+	    
+	    <!-- Plot 1D -->
+	    {% if plot.plot_1d_id %}
+	      <div class='wide_tile tile'>
+	      	<p>{{plot.plot_1d_name}}</p>
+	        <plot_anchor_{{ forloop.counter }}></plot_anchor_{{ forloop.counter }}>
+	        <a href="{% url 'plotting_adjust_1d' plot.plot_1d_id %}?back={{ back_url }}">adjust plot</a>
+	      </div>
+	      <script>
+	        var x_label_{{ forloop.counter }} = $('<div />').html("{{ plot.plot_object.layout.x_label|safe }}").text();
+	        var y_label_{{ forloop.counter }} = $('<div />').html("{{ plot.plot_object.layout.y_label|safe }}").text();
+	        var options_{{ forloop.counter }} = {'color': '{{ plot.plot_object.first_data_layout.color|safe }}',
+	                       'marker_size': '{{ plot.plot_object.first_data_layout.size }}',
+	                       'width': '370',
+	                       'height': '200',
+	                       'x_label': x_label_{{ forloop.counter }},
+	                       'y_label': y_label_{{ forloop.counter }},
+	                       'log_scale': {% if plot.plot_object.layout %}{{ plot.plot_object.layout.is_y_log|lower }}{% else %}true{% endif %}};
+	        plot_1d(data_{{ forloop.counter }}, "plot_anchor_{{ forloop.counter }}", options_{{ forloop.counter }}); 
+	      </script>
+	    {% endif %}
+	    
+	    <!-- Plot 2D -->
+	    {% if plot.plot_2d %}
+	      <div class='wide_tile tile'>
+	      	<p>{{plot.plot_2d_name}}</p>
+	        <plot_anchor_2d_{{ forloop.counter }}></plot_anchor_2d_{{ forloop.counter }}>
+	        <a href="{% url 'plotting_adjust_2d' plot.plot_2d.id %}?back={{ back_url }}">adjust plot</a>
+	      </div>
+	      <script>
+	        var x_label2d = $('<div />').html("{{ plot.plot_2d.layout.x_label|safe }}").text();
+	        var y_label2d = $('<div />').html("{{ plot.plot_2d.layout.y_label|safe }}").text();
+	        var options2d = {'width': '370',
+	                       'height': '370',
+	                       'x_label': x_label2d,
+	                       'y_label': y_label2d,
+	                       'log_scale': {% if plot.plot_2d.layout %}{{ plot.plot_2d.layout.is_y_log|lower }}{% else %}true{% endif %}};
+	        plot_2d(data2d_{{ forloop.counter }}, qx_{{ forloop.counter }}, qy_{{ forloop.counter }}, max_iq_{{ forloop.counter }}, options2d, "plot_anchor_2d_{{ forloop.counter }}");
+	      </script>
+	    {% endif %}
+ 
+    {% endfor %}
+    </div>
+    
+{% endblock %}
+
+
+

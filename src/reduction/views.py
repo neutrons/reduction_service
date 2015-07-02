@@ -489,7 +489,7 @@ def reduction_query(request, remote_job_id, instrument_name):
         template_values = view_util.set_into_template_values_job_files(template_values, request, remote_job)
 
     logger.debug(pprint.pformat(template_values))
-    return render_to_response('reduction/reduction_query.html',
+    return render_to_response('%s/reduction_query.html'%instrument_name,
                               template_values,
                               context_instance=RequestContext(request))
 

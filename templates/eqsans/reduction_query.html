@@ -1,4 +1,4 @@
-{% extends "reduction/reduction_base.html" %}
+{% extends "eqsans/base.html" %}
 {% load staticfiles %}
 {% load reduction_tags %}
 
@@ -99,11 +99,13 @@
         </ul>
       </div>
     </div>
+    
     {% if plot_1d_id or plot_2d %}
     <div class='tiled_area'>
-    <div class='wide_tile tile'>
-    Need to print? Click the 'adjust plot' link and use the print functionality of your browser.
-    </div>
+	    <div class='wide_tile tile'>
+	    Need to print? Click the 'adjust plot' link and use the print functionality of your browser.
+	    </div>
+    <!-- Plot 1D -->
     {% if plot_1d_id %}
       <div class='wide_tile tile'>
         <plot_anchor></plot_anchor>
@@ -122,6 +124,8 @@
         plot_1d(data, "plot_anchor", options); 
       </script>
     {% endif %}
+    
+    <!-- Plot 2D -->
     {% if plot_2d %}
       <div class='wide_tile tile'>
         <plot_anchor_2d></plot_anchor_2d>

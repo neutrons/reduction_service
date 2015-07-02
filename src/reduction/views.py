@@ -648,7 +648,7 @@ def configuration_query(request, remote_set_id, instrument_name):
         if job_info is not None:
             first_job = item
             job_info['reduction_name'] = item.reduction.name
-            job_info['reduction_id'] = item.reduction.id
+            job_info['reduction_id'] = item.reduction.id # same as remote_job_remote_id!!
             job_info['id'] = item.id
             job_info['remote_id'] = item.remote_id
             job_info['parameters'] = item.get_data_dict()

@@ -87,7 +87,7 @@ class Plot1D(models.Model):
         return None
     
 class Plot2DManager(models.Manager):
-    def create_plot(self, user, data, x_axis, y_axis, z_min, z_max, filename):
+    def create_plot(self, user, data, x_axis, y_axis, z_min, z_max, filename, **kwargs):
         """
             Create a default plot, with all associated DB entries
             @param user: owner of the plot
@@ -98,9 +98,8 @@ class Plot2DManager(models.Manager):
             @param z_max: maximum value of the plotted data in z
             @param filename: name of the plotted data file
         """
-        plotlayout = PlotLayout(owner=user, width=550, height=550,
-                                x_label='Qx [1/&Aring;]',
-                                y_label='Qy [1/&Aring;]',)
+        plotlayout = PlotLayout(owner=user, width=550, height=550,**kwargs)
+                                
         plotlayout.save()
         plot2d = Plot2D(owner=user, filename=filename, layout=plotlayout,
                         data=data, x_axis=x_axis, y_axis=y_axis,

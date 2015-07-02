@@ -64,7 +64,9 @@ def process_iqxy_output(request, remote_job, trans_id, filename):
                 plot_object2d = Plot2D.objects.create_plot(user=request.user, data=data_str_2d,
                                                            x_axis=x_str, y_axis=y_str,
                                                            z_min=z_min, z_max=z_max, 
-                                                           filename=filename)
+                                                           filename=filename,
+                                                           x_label='Qx [1/&Aring;]',
+                                                           y_label='Qy [1/&Aring;]',)
                 remote_job.plots2d.add(plot_object2d)
             except:
                 logger.error("Could not process nexus file: %s" % sys.exc_value)

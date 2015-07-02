@@ -54,7 +54,7 @@ defined several reduction jobs and submit them all at once.</p>
 <table class="scrolling_table reduction_table">
   <thead>
     <tr>
-      <th>Runs</th><th>Griendly name</th><th>grouping</th><th></th>
+      <th>Runs</th><th>Friendly name</th><th>Friendly name logs</th><th>grouping</th><th></th>
     </tr>
   </thead>
   <tbody>
@@ -64,6 +64,7 @@ defined several reduction jobs and submit them all at once.</p>
             {% if r.config %}(<a title='Click to go to the configuration page for this reduction' href='{% url 'configuration_options' instrument_name=instrument config_id=r.config.id %}'>config</a>){% endif %}
             {% endspaceless %}<div class='subtitle'>{{ r.reduction_name }}</div></td>
         <td><div class='subtitle_black'>{{ r.friendly_name }}</div></td>
+        <td><div class='subtitle_black'>{{ r.friendly_name_logs }}</div></td>
         <td><div class='subtitle_black'>{{ r.grouping }}</div></td>
         <td><a title='Click to delete this reduction' href="{% url 'reduction_delete' instrument r.id %}?back_url={{ back_url }}">
         	<span style='display:inline-block' class="ui-icon ui-icon-trash"></span></a>

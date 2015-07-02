@@ -38,6 +38,7 @@
     border-radius: 4px; /* future proofing */
     overflow: hidden;
     background-color: #fafafa;
+    overflow: auto;
 }
 .tile ul {padding-left:5px; margin-top:5px; margin-bottom:5px;}
 .tile li {list-style:none;}

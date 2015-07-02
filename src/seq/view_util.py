@@ -9,8 +9,9 @@ import remote.view_util
 from plotting.models import Plot1D, Plot2D
 import sys
 import numpy as np
+import pprint
 
-logger = logging.getLogger('seq')
+logger = logging.getLogger('seq.util')
 
 def process_sqw_1d_output(request, remote_job, trans_id, filename):
     """
@@ -19,8 +20,8 @@ def process_sqw_1d_output(request, remote_job, trans_id, filename):
         @param filename: data file containing plot data
     """
     template_values = {}
-    # Do we read this data already?
-    plot_object = remote_job.get_first_plot(filename=filename, owner=request.user)
+    # Have we read these data before?
+    plot_object = None#remote_job.get_first_plot(filename=filename, owner=request.user)
     if plot_object is not None and plot_object.first_data_layout() is not None:
         data_str = plot_object.first_data_layout().dataset.data
     else:
@@ -54,8 +55,8 @@ def process_sqw_2d_output(request, remote_job, trans_id, filename):
     """
     template_values = {}
     
-    # Do we read this data already?
-    plot_object2d = remote_job.get_plot_2d(filename=filename, owner=request.user)
+    # Have we read these data before?
+    plot_object2d = None #remote_job.get_plot_2d(filename=filename, owner=request.user)
     if plot_object2d is None:
         # If we don't have data stored, read it from file
         logger.warning("Retrieving %s from compute resource" % filename)
@@ -69,7 +70,9 @@ def process_sqw_2d_output(request, remote_job, trans_id, filename):
                                                            y_axis=y_str,
                                                            z_min=z_min,
                                                            z_max=z_max, 
-                                                           filename=filename)
+                                                           filename=filename,
+                                                           x_label='|Q| [1/&Aring;]',
+                                                           y_label='E [meV]')
                 remote_job.plots2d.add(plot_object2d)
             except Exception, e:
                 logger.error("Could not process 2D file (%s): %s" % (filename,sys.exc_value))
@@ -89,17 +92,18 @@ def process_sqw_1d_data(file_content, return_raw=False):
     """
     data = []
     for l in file_content.split('\n'):
-        toks = l.split()
-        if len(toks)>=2:
-            try:
-                deltaE = float(toks[0])
-                s = float(toks[1])
-                e = float(toks[2])
-                data.append([deltaE, s, e])
-            except Exception, e:
-                logger.exception(e)
-                logger.debug("Problems parsing: " + l)
-                pass
+        if not l.startswith("#"):
+            toks = l.split()
+            if len(toks)>=2:
+                try:
+                    deltaE = float(toks[0])
+                    s = float(toks[1])
+                    e = float(toks[2])
+                    data.append([deltaE, s, e])
+                except Exception, e:
+                    logger.exception(e)
+                    logger.debug("Problems parsing: " + l)
+                    pass
     if return_raw:
         return data
     return str(data)
@@ -145,13 +149,31 @@ def process_sqw_2d_data(file_content):
 def set_into_template_values_job_files(template_values, request, remote_job):
     '''
     If the files output by mantid in fermi are plots, builds the plots
+    Called by reduction_query
     '''
+    logger.debug(pprint.pformat(template_values))
+    logger.debug(pprint.pformat(request))
+    logger.debug(pprint.pformat(remote_job.full_clean))
+    
+    'parameters': {u'data_file': u'70083',
+                u'data_runs': u'70083',
+                u'energy_transfer_range': u'',
+                u'error_bar_criterion': 3.3,
+                u'experiment': u'IPTS-11514',
+                u'expt_id': None,
+                u'filter_bad_pulses': True,
+                u'friendly_name': u'STEPC',
+                u'friendly_name_logs'
+    
+    
     for f in template_values['job_files']:
         if f.endswith('_sqw_1d.dat'):
+            logger.debug("Adding plot %s."%f)
             plot_info = process_sqw_1d_output(request, remote_job, 
                                                     template_values['trans_id'], f)
             template_values.update(plot_info)
         elif f.endswith('_sqw_2d.dat'):
+            logger.debug("Adding plot %s."%f)
             plot_info = process_sqw_2d_output(request, remote_job, 
                                                       template_values['trans_id'], f)
             template_values.update(plot_info)
@@ -159,6 +181,9 @@ def set_into_template_values_job_files(template_values, request, remote_job):
     
 
 def set_into_template_values_plots(template_values, request, first_job):
+    '''
+    Only plot 1D (called only by confuguration query (?))
+    '''
     plot_data = []
     if first_job is not None and template_values['job_files'] is not None:
         for f in template_values['job_files']:
@@ -169,6 +194,13 @@ def set_into_template_values_plots(template_values, request, first_job):
                                               f)
                 plot_info['name'] = f
                 plot_data.append(plot_info)
+#             if f.endswith('_sqw_2d.dat'):
+#                 plot_info = process_sqw_2d_output(request,
+#                                                   first_job, 
+#                                                   template_values['trans_id'], 
+#                                                   f)                
+#                 plot_info['name'] = f
+#                 plot_data.append(plot_info)
     template_values['plot_data'] = plot_data
     return template_values
 

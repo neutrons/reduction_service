@@ -70,7 +70,7 @@
         <li>Status: {{ job_info.JobStatus }}</li>
         <li>Start time: {{ job_info.StartDate }}</li>
         <li>End time: {{ job_info.CompletionDate }}</li>
-        <li><a href="{% url 'reduction_query' remote_job_id=job_info.id instrument_name=instrument %}" title='Edit latest version of this reduction'>View full job results...</a></li>
+        <li><a href="{% url 'reduction_query' remote_job_id=job_info.id instrument_name=instrument %}" title='View detailed information of the latest version of this reduction'> {{job_info.parameters.friendly_name}} {{job_info.parameters.friendly_name_logs}} <span style="padding-bottom:3px" class="ui-button ui-icon ui-icon-image"></span></a></li>
       </ul>
     </div>
   {% endfor %}

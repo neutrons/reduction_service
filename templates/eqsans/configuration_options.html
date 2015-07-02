@@ -76,7 +76,7 @@
       </div>
     </div>
     <div class='flexible tile'>
-      <a style='float:right' href='?extra=1'><span style='display:inline-block' class="ui-icon ui-icon-plusthick"></span> add a job</a>
+      <div id='add_a_job'> <a style='float:right' href='?extra=1'><span style='display:inline-block' class="ui-icon ui-icon-plusthick"></span> add a job</a></div>
       <p>
       {{ options_form.management_form }}
         <table cellspacing="0" class="property_table">
@@ -152,6 +152,7 @@ $('#cancel_button').hide();
 $("#form :input").change(function() {
   $('#execute_jobs_button').hide();
   $('#cancel_button').show();
+  $('#add_a_job').children().hide().parent().append( "<p style='float:right'>Update or cancel changes to add more sample runs to this configuration...</p>" );
 });
    
 </script>

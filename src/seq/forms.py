@@ -57,8 +57,8 @@ class ConfigurationForm(forms.Form):
     save_choices = [(i,i) for i in ['summary', 'phx', 'spe', 'nxspe', 'par', 'jpg', 'nxs', 'mdnxs', 'iofq','iofe',
                                           'iofphiecolumn','iofphiearray','iofqecolumn','iofqearray','sqw','vannorm']]
     
-    save_format = forms.MultipleChoiceField(required=True, widget=forms.SelectMultiple, initial=save_choices[0],
-                                      choices=save_choices, help_text="Hit 'Ctrl' for multiple selection." )
+    save_format = forms.MultipleChoiceField(required=True, widget=forms.SelectMultiple,
+                                            choices=save_choices, help_text="Hit 'Ctrl' for multiple selection." )
     
 #     <!-- CALIBRATION AND MaskING section -->
 #     <calibration SaveProcDetVanFilename="van37350_white_uposcB.nxs"
@@ -115,6 +115,14 @@ class ConfigurationForm(forms.Form):
     error_bar_criterion = forms.FloatField(required=True,initial=3.3)
     median_test_levels_up = forms.BooleanField(required=False, initial=True)
     
+    def __init__(self, *args, **kwargs):
+        '''
+        ModelMultipleChoiceField must be initialised here!
+        '''
+        super(ConfigurationForm, self).__init__(*args, **kwargs)
+        self.fields['save_format'].initial = ['summary', 'phx', 'nxspe', 'jpg']
+        
+        
     @classmethod
     def data_from_db(cls, user, reduction_config):
         """
@@ -288,6 +296,13 @@ class ScanForm(forms.Form):
 #             raise forms.ValidationError("Energy min is higher than Energy max!")
 #         return cleaned_data
 
+    def __init__(self, *args, **kwargs):
+        '''
+        ModelMultipleChoiceField must be initialised here!
+        '''
+        super(ScanForm, self).__init__(*args, **kwargs)
+        self.fields['save_format'].initial = ['summary', 'phx', 'nxspe', 'jpg']
+        
     
     def as_table(self):
         """Returns this form rendered as HTML <tr>s -- excluding the <table></table>.

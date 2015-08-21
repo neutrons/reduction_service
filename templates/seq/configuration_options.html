@@ -2,6 +2,8 @@
 {% load staticfiles %}
 {% block header %}
 <script>
+	var runs_jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=config_form.experiment.value %}";
+    
     function get_icat_info(run_number, element_id) {
         $.ajax({ url: "{{ icat_url }}"+run_number+"/", 
                  success: function(data) { $('#'+element_id).attr('title', data.title); },
@@ -19,12 +21,14 @@
     Function called only once! It populates the autocomplete from a remote json.
     The filtering is made locally as the source is a local variable :)
     */
-    $(function() {
-        var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=config_form.experiment.value %}";
-        var selector = "#id_vanadium_runs,[id$='data_runs']";
+    function set_autocomplete_data_fields(selector) {
         if  ($(selector).is('*')) {
-            set_autocomplete_ranged(selector,jsonurl);
+            set_autocomplete_ranged(selector,runs_jsonurl);
         }
+	};
+	/* Call the function on load */
+    $(function() {
+    	set_autocomplete_data_fields("#id_vanadium_runs,[id$='data_runs']");
     });
 	
     $(function() {
@@ -38,9 +42,10 @@
 	/* if the user change the experiment number, the runs will be different!! */    
 	$(function() {
 	    $("#id_experiment").on( "autocompletechange", function(event,ui) {
-	   		var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=12345 %}".replace(/12345/, $(this).val() );
+	    	// since the exp ipts changed, the global url for runs also changed
+	   		runs_jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=12345 %}".replace(/12345/, $(this).val() );
 	        var selector = "#id_vanadium_runs,[id$='data_runs']";
-	        set_autocomplete_ranged(selector,jsonurl);
+	        set_autocomplete_ranged(selector,runs_jsonurl);
 		});
 	});
 	
@@ -63,6 +68,12 @@
 	}
  
     function addForm(btn, prefix) {
+    	// Disable autocomplete before cloning the form:
+    	if (prefix == 'sf') {
+	    	$( "[id$='data_runs']" ).autocomplete("destroy");
+			$( "[id$='data_runs']" ).removeData('autocomplete');
+		}
+
         var formCount = parseInt($('#id_' + prefix + '-TOTAL_FORMS').val());
         var row = $('.dynamic-form-'+prefix+':first').clone(true).get(0);
         $(row).removeAttr('id').insertAfter($('.dynamic-form-'+prefix+':last')).children('.hidden').removeClass('hidden');
@@ -74,10 +85,16 @@
     	    updateElementIndex(this, prefix, formCount);
     	    $(this).val('');
         });
+        
         $(row).find('.delete-row').click(function() {
     	    deleteForm(this, prefix);
         });
         $('#id_' + prefix + '-TOTAL_FORMS').val(formCount + 1);
+        
+        if (prefix == 'sf') {
+        	// Set autocomplete back
+        	set_autocomplete_data_fields("[id$='data_runs']");
+        }
         return false;
     }
   

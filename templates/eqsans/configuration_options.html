@@ -12,35 +12,13 @@
       $("#execute_jobs_button").button();
       $("#cancel_button").button();
     });
-	
-    /*
-    Function called only once! It populates the autocomplete from a remote json.
-    The filtering is made locally as the source is a local variable :)
-    */
+    
+    /* Call autocomplete functions on load */
     $(function() {
-        var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=config_form.experiment.value %}";
-        var selector = '.runcomplete input';
-        if  ($(selector).is('*')) {
-            set_autocomplete(selector,jsonurl);
-        }
+    	set_autocomplete_run_fields(".runcomplete input","#id_experiment");
+    	set_autocomplete_experiment_field('.experimentcomplete input');
+    	update_autocomplete_runs_when_experiment_changes(".runcomplete input",".experimentcomplete input");
     });
-	
-    $(function() {
-        var jsonurl = "{% url 'catalog_experiments_json' instrument=instrument %}";
-        var selector = '.experimentcomplete input';
-        if  ($(selector).is('*')) {
-            set_autocomplete(selector,jsonurl);
-        }
-    });
-	
-	/* if the user change the experiment number, the runs will be different!! */    
-	$(function() {
-	    $(".experimentcomplete input").on( "autocompletechange", function(event,ui) {
-	   		var jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=12345 %}".replace(/12345/, $(this).val() );
-	        var selector = '.runcomplete input';
-	        set_autocomplete(selector,jsonurl);
-		});
-	});
 	
 </script>
 

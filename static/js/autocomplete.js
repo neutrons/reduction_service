@@ -4,7 +4,6 @@
 
 var NON_VALID_EXPERIMENT_ID = 'uncategorized';
 
-
 /**
  * Populates the autocomplete for data for runs
  * for a certain experiment_id
@@ -16,7 +15,6 @@ function set_autocomplete_run_fields(run_selector,experiment_id_selector) {
         set_autocomplete_ranged(selector,runs_jsonurl);
     }
 };
-
 
 /**
  * Populates the autocomplete for an experiment field
@@ -40,10 +38,6 @@ function update_autocomplete_runs_when_experiment_changes(run_selector,experimen
         set_autocomplete_ranged(run_selector,runs_jsonurl);
 	});
 };
-
-
-
-
 
 
 /**
@@ -182,7 +176,6 @@ function join(values, delimiters) {
  * <button id="run-lookup" onclick="run_lookup('{{config_form.vanadium_runs.id_for_label}}'); return false;">Vanadium Lookup</button>
  */
 function run_lookup(caller) {
-	
 	
 	if ( !$('#dialog-run-lookup').is('*')) { // if the selector does not exists:
 	    $("body").append('\

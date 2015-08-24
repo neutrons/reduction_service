@@ -1,57 +1,31 @@
 {% extends "seq/base.html" %}
 {% load staticfiles %}
 {% block header %}
+{{ block.super }}
 <script>
+
+	/*
+	Global variable to get the runs for a certain  experiment IPTS
+	*/
 	var runs_jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=config_form.experiment.value %}";
     
-    function get_icat_info(run_number, element_id) {
-        $.ajax({ url: "{{ icat_url }}"+run_number+"/", 
-                 success: function(data) { $('#'+element_id).attr('title', data.title); },
-                 dataType: "json", timeout: 10000, cache: true });
-    }
-    	
 	$(function() {
       $("#tabs").tabs({ active: 3 });
       $("#submit_button").button();
       $("#execute_jobs_button").button();
       $("#cancel_button").button();
     });
-    
-    /*
-    Function called only once! It populates the autocomplete from a remote json.
-    The filtering is made locally as the source is a local variable :)
-    */
-    function set_autocomplete_data_fields(selector) {
-        if  ($(selector).is('*')) {
-            set_autocomplete_ranged(selector,runs_jsonurl);
-        }
-	};
-	/* Call the function on load */
+
+	/* Call autocomplete functions on load */
     $(function() {
-    	set_autocomplete_data_fields("#id_vanadium_runs,[id$='data_runs']");
+    	set_autocomplete_run_fields("#id_vanadium_runs,[id$='data_runs']","#id_experiment");
+    	set_autocomplete_experiment_field('#id_experiment');
+    	update_autocomplete_runs_when_experiment_changes("#id_vanadium_runs,[id$='data_runs']","#id_experiment");
     });
 	
-    $(function() {
-        var jsonurl = "{% url 'catalog_experiments_json' instrument=instrument %}";
-        var selector = '#id_experiment';
-        if  ($(selector).is('*')) {
-            set_autocomplete(selector,jsonurl);
-        }
-    });
 	
-	/* if the user change the experiment number, the runs will be different!! */    
-	$(function() {
-	    $("#id_experiment").on( "autocompletechange", function(event,ui) {
-	    	// since the exp ipts changed, the global url for runs also changed
-	   		runs_jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=12345 %}".replace(/12345/, $(this).val() );
-	        var selector = "#id_vanadium_runs,[id$='data_runs']";
-	        set_autocomplete_ranged(selector,runs_jsonurl);
-		});
-	});
-	
-	
-    /*
-    Dynamic formset generation
+    /****************************************************************************
+    Dynamic formset generation START
     */
     function updateElementIndex(el, prefix, ndx) {
 		var id_regex = new RegExp('(' + prefix + '-\\d+)');
@@ -93,7 +67,7 @@
         
         if (prefix == 'sf') {
         	// Set autocomplete back
-        	set_autocomplete_data_fields("[id$='data_runs']");
+        	set_autocomplete_run_fields("[id$='data_runs']","#id_experiment");
         }
         return false;
     }
@@ -109,7 +83,9 @@
         }
         return false;
     }
-    
+    /****************************************************************************
+    Dynamic formset generation END
+    */
     
     
     $(function () {
@@ -127,13 +103,16 @@
         })
     })
 
-    
 </script>
 
 
 {% endblock %}
 
 {% block content %}
+
+
+
+
 
 <h2>Batch Reduction for {{instrument|upper}}</h2>
 
@@ -175,7 +154,11 @@
         <tbody>
           <tr><th title='{{ config_form.vanadium_units.help_text }}'>{{ config_form.vanadium_units.label_tag }}</th><td>{{ config_form.vanadium_units.errors }}{{ config_form.vanadium_units }}</td></tr>
           <tr><th title='{{ config_form.normalized_calibration.help_text }}'>{{ config_form.normalized_calibration.label_tag }}</th><td>{{ config_form.normalized_calibration.errors }}{{ config_form.normalized_calibration }}</td></tr>
-          <tr><th title='{{ config_form.vanadium_runs.help_text }}'>{{ config_form.vanadium_runs.label_tag }}</th><td class='long_input'>{{ config_form.vanadium_runs.errors }}{{ config_form.vanadium_runs }}</td></tr>
+          <tr>
+          	<th title='{{ config_form.vanadium_runs.help_text }}'>{{ config_form.vanadium_runs.label_tag }}</th><td class='long_input'>{{ config_form.vanadium_runs.errors }}{{ config_form.vanadium_runs }}</td>
+          	<th><button id="run-lookup" onclick="run_lookup('{{config_form.vanadium_runs.id_for_label}}'); return false;">Vanadium Lookup</button></th><td></td>
+          </td>
+          </tr>
           <tr>
             <th title='{{ config_form.vanadium_min.help_text }}'>{{ config_form.vanadium_min.label_tag }}</th><td>{{ config_form.vanadium_min.errors }}{{ config_form.vanadium_min }}</td>
             <th title='{{ config_form.vanadium_max.help_text }}'>{{ config_form.vanadium_max.label_tag }}</th><td>{{ config_form.vanadium_max.errors }}{{ config_form.vanadium_max }}</td>

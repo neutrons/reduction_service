@@ -1,5 +1,6 @@
 {% extends "eqsans/base.html" %}
 {% block header %}
+{{ block.super }}
 <script>
     function get_icat_info(run_number, element_id) {
         $.ajax({ url: "{{ icat_url }}"+run_number+"/", 

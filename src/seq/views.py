@@ -33,18 +33,12 @@ def configuration_submit(request, config_id):
     @param request: request object
     @param config_id: pk of configuration
     """
-    
-    
+        
     logger.debug("Specific SEQ Submit: %s"%(inspect.stack()[0][3]))
-
  
-    instrument_forms = reduction.view_util.import_module_from_app(INSTRUMENT_NAME,'forms')
-    
+    instrument_forms = reduction.view_util.import_module_from_app(INSTRUMENT_NAME,'forms') 
     forms_handler = instrument_forms.ConfigurationFormHandler(request,config_id)
-     
     reduction_config = get_object_or_404(ReductionConfiguration, pk=config_id, owner=request.user)
-     
-     
     reductions = reduction_config.reductions.all()
     
     if len(reductions) <= 0:
@@ -60,10 +54,9 @@ def configuration_submit(request, config_id):
             job_set.save()
             
             code = forms_handler.get_mantid_script(None, transaction.directory)
-            
-            jobID = remote.view_util.submit_job(request, transaction, code)
-    #         import random
-    #         jobID = random.randrange(9899898)
+            number_of_nodes,cores_per_node = forms_handler.get_processing_nodes_and_cores
+
+            jobID = remote.view_util.submit_job(request, transaction, code,number_of_nodes,cores_per_node)
             
             if jobID is not None:
                 # In EQSANS one config has several reductions. For QEQ is different. We just use one reduction! 
@@ -79,7 +72,7 @@ def configuration_submit(request, config_id):
                                      message="Job set %s sucessfully submitted. <a href='%s' class='message-link'>Click to see the results this job set</a>."%
                                      (job_set.id, reverse('configuration_query', kwargs={'remote_set_id' : job_set.id, 'instrument_name' : "seq"})))
             else:
-                messages.add_message(request, messages.ERROR, message="The job was not submitted. There was an internal problem with Fermi. The administrators have been notified.")
+                messages.add_message(request, messages.ERROR, message="The job was not submitted. There was an internal problem with Fermi. The fermi administrators have been notified.")
         
     redirect_url = reverse('configuration_options',
                            kwargs={'config_id' : config_id, 'instrument_name' : INSTRUMENT_NAME})

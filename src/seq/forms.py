@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404
 from reduction.models import ReductionProcess, ReductionConfiguration
 from reduction.models import Instrument
 from reduction.forms import process_experiment
+from remote.forms import FermiProcessingForm
 from reduction_service.forms_util import build_script
 from django.core.exceptions import ValidationError
 from reduction_service.forms_util import build_script, is_xml_valid
@@ -41,7 +42,7 @@ ranged_field_help_text = "Use ranged input. E.g.: 1-8,12,21,44,121-128."
 ranged_field_regex = r'^[\d\-,]+$'
     
 
-class ConfigurationForm(forms.Form):
+class ConfigurationForm(FermiProcessingForm):
     
     required_css_class = 'required'
     
@@ -442,6 +443,9 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
     def __init__(self, request,config_id):
         self.request = request
         self.config_id = config_id
+        # 
+        self.configuration_values = None
+        self.reduction_values = None
         #forms
         self.scans_form = None
         self.config_form = None
@@ -561,39 +565,50 @@ class ConfigurationFormHandler(ConfigurationFormHandlerBase):
                 'masks_form': self.masks_form,}
     
     
+    
+    def _set_configuration_and_reduction_data(self):
+        if self.configuration_values is None or self.reduction_values is None:
+            reduction_config = get_object_or_404(ReductionConfiguration, pk=self.config_id, owner=self.request.user)
+            configuration_values = ConfigurationForm.data_from_db(self.request.user, reduction_config)
+            reduction_values = []
+            for item in reduction_config.reductions.all():
+                props = ReductionOptions.data_from_db(self.request.user, item.pk)
+                reduction_values.append(props)
+            self.configuration_values = configuration_values
+            self.reduction_values = reduction_values
+            
+    
     def get_mantid_script(self, reduction_id, transaction_directory):
         """
         @param reduction_id: 
         @param transaction: Transaction for this job submission 
         """
         
-        reduction_config = get_object_or_404(ReductionConfiguration, pk=self.config_id, owner=self.request.user)
-        configuration_values = ConfigurationForm.data_from_db(self.request.user, reduction_config)
+        logger.debug("Getting mantid script for reduction_id=%s and transaction_directory=%s."%(reduction_id,transaction_directory))
         
-        reduction_values = []
-        for item in reduction_config.reductions.all():
-            props = ReductionOptions.data_from_db(self.request.user, item.pk)
-            reduction_values.append(props)
-                
-        data = configuration_values
-        data["reduction"] = reduction_values
+        self._set_configuration_and_reduction_data()
+        
+        data = self.configuration_values
+        data["reduction"] = self.reduction_values
         
         logger.debug(pprint.pformat(data))
         
-        logger.debug( pprint.pformat(data))
-        
         xml = ConfigurationForm.as_xml(data)
-        
         data['xml_content']=xml
-        
         code = ConfigurationForm.as_mantid_script(data, transaction_directory)
-        
         return code
-        
     
-    
-
-
+    def get_processing_nodes_and_cores(self):
+        self._set_configuration_and_reduction_data()
+        try :
+            number_of_nodes = self.configuration_values['number_of_nodes']
+            cores_per_node = self.configuration_values['cores_per_node']
+        except Exception,e:
+            logger.exception(e)
+            number_of_nodes = 1
+            cores_per_node = 1
+        return number_of_nodes,cores_per_node
+            
 # alias:
 ReductionOptions = ScanForm
 

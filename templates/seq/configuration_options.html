@@ -10,7 +10,7 @@
 	var runs_jsonurl = "{% url 'catalog_runs_json' instrument=instrument ipts=config_form.experiment.value %}";
     
 	$(function() {
-      $("#tabs").tabs({ active: 3 });
+      $("#tabs").tabs({ active: 0 });
       $("#submit_button").button();
       $("#execute_jobs_button").button();
       $("#cancel_button").button();
@@ -137,6 +137,7 @@
       <li><a href="#tabs-1">Calibration</a></li>
       <li><a href="#tabs-2">Masking</a></li>
       <li><a href="#tabs-3">Data</a></li>
+      <li><a href="#tabs-4">Processing</a></li>
     </ul>
     
     <div id="tabs-0">
@@ -236,6 +237,15 @@
       {% endfor %}
       <p><a href="javascript:void(0)" class="add-row-sf"><span style='display:inline-block' class="ui-icon ui-icon-plusthick"></span>Add another scan..</a></p>
       {{ scans_form.management_form }}
+    </div>
+    
+    <div id="tabs-4">
+      <table cellspacing="0" class="property_table">
+        <tbody>
+          <tr><th title='{{ config_form.number_of_nodes.help_text }}'>{{ config_form.number_of_nodes.label_tag }}</th><td>{{ config_form.number_of_nodes.errors }}{{ config_form.number_of_nodes }}</td></tr>
+          <tr><th title='{{ config_form.cores_per_node.help_text }}'>{{ config_form.cores_per_node.label_tag }}</th><td>{{ config_form.cores_per_node.errors }}{{ config_form.cores_per_node }}</td></tr>
+        </tbody>
+      </table>
     </div>
     
   </div>

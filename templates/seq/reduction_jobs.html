@@ -19,7 +19,7 @@ The following is a list of all your reduction configuration results:
   <tbody>
   {% for job in config_data|dictsortreversed:"id" %}
     <tr class="{% if forloop.counter|divisibleby:2 %}even{% else %}odd{% endif %}">
-      <td><a href="{% url 'configuration_query' remote_set_id=job.id instrument_name=instrument%}" title="Click to see the results of the jobs belonging to this configuration">{{ job.id }}</a></td>
+      <td><a href="{% url 'configuration_query' remote_set_id=job.id instrument_name=instrument%}" title="Click to see the results of the jobs belonging to this configuration">{{ job.id }}&nbsp;<span class="ui-icon ui-icon-image"  style="display:inline-block;"></span></a></td>
       <td><a href="{% url 'configuration_options' config_id=job.config_id instrument_name=instrument%}" title="Click to see the latest version of this configuration">{{ job.name }}</a></td>
       <td>{{ job.experiments }}</td>
       <td title='Click to remove this reduction job'><a href="{% url 'remote_stop_transaction' job.trans_id %}?back_url={{ back_url }}"><span class="ui-icon ui-icon-trash"></span></a></td>

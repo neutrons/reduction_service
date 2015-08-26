@@ -12,7 +12,7 @@ var NON_VALID_EXPERIMENT_ID = 'uncategorized';
 function set_autocomplete_run_fields(run_selector,experiment_id_selector) {
     if  ( is_valid_experiment(experiment_id_selector) ) {
     	runs_jsonurl = get_all_runs_json_url($(experiment_id_selector).val());
-        set_autocomplete_ranged(selector,runs_jsonurl);
+        set_autocomplete_ranged(run_selector,runs_jsonurl);
     }
 };
 

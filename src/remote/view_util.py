@@ -17,14 +17,7 @@ from reduction.models import RemoteJob, RemoteJobSet
 from django.conf import settings
 from django.contrib import messages
 
-logger = logging.getLogger('remote')
-
-class FermiLoginForm(forms.Form):
-    """
-        Simple form to submit authentication
-    """
-    username = forms.CharField()
-    password = forms.CharField()
+logger = logging.getLogger('remote.view_util')
 
 def get_authentication_status(request):
     """
@@ -191,7 +184,7 @@ def stop_transaction(request, trans_id):
         messages.add_message(request, messages.ERROR, "Could not close Fermi transaction: %s" % sys.exc_value)
 
     
-def submit_job(request, transaction, script_code, script_name='web_submission.py'):
+def submit_job(request, transaction, script_code, script_name='web_submission.py', number_of_nodes = 1, cores_per_node=1):
     """
         Submit a job to be executed on Fermi
         @param request: request object
@@ -203,8 +196,8 @@ def submit_job(request, transaction, script_code, script_name='web_submission.py
 
     # Submit job
     post_data = urllib.urlencode({'TransID': transaction.trans_id,
-                                  'NumNodes': 1,
-                                  'CoresPerNode': 1,
+                                  'NumNodes': number_of_nodes,
+                                  'CoresPerNode': cores_per_node,
                                   'ScriptName': script_name,
                                   script_name: script_code})
     try:

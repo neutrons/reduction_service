@@ -11,12 +11,13 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 
 import reduction_service.view_util
+from . import forms
 import remote.view_util
 from reduction_service.view_util import Breadcrumbs
 
 import logging
 
-logger = logging.getLogger('remote')
+logger = logging.getLogger('remote.view')
 
 @login_required
 def query_remote_jobs(request):
@@ -40,7 +41,7 @@ def authenticate(request):
     if 'redirect' in request.POST:
         redirect_url = request.POST['redirect']
     if request.method == 'POST':
-        form = remote.view_util.FermiLoginForm(request.POST, request.FILES)
+        form = forms.FermiLoginForm(request.POST, request.FILES)
         if form.is_valid():
             status, reason = remote.view_util.authenticate(request)
             if status is not 200:

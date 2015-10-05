@@ -38,6 +38,8 @@ def process_sqw_1d_output(request, remote_job, trans_id, filename):
                                                              x_label = "Delta E",
                                                              is_y_log = True)
                     remote_job.plots.add(plot_object)
+                else:
+                    data_str = None
             except:
                 logger.error("Could not process DeltaE(i) file: %s" % sys.exc_value)
     
@@ -57,7 +59,7 @@ def process_sqw_2d_output(request, remote_job, trans_id, filename):
     plot_parameters = {}
     
     # Have we read these data before?
-    plot_object2d = None #remote_job.get_plot_2d(filename=filename, owner=request.user)
+    plot_object2d = remote_job.get_plot_2d(filename=filename, owner=request.user)
     if plot_object2d is None:
         # If we don't have data stored, read it from file
         logger.warning("Retrieving %s from compute resource" % filename)
@@ -186,13 +188,13 @@ def set_into_template_values_plots(template_values, request, first_job):
                                               f)
                 plot_info['name'] = f
                 plot_data.append(plot_info)
-#             if f.endswith('_sqw_2d.dat'):
-#                 plot_info = process_sqw_2d_output(request,
-#                                                   first_job, 
-#                                                   template_values['trans_id'], 
-#                                                   f)                
-#                 plot_info['name'] = f
-#                 plot_data.append(plot_info)
+            if f.endswith('_sqw_2d.dat'):
+                plot_info = process_sqw_2d_output(request,
+                                                  first_job, 
+                                                  template_values['trans_id'], 
+                                                  f)                
+                plot_info['name'] = f
+                plot_data.append(plot_info)
     template_values['plot_data'] = plot_data
     return template_values
 

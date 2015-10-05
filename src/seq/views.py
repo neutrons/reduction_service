@@ -54,8 +54,8 @@ def configuration_submit(request, config_id):
             job_set.save()
             
             code = forms_handler.get_mantid_script(None, transaction.directory)
-            number_of_nodes,cores_per_node = forms_handler.get_processing_nodes_and_cores
-
+            number_of_nodes,cores_per_node = forms_handler.get_processing_nodes_and_cores()
+            
             jobID = remote.view_util.submit_job(request, transaction, code,number_of_nodes,cores_per_node)
             
             if jobID is not None:

@@ -40,8 +40,8 @@
 	{% for scan in reduction %}
 		<scan Runs="{{scan.data_runs}}"
 		{% if scan.save_format %} Save='{{ scan.save_format | join:"," }}' {% endif %} 
-		{% if scan.friendly_name %} FriendlyName="{{scan.friendly_name}}" {% endif %}
-		{% if scan.friendly_name_logs %} FriendlyNameLogs='{{scan.friendly_name_logs}}' {% endif %}
+		{% if scan.friendly_name %} FriendlyName="{{scan.friendly_name|slugify}}" {% endif %}
+		{% if scan.friendly_name_logs %} FriendlyNameLogs='{{scan.friendly_name_logs|slugify}}' {% endif %}
 		{% if scan.use_incident_energy_guess %} UseIncidentEnergyGuess='{{scan.use_incident_energy_guess}' {% endif %}
 		{% if scan.energy_transfer_range %} EnergyTransferRange='{{scan.energy_transfer_range}' {% endif %}
 		{% if scan.time_zero_guess %} TimeZeroGuess='{{scan.time_zero_guess}'  {% endif %}

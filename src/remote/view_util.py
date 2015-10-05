@@ -184,7 +184,7 @@ def stop_transaction(request, trans_id):
         messages.add_message(request, messages.ERROR, "Could not close Fermi transaction: %s" % sys.exc_value)
 
     
-def submit_job(request, transaction, script_code, script_name='web_submission.py', number_of_nodes = 1, cores_per_node=1):
+def submit_job(request, transaction, script_code, number_of_nodes = 1, cores_per_node=1, script_name='web_submission.py'):
     """
         Submit a job to be executed on Fermi
         @param request: request object

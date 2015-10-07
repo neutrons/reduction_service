@@ -9,8 +9,8 @@ import os
 import django
 
 DEBUG = True
-TEMPLATE_DEBUG = True
-DEBUG_TOOLBAR = True
+TEMPLATE_DEBUG = DEBUG
+DEBUG_TOOLBAR = False
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -186,11 +186,11 @@ LOGGING = {
     },
     'handlers': {
         'null': {
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'django.utils.log.NullHandler',
         },
         'console':{
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.StreamHandler',
             'formatter': 'standard'
         },
@@ -198,7 +198,7 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers':['console'],
-            'level':'DEBUG',
+            'level':'INFO',
             'propagate': True,
         },
         'django.db.backends': {
@@ -212,15 +212,15 @@ LOGGING = {
         },
         'remote': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
         'catalog': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
         'catalog.icat': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
         'reduction': {
             'handlers': ['console'],
@@ -228,19 +228,19 @@ LOGGING = {
         },
         'reduction.forms': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
         'eqsans': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
         'seq': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
         'main': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
     }
 }

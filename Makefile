@@ -1,6 +1,6 @@
 prefix := /var/www/reduction_service
 
-HAS_MIGRATIONS:=$(shell python -c "import django;t=0 if django.VERSION[1]>=8 else 1; print t")
+HAS_MIGRATIONS:=$(shell python -c "import django;t=1 if django.VERSION[1]>=8 else 0; print t")
 
 ifeq ($(OS),Windows_NT)
 UNAME_S=Windows

@@ -54,7 +54,8 @@ ifeq ($(HAS_MIGRATIONS),1)
 	
 	# Create migrations and apply them
 	cd $(prefix)/app/src; python manage.py makemigrations
-	cd $(prefix)/app/src; python manage.py migrate
+	# To avoid error: ProgrammingError: relation "django_content_type" already exists
+	cd $(prefix)/app/src; python manage.py migrate --fake-initial --fake reduction
 else
 	cd $(prefix)/app/src; python manage.py syncdb
 endif
@@ -64,9 +65,9 @@ endif
 	@echo "\n\nReady to go: run apachectl restart\n"
 	
 	# Development environment
-	test -d /etc/apache2/other && cp $(prefix)/apache/dev_django_wsgi.conf /etc/apache2/other/reduction_service_wsgi.conf
+	# test -d /etc/apache2/other && cp $(prefix)/apache/dev_django_wsgi.conf /etc/apache2/other/reduction_service_wsgi.conf
 	# Linux server environment
-	#test -d /etc/httpd/conf.d && cp $(prefix)/apache/apache_django_wsgi.conf /etc/httpd/conf.d/reduction_service_wsgi.conf
+	test -d /etc/httpd/conf.d && cp $(prefix)/apache/apache_django_wsgi.conf /etc/httpd/conf.d/reduction_service_wsgi.conf
 	
 .PHONY: check
 .PHONY: clean

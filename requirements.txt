@@ -1,0 +1,4 @@
+Django>=1.8.5
+django-auth-ldap
+psycopg2
+django-debug-toolbar

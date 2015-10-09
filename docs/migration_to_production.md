@@ -76,9 +76,10 @@ sudo service httpd restart
 
 ```
 
-
+```
 cd /var/www/reduction_service
 scl enable python27 bash
 virtualenv env --system-site-packages --python=python2.7
 source env/bin/activate
 pip install -r /SNS/users/rhf/git/reduction_service/requirements.txt
+```

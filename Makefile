@@ -1,74 +1,68 @@
-prefix := /var/www/reduction_service
+# Constants:
+SRC_DIRECTORY := $(shell pwd)
+SRC_src := $(addprefix $(SRC_DIRECTORY), /src)
+SRC_templates := $(addprefix $(SRC_DIRECTORY), /templates)
+SRC_static := $(addprefix $(SRC_DIRECTORY), /static)
 
-HAS_MIGRATIONS:=$(shell python -c "import django;t=1 if django.VERSION[1]>=8 else 0; print t")
-
-ifeq ($(OS),Windows_NT)
-UNAME_S=Windows
-else
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-ISLINUX = 1
-endif
-ifeq ($(UNAME_S),Darwin)
-ISOSX = 1
-endif
-endif
+APACHE_WSGI := $(addprefix $(SRC_DIRECTORY), /apache/dev_django_wsgi.conf)
+WWW_PREFIX := /var/www/reduction_service
+REQUIREMENTS := $(addprefix $(SRC_DIRECTORY), /requirements/production.txt)
 
 all:
 	@echo "Run make install to install the reduction application locally"
-	
-clean: 
-	rm -rf $(prefix)
-	rm -f /etc/apache2/other/reduction_service_wsgi.conf
-	
-check:
-	# Check dependencies
-	# NEEDS django_auth_ldap
-	@python -c "import django" || echo "\nERROR: Django is not installed: www.djangoproject.com\n"
-	@python -c "import h5py" || echo "\nERROR: h5py is not installed: www.h5py.org\n"
-	
+
+venv: env/bin/activate
+	@echo "Venv"
+
+env/bin/activate: $(REQUIREMENTS)
+	@echo "Virtual env instalation"
+	cd $(WWW_PREFIX)
+	test -d env || virtualenv env
+	bash -c "source env/bin/activate; env/bin/pip install -r $(REQUIREMENTS)"
+	touch env/bin/activate
+
+check: venv
+	@echo "Check dependencies"
+
 install: webapp
-       
+
 webapp: check
 	# Make sure the install directories exist
-	test -d $(prefix) || mkdir -m 0755 -p $(prefix)
-	test -d $(prefix)/app || mkdir -m 0755 $(prefix)/app
-	test -d $(prefix)/static || mkdir -m 0755 $(prefix)/static
-	
+	test -d $(WWW_PREFIX) || mkdir -m 0755 -p $(WWW_PREFIX)
+	test -d $(WWW_PREFIX)/app || mkdir -m 0755 $(WWW_PREFIX)/app
+	test -d $(WWW_PREFIX)/static || mkdir -m 0755 $(WWW_PREFIX)/static
+
 	# Install application code
-	cp -R src $(prefix)/app
-	cp -R templates $(prefix)/app
-	cp -R static $(prefix)/app
-	
+	cp -R $(SRC_src) $(WWW_PREFIX)/app
+	cp -R $(SRC_templates) $(WWW_PREFIX)/app
+	cp -R $(SRC_static) $(WWW_PREFIX)/app
+
 	# Install apache config
-	cp -R apache $(prefix)
+	# cp -R $(SRC_apache) $(WWW_PREFIX)
 
 	# Collect the static files and install them
-	cd $(prefix)/app/src; python manage.py collectstatic --noinput
+	cd $(WWW_PREFIX)/app/src; python manage.py collectstatic --noinput
 
-	# Create the database tables. The database itself must have been created on the server already
-ifeq ($(HAS_MIGRATIONS),1)
-	@echo "Detected Django >= 1.7: Using migrations"
-	# The following call only needs to be done once to create the migrations if the tables already exist
-	#cd $(prefix)/app/src; python manage.py makemigrations eqsans plotting catalog remote users
-	
 	# Create migrations and apply them
-	cd $(prefix)/app/src; python manage.py makemigrations
+	cd $(WWW_PREFIX)/app/src; python manage.py makemigrations
 	# To avoid error: ProgrammingError: relation "django_content_type" already exists
-	cd $(prefix)/app/src; python manage.py migrate --fake-initial --fake reduction
-else
-	cd $(prefix)/app/src; python manage.py syncdb
-endif
+	cd $(WWW_PREFIX)/app/src; python manage.py migrate --fake-initial
+
 	# Prepare web monitor cache: RUN THIS ONCE BY HAND
-	#cd $(prefix)/app/src; python manage.py createcachetable webcache
-	
-	@echo "\n\nReady to go: run apachectl restart\n"
-	
+	#cd $(WWW_PREFIX)/app/src; python manage.py createcachetable webcache
+
 	# Development environment
-	# test -d /etc/apache2/other && cp $(prefix)/apache/dev_django_wsgi.conf /etc/apache2/other/reduction_service_wsgi.conf
+	# test -d /etc/apache2/other && cp $(WWW_PREFIX)/apache/dev_django_wsgi.conf /etc/apache2/other/reduction_service_wsgi.conf
 	# Linux server environment
-	test -d /etc/httpd/conf.d && cp $(prefix)/apache/apache_django_wsgi.conf /etc/httpd/conf.d/reduction_service_wsgi.conf
-	
+	test -d /etc/httpd/conf.d && cp $(APACHE_WSGI) /etc/httpd/conf.d/
+
+	@echo "\n\nReady to go: run apachectl restart\n"
+
+clean:
+	rm -rf $(WWW_PREFIX)
+	#rm -f /etc/apache2/other/reduction_service_wsgi.conf
+	rm -f /etc/httpd/conf.d/reduction_service_wsgi.conf
+
 .PHONY: check
 .PHONY: clean
 .PHONY: install

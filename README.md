@@ -4,7 +4,7 @@
 
 ## Requisites:
 
-### Packages, and all required dependencies, to install with synaptic / apt-get 
+### Packages, and all required dependencies, to install with synaptic / apt-get
 - libhdf5-dev
 - libhdf5-serial-dev
 - python-h5py
@@ -129,4 +129,118 @@ $ python manage.py shell
 ```python
 from django.core.cache import cache
 cache.clear()
+```
+
+# Production (REH7)
+
+## Postgres
+
+### Start
+```bash
+# Init db
+sudo postgresql-setup initdb
+
+# start service
+sudo service postgresql start
+```
+
+### Config postgres:
+
+```bash
+# Enter as postgres user
+sudo su - postgres
+
+# Create user as in local_settings.py
+createuser -s -P reduction
+
+# Once postgres, create a db
+createdb --owner=reduction reduction_service
+```
+### Edits:
+
+By default Postgresql uses IDENT-based authentication. change to MD5:
+```
+sudo vi /var/lib/pgsql/data/pg_hba.conf
+```
+Change:
+```
+# "local" is for Unix domain socket connections only
+local   all             all                                     peer
+```
+by:
+```
+# "local" is for Unix domain socket connections only
+local   all             all                                     md5
+```
+
+### Restart the service:
+```
+sudo service postgresql restart
+```
+
+### Test
+This should work:
+```
+psql --username=reduction -W reduction_service
+
+\list # list all databases
+
+```
+
+### Restore
+```
+psql -U reduction -d reduction_service -f /SNS/users/rhf/reduction_service_dump.sql
+
+# play with the DB:
+psql --username=reduction -W reduction_service
+
+\dt #  list all tables in the current database
+
+```
+## Misc:
+
+Gcc was not available. Installed:
+
+```
+sudo yum group install "Development Tools"
+```
+
+
+## Virtual Envs
+
+### Intall:
+
+```
+virtualenv env
+source env/bin/activate
+pip install -r /SNS/users/rhf/git/reduction_service/requirements.txt
+```
+
+
+## Testing locally:
+
+```
+cd src/
+python manage.py makemigrations
+python manage.py migrate --fake-initial
+
+# test! Port 80 to call from a browser
+sudo -E python manage.py runserver 80
+```
+
+
+## Apache
+
+### Test
+```
+sudo sudo service httpd configtest
+sudo service httpd status
+```
+
+### Open ports:
+```
+sudo iptables -A INPUT -p tcp -m tcp --sport 80 -j ACCEPT
+sudo iptables -A OUTPUT -p tcp -m tcp --dport 80 -j ACCEPT
+sudo iptables -A INPUT -p tcp -m tcp --sport 443 -j ACCEPT
+sudo iptables -A OUTPUT -p tcp -m tcp --dport 443 -j ACCEPT
 ```

@@ -133,6 +133,13 @@ cache.clear()
 
 # Production (REH7)
 
+## Aditional Software
+```
+sudo yum group install "Development Tools"
+sudo yum install mod_ssl
+
+```
+
 ## Postgres
 
 ### Start
@@ -233,14 +240,22 @@ sudo -E python manage.py runserver 80
 
 ### Test
 ```
-sudo sudo service httpd configtest
+sudo service httpd configtest
 sudo service httpd status
 ```
 
 ### Open ports:
 ```
 sudo iptables -A INPUT -p tcp -m tcp --sport 80 -j ACCEPT
-sudo iptables -A OUTPUT -p tcp -m tcp --dport 80 -j ACCEPT
+#sudo iptables -A OUTPUT -p tcp -m tcp --dport 80 -j ACCEPT
 sudo iptables -A INPUT -p tcp -m tcp --sport 443 -j ACCEPT
-sudo iptables -A OUTPUT -p tcp -m tcp --dport 443 -j ACCEPT
+#sudo iptables -A OUTPUT -p tcp -m tcp --dport 443 -j ACCEPT
+```
+
+### Copy  certificate and key:
+
+From reduction-old to reduction
+```
+/etc/ssl/certs/reduction.sns.gov.crt
+/etc/pki/tls/private/reduction.sns.gov.key
 ```

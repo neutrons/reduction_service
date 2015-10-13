@@ -197,13 +197,23 @@ psql --username=reduction -W reduction_service
 ### Restore
 ```
 psql -U reduction -d reduction_service -f /SNS/users/rhf/reduction_service_dump.sql
+```
 
-# play with the DB:
+### play with the DB:
+
+```
 psql --username=reduction -W reduction_service
 
 \dt #  list all tables in the current database
 
 ```
+
+If the migration dit not insert seq in the instriment table. Do it:
+```
+select * from reduction_instrument;
+insert into reduction_instrument(name) values ('seq');
+```
+
 ## Misc:
 
 Gcc was not available. Installed:
@@ -211,6 +221,8 @@ Gcc was not available. Installed:
 ```
 sudo yum group install "Development Tools"
 ```
+
+
 
 
 ## Virtual Envs

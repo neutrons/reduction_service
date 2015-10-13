@@ -6,7 +6,6 @@
 .PHONY: check
 .PHONY: clean
 .PHONY: install
-.PHONY: webapp
 .PHONY: venv
 
 SHELL = /bin/bash
@@ -24,9 +23,6 @@ SRC_src := $(addprefix $(SRC_DIRECTORY), /src)
 SRC_templates := $(addprefix $(SRC_DIRECTORY), /templates)
 SRC_static := $(addprefix $(SRC_DIRECTORY), /static)
 SRC_env := $(addprefix $(SRC_DIRECTORY), /env)
-
-APACHE_WSGI := $(addprefix $(SRC_DIRECTORY), /apache/reduction_service_wsgi.conf)
-REQUIREMENTS := $(addprefix $(SRC_DIRECTORY), /requirements/production.txt)
 
 WWW_PREFIX := /var/www/reduction_service
 
@@ -53,11 +49,18 @@ ifeq ("$(DISTRO)","")
 	exit 1
 endif
 
+
 ## Check wich apache root to use:
 ifeq ($(shell [[ $(DISTRO) == "ubuntu" || $(DISTRO) == "debian" ]] && echo true),true)
-	APACHE_PREFIX := /etc/apache2
+	# Development
+	APACHE_PREFIX := /etc/apache2/sites-available
+	APACHE_WSGI := $(addprefix $(SRC_DIRECTORY), /apache/reduction_service_development_wsgi.conf)
+	REQUIREMENTS := $(addprefix $(SRC_DIRECTORY), /requirements/development.txt)
 else
-	APACHE_PREFIX := /etc/httpd
+	# Production
+	APACHE_WSGI := $(addprefix $(SRC_DIRECTORY), /apache/reduction_service_production_wsgi.conf)
+	APACHE_PREFIX := /etc/httpd/conf.d
+	REQUIREMENTS := $(addprefix $(SRC_DIRECTORY), /requirements/base.txt)
 endif
 
 
@@ -65,12 +68,9 @@ all:
 	@echo "Run make install to install the reduction application locally"
 	@echo "Configuration:"
 	@echo "Apache: $(APACHE_PREFIX)"
+	@echo "WSGI:   $(APACHE_WSGI)"
 	@echo "From:   $(SRC_DIRECTORY)"
 	@echo "To:     $(WWW_PREFIX)"
-
-venv: env/bin/activate
-	@echo "Check if virtualenv is working"
-	bash -c "source env/bin/activate; env/bin/python -c 'import os; os.environ[\"VIRTUAL_ENV\"]'"
 
 env/bin/activate: $(REQUIREMENTS)
 	@echo "Virtual env instalation"
@@ -78,44 +78,48 @@ env/bin/activate: $(REQUIREMENTS)
 	bash -c "source env/bin/activate; env/bin/pip install -r $(REQUIREMENTS)"
 	touch env/bin/activate
 
-check: venv
+venv: env/bin/activate
+	@echo "Check if virtualenv is working"
+	bash -c "source env/bin/activate; env/bin/python -c 'import os; os.environ[\"VIRTUAL_ENV\"]'"
 
-install: webapp
-
-webapp: check
+install: venv
 	# Make sure the install directories exist
 	test -d $(WWW_PREFIX) || mkdir -m 0755 -p $(WWW_PREFIX)
 	test -d $(WWW_PREFIX)/app || mkdir -m 0755 $(WWW_PREFIX)/app
 	test -d $(WWW_PREFIX)/static || mkdir -m 0755 $(WWW_PREFIX)/static
 
 	# Install application code
-	cp -R $(SRC_src) $(WWW_PREFIX)/app
-	cp -R $(SRC_templates) $(WWW_PREFIX)/app
-	cp -R $(SRC_static) $(WWW_PREFIX)/app
-	cp -R $(SRC_env) $(WWW_PREFIX)
-
+	cp -R $(SRC_src) $(WWW_PREFIX)/app/
+	cp -R $(SRC_templates) $(WWW_PREFIX)/app/
+	cp -R $(SRC_static) $(WWW_PREFIX)/app/
+	cp -R $(SRC_env) $(WWW_PREFIX)/
+	
+	#$(WWW_PREFIX)/env/bin/python manage.py migrate --fake-initial;
 	bash -c " \
 		cd $(WWW_PREFIX)/app/src; \
 		source $(WWW_PREFIX)/env/bin/activate; \
 		$(WWW_PREFIX)/env/bin/python manage.py collectstatic --noinput; \
 		$(WWW_PREFIX)/env/bin/python manage.py makemigrations; \
-		$(WWW_PREFIX)/env/bin/python manage.py migrate --fake-initial; \
-	
+		$(WWW_PREFIX)/env/bin/python manage.py migrate \
 	"
 	# Prepare web monitor cache: RUN THIS ONCE BY HAND
 	#cd $(WWW_PREFIX)/app/src; python manage.py createcachetable webcache
 
 	# Linux server environment
 	# This probbaly has to run as root
-	test -d $(APACHE_PREFIX)/conf.d && cp $(APACHE_WSGI) $(APACHE_PREFIX)/conf.d/
+	test -d $(APACHE_PREFIX) && cp $(APACHE_WSGI) $(APACHE_PREFIX)/
 
 	@echo "\n\nReady to go:\n"
 	@echo "sudo service httpd restart\n"
 	@echo "Or:\n"
-	@echo "sudo service apachectl restart\n"
+	@echo "sudo apachectl restart\n"
+	@echo "Or:\n"
+	@echo "sudo a2ensite reduction_service_development_wsgi\n"
+	@echo "sudo service apache2 reload\n"
 
 clean:
 	rm -rf $(WWW_PREFIX)/*
-	rm -f $(APACHE_PREFIX)/conf.d/reduction_service_wsgi.conf
+	rm -f $(APACHE_PREFIX)/reduction_service_production_wsgi.conf
+	rm -f $(APACHE_PREFIX)/reduction_service_development_wsgi.conf
 
 

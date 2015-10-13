@@ -8,7 +8,7 @@
 import os
 import django
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 DEBUG_TOOLBAR = False
 
@@ -186,11 +186,11 @@ LOGGING = {
     },
     'handlers': {
         'null': {
-            'level':'INFO',
+            'level':'DEBUG',
             'class':'django.utils.log.NullHandler',
         },
         'console':{
-            'level':'INFO',
+            'level':'DEBUG',
             'class':'logging.StreamHandler',
             'formatter': 'standard'
         },
@@ -212,15 +212,15 @@ LOGGING = {
         },
         'remote': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
         },
         'catalog': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
         },
         'catalog.icat': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
         },
         'reduction': {
             'handlers': ['console'],
@@ -228,19 +228,19 @@ LOGGING = {
         },
         'reduction.forms': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
         },
         'eqsans': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
         },
         'seq': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
         },
         'main': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
         },
     }
 }

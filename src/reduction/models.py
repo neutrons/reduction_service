@@ -63,7 +63,7 @@ class Experiment(models.Model):
         Table holding IPTS information
     """
     name = models.CharField(max_length=24, unique=True)
-    instruments = models.ManyToManyField(Instrument, related_name='_ipts_instruments+')
+    instruments = models.ManyToManyField(Instrument)
     created_on = models.DateTimeField('Timestamp', auto_now_add=True)
     objects = ExperimentManager()
     
@@ -78,7 +78,7 @@ class ReductionProcess(models.Model):
         Reduction process definition
     """
     instrument = models.ForeignKey(Instrument)
-    experiments = models.ManyToManyField(Experiment, related_name='_reduction_experiment+')
+    experiments = models.ManyToManyField(Experiment)
     name = models.TextField()
     owner = models.ForeignKey(User)
     data_file = models.TextField()
@@ -127,10 +127,10 @@ class ReductionConfiguration(models.Model):
         Common reduction properties used for a given configuration
     """
     instrument = models.ForeignKey(Instrument)
-    experiments = models.ManyToManyField(Experiment, related_name='_configuration_experiment+')
+    experiments = models.ManyToManyField(Experiment)
     name = models.TextField()
     owner = models.ForeignKey(User)
-    reductions = models.ManyToManyField(ReductionProcess, related_name='_configuration_reduction+')
+    reductions = models.ManyToManyField(ReductionProcess)
     properties = models.TextField()
     timestamp = models.DateTimeField('timestamp', auto_now=True)
 
@@ -170,8 +170,8 @@ class RemoteJob(models.Model):
     remote_id = models.CharField(max_length = 30)#, unique=True)
     transaction = models.ForeignKey(Transaction)
     properties = models.TextField()
-    plots = models.ManyToManyField(Plot1D, blank=True, related_name='_remote_job_plot+')
-    plots2d = models.ManyToManyField(Plot2D, blank=True, related_name='_remote_job_plot2d+')
+    plots = models.ManyToManyField(Plot1D, blank=True)
+    plots2d = models.ManyToManyField(Plot2D, blank=True)
     
     def get_data_dict(self):
         """
@@ -222,7 +222,7 @@ class RemoteJobSet(models.Model):
     """
     transaction = models.ForeignKey(Transaction)
     configuration = models.ForeignKey(ReductionConfiguration)
-    jobs = models.ManyToManyField(RemoteJob, related_name='_remote_set_jobs')
+    jobs = models.ManyToManyField(RemoteJob)
     timestamp = models.DateTimeField('timestamp', auto_now=True)
     
     def __str__(self):

@@ -6,4 +6,10 @@
 src/reduction_service/local_settings.py
 .settings
 
+# Python virtual env
 env
+
+# Files that will be in config/settings/ as .env
+env_prod
+env_local
+config/settings/.env

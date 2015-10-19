@@ -4,7 +4,12 @@ Django==1.8.5
 # Django Packages
 django-auth-ldap==1.2.6
 psycopg2==2.6.1
+django-environ
 
 # other
 numpy
 simplejson
+# For h5py: cython needs to be first for h5py in RHEL7
+cython
+h5py
+

@@ -59,7 +59,7 @@ python manage.py collectstatic
 ```
 
 
-## Deployment
+## Deployment no SSL
 
 Copy everything for now:
 ```
@@ -80,4 +80,22 @@ Start the uwsgi server. It uses a socket to communicate with nginx
 ```
 cd /var/nginx/reduction_service
 sudo uwsgi --socket reduction.sock --module config.wsgi --chmod-socket=666
+# or
+sudo uwsgi --ini nginx/reduction_uwsgi.ini
+```
+
+## Deployment SSL
+
+Create key and certificate if needed:
+```
+cd ssl/
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout reduction.key -out reduction.crt
+```
+
+Enable the configuration:
+```
+sudo rm default
+sudo rm /var/nginx/reduction_service/nginx/reduction_local_nginx.conf
+sudo ln -s /var/nginx/reduction_service/nginx/reduction_dev_nginx.conf  /etc/nginx/sites-enabled/
+sudo /etc/init.d/nginx restart
 ```

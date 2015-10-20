@@ -9,6 +9,7 @@
 import logging
 import sys
 import inspect
+import importlib
 from django.conf import settings
 
 logger = logging.getLogger('catalog')
@@ -44,13 +45,17 @@ def _get_function_from_instrument_name(instrument_name,function_name):
     """
     instrument = instrument_name.lower()
     module_str = "reduction_server."+instrument
-    module = __import__ (module_str)
+    logger.debug("Getting module: %s"%module_str)
+    
+    #module = __import__ (module_str,fromlist=[''])
+    # In Python 2.7 and Python 3.1 or later:
+    module = importlib.import_module(module_str)
     try:
         func_to_call = getattr(module, function_name)
         return func_to_call
     except Exception as e:
-        #logger.exception(e)
-        #logger.error('Error getting function <%s> from module <%s>: %s' %(function_name, module_str, sys.exc_value) )
+        logger.exception(e)
+        logger.error('Error getting function <%s> from module <%s>: %s' %(function_name, module_str, sys.exc_value) )
         return None
 
 def get_new_reduction_url(instrument, run=None, ipts=None):

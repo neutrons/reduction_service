@@ -1,22 +1,3 @@
-# RHEL 7
-
-
-## Disable Apache
-
-```
-# install
-sudo yum install nginx
-sudo yum install uwsgi
-#
-# Disable Apache
-sudo service httpd status
-sudo systemctl disable httpd.service
-sudo service httpd status
-sudo systemctl stop httpd.service
-```
-
-
-
 # Ubuntu 14.04
 
 ## Disable Apache
@@ -38,13 +19,6 @@ Start nginx:
 sudo service nginx start
 ```
 
-see a list of all available SELinux booleans. Must be ON!
-```
-getsebool -a | grep httpd
-# Set to on permanentely  if needed:
-setsebool httpd_can_network_connect on -P
-```
-
 ## uWSGI
 
  uwsgi 2.0 is in the requirements folder.
@@ -54,7 +28,7 @@ Test uWSGI:
 cd ~/git/reduction_service
 # Collect static files in the static folder:
 python manage.py collectstatic
-# Test with the static 
+# Test with the static
 ./env/bin/uwsgi --http :8001 --module config.wsgi --static-map /static=static
 ```
 
@@ -98,4 +72,69 @@ sudo rm default
 sudo rm /var/nginx/reduction_service/nginx/reduction_local_nginx.conf
 sudo ln -s /var/nginx/reduction_service/nginx/reduction_dev_nginx.conf  /etc/nginx/sites-enabled/
 sudo /etc/init.d/nginx restart
+sudo uwsgi --ini nginx/reduction_uwsgi.ini
+```
+
+# RHEL 7
+
+
+## Disable Apache
+
+```
+# Disable Apache
+sudo service httpd status
+sudo systemctl disable httpd.service
+sudo service httpd status
+sudo systemctl stop httpd.service
+```
+
+## Add new software
+```
+# install
+sudo yum install nginx
+sudo pip install uwsgi
+```
+
+## Start nginx
+
+```
+sudo service nginx status
+sudo service nginx start
+
+```
+Test: http://reduction.sns.gov/
+
+## Deployment
+
+```
+rm -rf /SNS/users/rhf/git/reduction_service/env
+cd /SNS/users/rhf/git/reduction_service/
+cp env_prod config/settings/.env
+virtualenv env
+source env/bin/activate
+pip install -r requirements/production.txt
+```
+
+Copy everything for now:
+```
+sudo mkdir -p  /var/nginx/reduction_service
+cd /var/nginx/reduction_service
+sudo cp -r /SNS/users/rhf/git/reduction_service/* .
+```
+Only in redhat:
+```
+# If the folders don't exist!
+sudo mkdir /etc/nginx/sites-available
+sudo mkdir /etc/nginx/sites-enabled
+# vi /etc/nginx/nginx.conf
+# add inside the http block: include /etc/nginx/sites-enabled/*;
+```
+
+Enable the configuration:
+```
+
+sudo ln -s /var/nginx/reduction_service/nginx/reduction_prod_nginx.conf  /etc/nginx/sites-enabled/
+sudo service nginx restart
+
+nohup sudo -E uwsgi --ini nginx/reduction_uwsgi.ini &
 ```

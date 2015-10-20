@@ -50,7 +50,7 @@ SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
 # ------------------------------------------------------------------------------
 # Hosts/domain names that are valid for this site
 # See https://docs.djangoproject.com/en/1.6/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['reduction.ornl.gov'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['reduction.sns.gov'])
 # END SITE CONFIGURATION
 
 
@@ -109,3 +109,5 @@ ADMIN_URL = env('ADMIN_URL')
 # Your production stuff: Below this line define 3rd party library settings
 STATIC_ROOT = '/var/nginx/reduction_service/static'
 
+# For NGINX
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

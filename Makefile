@@ -11,7 +11,7 @@
 SHELL = /bin/bash
 UNAME = $(shell uname)
 
-## Release file to determin distro and os
+## Release file to determine distro and os
 UBUNTU_REL_F := /etc/lsb-release
 DEBIAN_REL_F := /etc/debian_version
 ORACLE_REL_F := /etc/oracle-release
@@ -19,13 +19,14 @@ REDHAT_REL_F := /etc/redhat-release
 
 # Constants:
 SRC_DIRECTORY := $(shell pwd)
-SRC_src := $(addprefix $(SRC_DIRECTORY), /src)
-SRC_templates := $(addprefix $(SRC_DIRECTORY), /templates)
-SRC_static := $(addprefix $(SRC_DIRECTORY), /static)
+SRC_src := $(addprefix $(SRC_DIRECTORY), /app)
+SRC_config := $(addprefix $(SRC_DIRECTORY), /config)
 SRC_env := $(addprefix $(SRC_DIRECTORY), /env)
 
 WWW_PREFIX := /var/www/reduction_service
 
+ENV_FILE := $(addprefix $(SRC_DIRECTORY), /env_prod)
+	
 ## Determine OS and Distribution
 ifeq ($(UNAME),Darwin)
 	DISTRO := osx
@@ -50,17 +51,18 @@ ifeq ("$(DISTRO)","")
 endif
 
 
-## Check wich apache root to use:
+## Check what to use.
+## Assuming REDHAT is production and UBUNTU is local
 ifeq ($(shell [[ $(DISTRO) == "ubuntu" || $(DISTRO) == "debian" ]] && echo true),true)
-	# Development
+	# Local
 	APACHE_PREFIX := /etc/apache2/sites-available
-	APACHE_WSGI := $(addprefix $(SRC_DIRECTORY), /apache/reduction_service_development_wsgi.conf)
-	REQUIREMENTS := $(addprefix $(SRC_DIRECTORY), /requirements/development.txt)
+	APACHE_WSGI := $(addprefix $(SRC_DIRECTORY), /apache/reduction_service_local_wsgi.conf)
+	REQUIREMENTS := $(addprefix $(SRC_DIRECTORY), /requirements/local.txt)
 else
 	# Production
 	APACHE_WSGI := $(addprefix $(SRC_DIRECTORY), /apache/reduction_service_production_wsgi.conf)
 	APACHE_PREFIX := /etc/httpd/conf.d
-	REQUIREMENTS := $(addprefix $(SRC_DIRECTORY), /requirements/base.txt)
+	REQUIREMENTS := $(addprefix $(SRC_DIRECTORY), /requirements/production.txt)
 endif
 
 
@@ -75,6 +77,7 @@ all:
 env/bin/activate: $(REQUIREMENTS)
 	@echo "Virtual env instalation"
 	test -d env || virtualenv env
+	# use -Ur for upgrade:
 	bash -c "source env/bin/activate; env/bin/pip install -r $(REQUIREMENTS)"
 	touch env/bin/activate
 
@@ -85,18 +88,18 @@ venv: env/bin/activate
 install: venv
 	# Make sure the install directories exist
 	test -d $(WWW_PREFIX) || mkdir -m 0755 -p $(WWW_PREFIX)
-	test -d $(WWW_PREFIX)/app || mkdir -m 0755 $(WWW_PREFIX)/app
 	test -d $(WWW_PREFIX)/static || mkdir -m 0755 $(WWW_PREFIX)/static
 
 	# Install application code
-	cp -R $(SRC_src) $(WWW_PREFIX)/app/
-	cp -R $(SRC_templates) $(WWW_PREFIX)/app/
-	cp -R $(SRC_static) $(WWW_PREFIX)/app/
+	cp $(ENV_FILE) $(SRC_config)/settings/.env
+	cp $(SRC_DIRECTORY)/manage.py $(WWW_PREFIX)/
+	cp -R $(SRC_src) $(WWW_PREFIX)/
+	cp -R $(SRC_config) $(WWW_PREFIX)/
 	cp -R $(SRC_env) $(WWW_PREFIX)/
 	
 	#$(WWW_PREFIX)/env/bin/python manage.py migrate --fake-initial;
 	bash -c " \
-		cd $(WWW_PREFIX)/app/src; \
+		cd $(WWW_PREFIX); \
 		source $(WWW_PREFIX)/env/bin/activate; \
 		$(WWW_PREFIX)/env/bin/python manage.py collectstatic --noinput; \
 		$(WWW_PREFIX)/env/bin/python manage.py makemigrations; \
@@ -114,12 +117,12 @@ install: venv
 	@echo "Or:\n"
 	@echo "sudo apachectl restart\n"
 	@echo "Or:\n"
-	@echo "sudo a2ensite reduction_service_development_wsgi\n"
+	@echo "sudo a2ensite reduction_service_local_wsgi\n"
 	@echo "sudo service apache2 reload\n"
 
 clean:
 	rm -rf $(WWW_PREFIX)/*
 	rm -f $(APACHE_PREFIX)/reduction_service_production_wsgi.conf
-	rm -f $(APACHE_PREFIX)/reduction_service_development_wsgi.conf
+	rm -f $(APACHE_PREFIX)/reduction_service_local_wsgi.conf
 
 

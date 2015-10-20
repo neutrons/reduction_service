@@ -13,3 +13,6 @@ env
 env_prod
 env_local
 config/settings/.env
+# Collected static files
+/static
+

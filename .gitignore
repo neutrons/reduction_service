@@ -7,12 +7,13 @@ src/reduction_service/local_settings.py
 .settings
 
 # Python virtual env
-env
+/env
 
 # Files that will be in config/settings/ as .env
-env_prod
-env_local
-config/settings/.env
+/env_prod
+/env_local
+/env_dev
+/config/settings/.env
 # Collected static files
 /static
 /ssl

@@ -6,7 +6,7 @@
 """
 from django import template
 import re
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict
 
 register = template.Library()
 
@@ -35,7 +35,7 @@ def sortdic(value):
     {% endfor %}
     """
     if isinstance(value, dict):
-        new_dict = SortedDict()
+        new_dict = OrderedDict()
         key_list = sorted(value.keys())
         for key in key_list:
             new_dict[key] = value[key]

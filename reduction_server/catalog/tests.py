@@ -1,19 +1,47 @@
 from django.test import TestCase
+from django.test import RequestFactory
+from django.test.runner import DiscoverRunner
+from django.contrib.messages.storage.fallback import FallbackStorage
 
-from . import icat_server_communication
+from .icat import ICat
+
 
 """
 To run the test:
-python manage.py test catalog/
+
+python manage.py test reduction_server/catalog/ --testrunner=reduction_server.catalog.tests.NoDbTestRunner
+python manage.py test reduction_server/catalog/ --testrunner=reduction_server.catalog.tests.NoDbTestRunner --settings=config.settings.local
 
 
 """
 
-class IcatTestCase(TestCase):
-    def setUp(self):
+
+class NoDbTestRunner(DiscoverRunner):
+    """
+    A test runner to test without database creation/deletion
+    """
+    def setup_databases(self, **kwargs):
+        pass
+    def teardown_databases(self, old_config, **kwargs):
         pass
 
-    def test_ipts_runs_range(self):
-        runs_expected = [46477, 46478, 46479, 46480, 46481, 46482, 46483, 46484, 46485, 46486, 46487, 46488, 46489, 46490, 46491, 46492, 46493, 46494, 46495, 46496, 46497, 46498, 46499, 46500, 46501, 46502, 46503, 46504, 46505, 46506, 46507, 46508, 46509, 46510, 46511, 46512, 46513, 46514, 46515, 46516, 46517, 46518, 46519, 46520, 46521, 46522, 46523, 46524, 46525, 46526, 46527, 46528, 46529, 46530, 46531, 46532, 46533, 46534, 46535, 46536, 46537, 46538, 46539, 46540, 46541, 46542, 46543, 46544, 46545, 46546, 46547, 46548, 46549, 46550, 46551, 46552, 46553, 46554, 46555, 46556, 46557, 46558, 46559, 46560, 46561, 46562, 46563, 46564, 46565, 46566, 46567, 46568, 46569, 46570, 46571, 46572, 46573, 46574, 46575, 46576, 46577, 46578, 46579, 46580, 46581, 46586, 46587, 46588, 46589, 46590, 46591, 46592, 46593, 46594, 46595, 46596, 46597, 46598, 46599, 46600, 46601, 46602, 46603, 46604, 46605, 46606, 46607, 46608, 46609, 46610, 46611, 46612, 46613, 46614, 46615, 46616, 46617, 46618, 46619, 46620, 46621, 46622, 46623, 46624, 46625, 46626, 46627, 46628, 46629, 46630] 
-        runs = icat_server_communication.get_ipts_runs("EQSANS", "IPTS-13502")        
-        self.assertEqual(runs, runs_expected)
+class IcatTestCase(TestCase):
+    def setUp(self):
+        request_factory = RequestFactory()
+        request = request_factory.get('/users/login')
+        # Workaround for messages to work!
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+        self.icat = ICat(request)
+
+    def test_get_instruments(self):
+        instruments = self.icat.get_instruments()        
+        self.assertEqual(instruments, {u'instrument': [u'ARCS', u'BSS', u'CNCS', u'CORELLI', u'EQSANS', u'FNPB', u'HYS', u'HYSA', u'MANDI', u'NOM', u'NSE', u'PG3', u'REF_L', u'REF_M', u'SEQ', u'SNAP', u'TOPAZ', u'USANS', u'VIS', u'VULCAN']})
+
+    def test_get_experiments(self):
+        instruments = self.icat.get_experiments("MANDI")        
+        self.assertEqual(instruments, {u'proposal': [u'2012_2_11b_SCI', u'2013_2_11B_SCI', u'2014_1_11B_SCI', u'IPTS-10136', u'IPTS-10138', u'IPTS-10663', u'IPTS-10943', u'IPTS-11063', u'IPTS-11091', u'IPTS-11215', u'IPTS-11464', u'IPTS-11482', u'IPTS-11543', u'IPTS-11817', u'IPTS-11862', u'IPTS-11932', u'IPTS-11940', u'IPTS-12152', u'IPTS-12402', u'IPTS-12438', u'IPTS-12697', u'IPTS-12864', u'IPTS-12874', u'IPTS-12924', u'IPTS-13243', u'IPTS-13288', u'IPTS-13552', u'IPTS-13643', u'IPTS-13653', u'IPTS-13722', u'IPTS-13904', u'IPTS-14069', u'IPTS-14562', u'IPTS-14586', u'IPTS-15880', u'IPTS-8776']})
+        
+        instruments = self.icat.get_experiments("M")
+        self.assertEqual(instruments,None)

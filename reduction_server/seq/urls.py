@@ -1,6 +1,6 @@
-from django.conf.urls import patterns, include, url
-
+from django.conf.urls import url
+from . import views
 # Namespace seq
-urlpatterns = patterns('',
-	url(r'^configuration/(?P<config_id>\d+)/submit$' , 'reduction_server.seq.views.configuration_submit', name='configuration_submit'),
-)
+urlpatterns = [
+	url(r'^configuration/(?P<config_id>\d+)/submit$' , views.configuration_submit, name='configuration_submit'),
+]

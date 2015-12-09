@@ -2,7 +2,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.contrib.auth.models import Group
 from django.http import HttpResponse
-from django.core.context_processors import csrf
+from django.template.context_processors import csrf
 
 # import code for encoding urls and generating md5 hashes
 import hashlib

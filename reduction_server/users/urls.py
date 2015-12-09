@@ -1,6 +1,8 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import url
 
-urlpatterns = patterns('',
-    url(r'^login$', 'reduction_server.users.views.perform_login'),
-    url(r'^logout$', 'reduction_server.users.views.perform_logout'),
-)
+from . import views
+
+urlpatterns = [
+    url(r'^login$', views.perform_login),
+    url(r'^logout$', views.perform_logout),
+]

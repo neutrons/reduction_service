@@ -3,7 +3,7 @@ from django.test import RequestFactory
 from django.test.runner import DiscoverRunner
 from django.contrib.messages.storage.fallback import FallbackStorage
 
-from .icat import ICat
+from .icat import ICat, DjangoDumper, GeneralDumper
 
 
 """
@@ -33,7 +33,9 @@ class IcatTestCase(TestCase):
         setattr(request, 'session', 'session')
         messages = FallbackStorage(request)
         setattr(request, '_messages', messages)
-        self.icat = ICat(request)
+        
+        dumper = DjangoDumper(request)
+        self.icat = ICat(dumper)
 
     def test_get_instruments(self):
         instruments = self.icat.get_instruments()        
@@ -43,5 +45,7 @@ class IcatTestCase(TestCase):
         instruments = self.icat.get_experiments("MANDI")        
         self.assertEqual(instruments, {u'proposal': [u'2012_2_11b_SCI', u'2013_2_11B_SCI', u'2014_1_11B_SCI', u'IPTS-10136', u'IPTS-10138', u'IPTS-10663', u'IPTS-10943', u'IPTS-11063', u'IPTS-11091', u'IPTS-11215', u'IPTS-11464', u'IPTS-11482', u'IPTS-11543', u'IPTS-11817', u'IPTS-11862', u'IPTS-11932', u'IPTS-11940', u'IPTS-12152', u'IPTS-12402', u'IPTS-12438', u'IPTS-12697', u'IPTS-12864', u'IPTS-12874', u'IPTS-12924', u'IPTS-13243', u'IPTS-13288', u'IPTS-13552', u'IPTS-13643', u'IPTS-13653', u'IPTS-13722', u'IPTS-13904', u'IPTS-14069', u'IPTS-14562', u'IPTS-14586', u'IPTS-15880', u'IPTS-8776']})
         
-        instruments = self.icat.get_experiments("M")
+    def test_get_experiments_invalid_instrument(self):
+        instruments = self.icat.get_experiments("FOO")
         self.assertEqual(instruments,None)
+

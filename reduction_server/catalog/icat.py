@@ -27,7 +27,6 @@ DEFAULT_ICAT_DOMAIN = "icat.sns.gov"
 DEFAULT_ICAT_PORT = 2080
 
 TIMEOUT = 3
-URL_PATH_PREFIX = "icat-rest-ws"
 HEADERS = {"Accept": "application/json"}
 
 class IDumper():
@@ -171,7 +170,7 @@ class ICat(object):
         '''
         
         try:
-            request_str = '/%s/experiment/%s' % (URL_PATH_PREFIX, self.facility)
+            request_str = '/icat-rest-ws/experiment/%s' % (self.facility)
             logger.debug("get_instruments: %s" % request_str)
             self.conn.request('GET',
                               request_str,
@@ -199,7 +198,7 @@ class ICat(object):
         '''
         
         try:
-            request_str = '/%s/experiment/%s/%s' % (URL_PATH_PREFIX, self.facility, instrument)
+            request_str = '/icat-rest-ws/experiment/%s/%s' % (self.facility, instrument)
             logger.debug("get_experiments: %s" % request_str)
             self.conn.request('GET',
                               request_str,
@@ -208,7 +207,40 @@ class ICat(object):
             return self._parse_json(response.read())
         except Exception as e:
             self.dumper.dump_error(e, "Communication with ICAT server failed.")
-            return None            
+            return None
+        
+    def get_user_experiments(self, ucams_uid):
+        '''
+        @param ucams_uid: valid 3 characters ORNL ucams user uid
+        @param instrument: Valid instrument as string
+        @return: 
+        {
+            "proposals": [
+                {
+                    "IPTS": 522
+                },
+                {
+                    "IPTS": 1602
+                },
+                (.....................)
+                {
+                    "IPTS": 15834
+                }
+            ]
+        }
+        '''
+        
+        try:
+            request_str = '/prpsl_ws/getProposalNumbersByUser/%s' % (ucams_uid)
+            logger.debug("get_user_experiments: %s" % request_str)
+            self.conn.request('GET',
+                              request_str,
+                              headers=HEADERS)
+            response = self.conn.getresponse()
+            return self._parse_json(response.read())
+        except Exception as e:
+            self.dumper.dump_error(e, "Communication with ICAT server failed.")
+            return None
 
     def get_run_ranges(self, instrument, experiment):
         '''
@@ -218,7 +250,7 @@ class ICat(object):
         '''
         
         try:
-            request_str = '/%s/experiment/%s/%s/%s' % (URL_PATH_PREFIX,
+            request_str = '/icat-rest-ws/experiment/%s/%s/%s' % (
                                                      self.facility,
                                                      instrument,
                                                      experiment)
@@ -272,7 +304,7 @@ class ICat(object):
         '''
         
         try:
-            request_str = '/%s/experiment/%s/%s/%s/meta' % (URL_PATH_PREFIX,
+            request_str = '/icat-rest-ws/experiment/%s/%s/%s/meta' % (
                                                      self.facility,
                                                      instrument,
                                                      experiment)
@@ -346,7 +378,7 @@ class ICat(object):
         '''
         
         try:
-            request_str = '/%s/experiment/%s/%s/%s/all' % (URL_PATH_PREFIX,
+            request_str = '/icat-rest-ws/experiment/%s/%s/%s/all' % (
                                                      self.facility,
                                                      instrument,
                                                      experiment)
@@ -379,7 +411,7 @@ class ICat(object):
         '''
         
         try:
-            request_str = '/%s/dataset/%s/%s/%s' % (URL_PATH_PREFIX,
+            request_str = '/icat-rest-ws/dataset/%s/%s/%s' % (
                                                      self.facility,
                                                      instrument,
                                                      run_number)
@@ -407,7 +439,7 @@ class ICat(object):
         '''
         
         try:
-            request_str = '/%s/dataset/%s/%s/%s/metaOnly' % (URL_PATH_PREFIX,
+            request_str = '/icat-rest-ws/dataset/%s/%s/%s/metaOnly' % (
                                                      self.facility,
                                                      instrument,
                                                      run_number)
@@ -440,7 +472,7 @@ class ICat(object):
         '''
         
         try:
-            request_str = '/%s/dataset/%s/%s/%s/lite' % (URL_PATH_PREFIX,
+            request_str = '/icat-rest-ws/dataset/%s/%s/%s/lite' % (
                                                      self.facility,
                                                      instrument,
                                                      run_number)
@@ -463,7 +495,7 @@ class ICat(object):
         '''
         
         try:
-            request_str = '/%s/datafile/%s/%s' % (URL_PATH_PREFIX, self.facility, instrument)
+            request_str = '/icat-rest-ws/datafile/%s/%s' % (self.facility, instrument)
             logger.debug("get_last_run: %s" % request_str)
             self.conn.request('GET',
                               request_str,
@@ -486,7 +518,7 @@ class ICat(object):
         '''
         
         try:
-            request_str = '/%s/datafile/%s/%s/%s' % (URL_PATH_PREFIX,
+            request_str = '/icat-rest-ws/datafile/%s/%s/%s' % (
                                                      self.facility,
                                                      instrument,
                                                      run_number)
@@ -518,3 +550,5 @@ if __name__ == "__main__":
     pprint(icat.get_run_info_lite("SEQ", '42401'))
     pprint(icat.get_last_run("TOPAZ"))
     pprint(icat.get_run_files("SEQ", '42401'))
+    pprint(icat.get_user_experiments('19g'))
+    

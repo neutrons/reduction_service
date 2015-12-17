@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib import messages
 from abc import ABCMeta, abstractmethod
 from pprint import pformat, pprint
+from django.utils import dateparse
 
 """
 
@@ -144,6 +145,16 @@ class ICat(object):
         l_in_str = ','.join(str(x) for x in l)
         return l_in_str
 
+    @staticmethod
+    def _substitute_keys_in_dictionary(list_of_dicts,old_key,new_key):
+        for d in list_of_dicts:
+            d[new_key]=d.pop(old_key)
+
+    @staticmethod
+    def _convert_to_datetime(list_of_dicts,key):
+        for d in list_of_dicts:
+            d[key] = dateparse.parse_datetime(d[key])
+
     def get_instruments(self):
         '''
         @return:
@@ -235,7 +246,10 @@ class ICat(object):
                               request_str,
                               headers=HEADERS)
             response = self.conn.getresponse()
-            return self._parse_json(response.read())
+            json_data = self._parse_json(response.read())
+            self._substitute_keys_in_dictionary(json_data['proposal'],'@id','id')
+            self._convert_to_datetime(json_data['proposal'],'createTime')
+            return json_data;
         except Exception as e:
             self.dumper.dump_error(e, "Communication with ICAT server failed.")
             return None

@@ -47,7 +47,7 @@ class DjangoDumper(IDumper):
     """
     def __init__(self, django_request):
         self.django_request = django_request
-        
+
     def dump_error(self, exception, message):
         """
         @param exception: Must be a valid python exception
@@ -71,7 +71,7 @@ class GeneralDumper(IDumper):
         global logger
         logging.basicConfig(level=logging.DEBUG)
         logger = logging.getLogger(__name__)
-        
+
     def dump_error(self, exception, message):
         """
         @param exception: Must be a valid python exception
@@ -103,7 +103,7 @@ class ICat(object):
                                     timeout=TIMEOUT)
         self.facility = facility
         self.dumper = dumper
-        
+
     def __del__(self):
         '''
         Just makes sure the HTTP connection will be closed
@@ -111,8 +111,8 @@ class ICat(object):
         if self.conn is not None:
             logger.debug("Closing ICAT HTTP connection...")
             self.conn.close()
-        
-    
+
+
     def _parse_json(self, json_as_string):
         '''
         Makes sure we have a proper json string
@@ -126,7 +126,7 @@ class ICat(object):
         except Exception as e:
             self.dumper.dump_error(e, "It looks like ICAT did not return a valid JSON:\n%s" % json_as_string)
             return None
-        
+
     @staticmethod
     def _hyphen_range(s):
         """ Takes a range in form of "a-b" and generate a list of numbers between a and b inclusive.
@@ -143,10 +143,10 @@ class ICat(object):
         l.sort()
         l_in_str = ','.join(str(x) for x in l)
         return l_in_str
-    
+
     def get_instruments(self):
         '''
-        @return: 
+        @return:
         {u'instrument': [u'ARCS',
                  u'BSS',
                  u'CNCS',
@@ -168,7 +168,7 @@ class ICat(object):
                  u'VIS',
                  u'VULCAN']}
         '''
-        
+
         try:
             request_str = '/icat-rest-ws/experiment/%s' % (self.facility)
             logger.debug("get_instruments: %s" % request_str)
@@ -184,7 +184,7 @@ class ICat(object):
     def get_experiments(self, instrument):
         '''
         @param instrument: Valid instrument as string
-        @return: 
+        @return:
         {u'proposal': [u'2009_2_17_SCI',
                u'2009_3_17_SCI',
                u'2010_2_17_SCI',
@@ -196,7 +196,7 @@ class ICat(object):
                u'IPTS-9830',
                u'IPTS-9868']}
         '''
-        
+
         try:
             request_str = '/icat-rest-ws/experiment/%s/%s' % (self.facility, instrument)
             logger.debug("get_experiments: %s" % request_str)
@@ -208,12 +208,43 @@ class ICat(object):
         except Exception as e:
             self.dumper.dump_error(e, "Communication with ICAT server failed.")
             return None
-        
+
+    def get_experiments_meta(self, instrument):
+        '''
+        @param instrument: Valid instrument as string
+        @return:
+            {u'proposal': [{u'@id': u'IPTS-2774',
+                u'collection': u'12',
+                u'createTime': u'2012-08-02T16:19:37.604-04:00',
+                u'title': u'Junk run'},
+               {u'@id': u'IPTS-2911',
+                u'collection': u'0',
+                u'createTime': u'2012-08-01T20:17:26.894-04:00',
+                u'title': u'H2O%2DMCM%2D41%2C cooling%2C T%3D%7E230 K Ei%3D800 meV F1%40600 T0%40150'},
+                (.......................)
+               {u'@id': u'IPTS-14252',
+                u'collection': u'0',
+                u'createTime': u'2015-12-15T15:53:34.576-05:00',
+                u'title': u'CaRuTiO; T=4K; Ei=120 meV; Fch1=300 Hz T0=90 Hz'}]}
+        '''
+
+        try:
+            request_str = '/icat-rest-ws/experiment/%s/%s/meta' % (self.facility, instrument)
+            logger.debug("get_experiments: %s" % request_str)
+            self.conn.request('GET',
+                              request_str,
+                              headers=HEADERS)
+            response = self.conn.getresponse()
+            return self._parse_json(response.read())
+        except Exception as e:
+            self.dumper.dump_error(e, "Communication with ICAT server failed.")
+            return None
+
     def get_user_experiments(self, ucams_uid):
         '''
         @param ucams_uid: valid 3 characters ORNL ucams user uid
         @param instrument: Valid instrument as string
-        @return: 
+        @return:
         {
             "proposals": [
                 {
@@ -229,7 +260,7 @@ class ICat(object):
             ]
         }
         '''
-        
+
         try:
             request_str = '/prpsl_ws/getProposalNumbersByUser/%s' % (ucams_uid)
             logger.debug("get_user_experiments: %s" % request_str)
@@ -245,10 +276,10 @@ class ICat(object):
     def get_run_ranges(self, instrument, experiment):
         '''
         @param instrument: Valid instrument as string
-        @return: 
+        @return:
         {u'runRange': u'40136-40174, 40211-40246, 42375-42403'}
         '''
-        
+
         try:
             request_str = '/icat-rest-ws/experiment/%s/%s/%s' % (
                                                      self.facility,
@@ -263,14 +294,14 @@ class ICat(object):
         except Exception as e:
             self.dumper.dump_error(e, "Communication with ICAT server failed.")
             return None
-    
 
-    
+
+
     def get_runs(self, instrument, experiment):
         """
         Similar to get_run_ranges
         But returns:
-        @return: 
+        @return:
         {u'runRange': [40136,
                40137,
                (.........................)
@@ -291,7 +322,7 @@ class ICat(object):
     def get_run_ranges_meta(self, instrument, experiment):
         '''
         @param instrument: Valid instrument as string
-        @return: 
+        @return:
         {
             "proposal": {
                 "@id": "IPTS-8776",
@@ -302,7 +333,7 @@ class ICat(object):
             }
         }
         '''
-        
+
         try:
             request_str = '/icat-rest-ws/experiment/%s/%s/%s/meta' % (
                                                      self.facility,
@@ -322,7 +353,7 @@ class ICat(object):
         """
         Similar to get_run_ranges_meta but with runs as list
         But returns:
-        @return: 
+        @return:
         {u'proposal': {u'@id': u'IPTS-9868',
                        u'createTime': u'2013-08-19T18:58:56.688-04:00',
                        u'runRange': [40136,
@@ -339,7 +370,7 @@ class ICat(object):
         ranges = self._hyphen_range(raw_ranges["proposal"]["runRange"])
         raw_ranges["proposal"]["runRange"] = self._parse_json("[" + ranges + "]")
         return raw_ranges
-    
+
     def get_runs_all(self, instrument, experiment):
         '''
         @param instrument: Valid instrument as string
@@ -376,7 +407,7 @@ class ICat(object):
                                    u'totalCounts': u'129560.0'}]},
                u'title': u'Vanadium 5x5 White beam><E=110meV, T0=150Hz, Att1\n slitPacks: FC1=SEQ-700-3.5-AST FC2=SEQ-100-2.0-AST'}}
         '''
-        
+
         try:
             request_str = '/icat-rest-ws/experiment/%s/%s/%s/all' % (
                                                      self.facility,
@@ -409,7 +440,7 @@ class ICat(object):
          u'startTime': u'2013-09-30T22:21:37.715-04:00',
          u'totalCounts': u'6920258.0'}
         '''
-        
+
         try:
             request_str = '/icat-rest-ws/dataset/%s/%s/%s' % (
                                                      self.facility,
@@ -437,7 +468,7 @@ class ICat(object):
          u'startTime': u'2013-09-30T22:21:37.715-04:00',
          u'totalCounts': u'6920258.0'}
         '''
-        
+
         try:
             request_str = '/icat-rest-ws/dataset/%s/%s/%s/metaOnly' % (
                                                      self.facility,
@@ -470,7 +501,7 @@ class ICat(object):
          u'startTime': u'2013-09-30T22:21:37.715-04:00',
          u'totalCounts': u'6920258.0'}
         '''
-        
+
         try:
             request_str = '/icat-rest-ws/dataset/%s/%s/%s/lite' % (
                                                      self.facility,
@@ -485,15 +516,15 @@ class ICat(object):
         except Exception as e:
             self.dumper.dump_error(e, "Communication with ICAT server failed.")
             return None
-    
+
     def get_last_run(self, instrument):
         '''
         Gets the last run mumber for a certain instrument
         @param instrument: Valid instrument as string
-        @return: 
+        @return:
         {u'number': u'13780'}
         '''
-        
+
         try:
             request_str = '/icat-rest-ws/datafile/%s/%s' % (self.facility, instrument)
             logger.debug("get_last_run: %s" % request_str)
@@ -505,7 +536,7 @@ class ICat(object):
         except Exception as e:
             self.dumper.dump_error(e, "Communication with ICAT server failed.")
             return None
-    
+
     def get_run_files(self, instrument, run_number):
         '''
         @param instrument: Valid instrument as string
@@ -516,7 +547,7 @@ class ICat(object):
                u'/SNS/SEQ/IPTS-9868/shared/autoreduce/SEQ_42401_autoreduced.nxs',
                u'/SNS/SEQ/IPTS-9868/shared/autoreduce/SEQ_42401_autoreduced.nxspe']}
         '''
-        
+
         try:
             request_str = '/icat-rest-ws/datafile/%s/%s/%s' % (
                                                      self.facility,
@@ -531,15 +562,16 @@ class ICat(object):
         except Exception as e:
             self.dumper.dump_error(e, "Communication with ICAT server failed.")
             return None
-    
-    
+
+
 # Main just for testing
 if __name__ == "__main__":
-    
+
     dumper = GeneralDumper()
     icat = ICat(dumper)
     pprint(icat.get_instruments())
     pprint(icat.get_experiments("SEQ"))
+    pprint(icat.get_experiments_meta("SEQ"))
     pprint(icat.get_run_ranges("SEQ", 'IPTS-9868'))
     pprint(icat.get_runs("SEQ", 'IPTS-9868'))
     pprint(icat.get_run_ranges_meta("SEQ", 'IPTS-9868'))
@@ -551,4 +583,3 @@ if __name__ == "__main__":
     pprint(icat.get_last_run("TOPAZ"))
     pprint(icat.get_run_files("SEQ", '42401'))
     pprint(icat.get_user_experiments('19g'))
-    

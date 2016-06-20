@@ -271,3 +271,17 @@ From reduction-old to reduction
 /etc/ssl/certs/reduction.sns.gov.crt
 /etc/pki/tls/private/reduction.sns.gov.key
 ```
+
+# Production restart
+
+```
+# Restart Postgresql
+sudo service postgresql restart
+# Otherwise play with uwsgi and nginx
+cd /var/nginx/reduction_service
+sudo service nginx stop
+sudo killall uwsgi
+nohup sudo -E uwsgi --ini nginx/reduction_uwsgi.ini &
+# Check the output file!!!!
+sudo service nginx start
+```

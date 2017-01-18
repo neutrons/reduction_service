@@ -277,10 +277,11 @@ From reduction-old to reduction
 ```
 # Restart Postgresql
 sudo service postgresql restart
+
 # Otherwise play with uwsgi and nginx
 cd /var/nginx/reduction_service
 sudo service nginx stop
-sudo killall uwsgi
+sudo killall -s INT /usr/bin/uwsgi
 nohup sudo -E uwsgi --ini nginx/reduction_uwsgi.ini &
 # Check the output file!!!!
 sudo service nginx start
